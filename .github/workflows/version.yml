@@ -1,0 +1,36 @@
+name: Semantic Versioning
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Version
+        id: version
+        uses: paulhatch/semantic-version@v5.4.0
+        with:
+          tag_prefix: 'v'
+          major_pattern: '/!:|BREAKING CHANGE:/'
+          minor_pattern: '/feat:/'
+          version_format: '${major}.${minor}.${patch}'
+          enable_prerelease_mode: true
+
+      - name: Output Version
+        run: |
+          echo "Version: ${{ steps.version.outputs.version }}"
+          echo "Version Tag: ${{ steps.version.outputs.version_tag }}"
+          echo "Version Type: ${{ steps.version.outputs.version_type }}"
+          echo "Major: ${{ steps.version.outputs.major }}"
+          echo "Minor: ${{ steps.version.outputs.minor }}"
+          echo "Patch: ${{ steps.version.outputs.patch }}"

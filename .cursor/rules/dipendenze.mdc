@@ -1,0 +1,8 @@
+---
+name: dipendenze
+description: This is a new rule
+---
+
+# Overview
+
+Devi **SEMPRE** usare l'ultima versione delle dipendenze che installi. Non retrocedere MAI di versione. Usa sempre l'ultima. Se ci sono dei conflitti li devi risolvere senza retrocedere di versione. Usa sempre l'ultima versione disponibile usando pnpm outdated.

@@ -1,0 +1,121 @@
+# Project Rules - Patentify
+
+## Stack Tecnologico
+
+- **Framework**: TanStack Start (v0 - RC) con TanStack Router e TanStack Query
+- **UI**: React, Tailwind CSS, shadcn/ui
+- **Font**: Noto Sans (Google Font)
+- **Icone**: Google Icons (SVG locali in `/app/icons`)
+- **Database**: Neon DB (progetto "patentify" - ID: dawn-paper-76642524)
+- **Auth**: Neon Auth (managed)
+- **Testing**: Vitest
+- **Linting/Formatting**: ESLint + Prettier
+- **Form**: React Hook Form + Zod
+- **Package Manager**: pnpm
+- **Node.js**: 24.x
+- **TypeScript**: ultima versione
+
+## Regole di Codice
+
+### TypeScript
+
+- **Return types espliciti sempre richiesti**: Ogni funzione deve avere un return type esplicito
+- **Strict mode**: TypeScript è configurato in strict mode
+- **No `any`**: Evitare l'uso di `any`, preferire tipi specifici o `unknown`
+
+### Mobile-First
+
+- **Design sempre partendo da mobile**: Tutti i componenti devono essere progettati prima per mobile, poi estesi per desktop
+- **Breakpoint Tailwind**: Usare `sm:`, `md:`, `lg:` per responsive design
+- **Touch-friendly**: Assicurarsi che gli elementi interattivi siano adeguati per touch
+
+### Componenti
+
+- **shadcn/ui**: Usare componenti shadcn/ui quando disponibili
+- **Import icone**: Importare icone da `~/icons` (es: `import { LoginIcon } from '~/icons'`)
+- **Naming**: Componenti in PascalCase, file in kebab-case o PascalCase
+- **Composizione**: Preferire composizione a ereditarietà
+
+### Styling
+
+- **Tailwind CSS**: Usare Tailwind per tutti gli stili
+- **Font**: Noto Sans è il font principale, applicato globalmente
+- **CSS Variables**: Usare le variabili CSS definite in `globals.css` per i colori
+- **Dark mode**: Supportare dark mode usando le classi Tailwind
+
+### Form
+
+- **React Hook Form**: Usare React Hook Form per tutti i form
+- **Zod**: Usare Zod per la validazione dei form
+- **Resolvers**: Usare `@hookform/resolvers` per integrare Zod con React Hook Form
+
+### Testing
+
+- **Vitest**: Usare Vitest per tutti i test
+- **Testing Library**: Usare @testing-library/react per i test dei componenti
+- **Coverage**: Mantenere una buona copertura dei test
+
+### Linting e Formatting
+
+- **ESLint**: Sempre rispettare le regole ESLint
+- **Prettier**: Sempre formattare il codice con Prettier prima di committare
+- **Pre-commit**: Eseguire lint e format prima di ogni commit
+
+### Database
+
+- **Neon DB**: Usare `@neondatabase/serverless` per le query
+- **Connection string**: Usare la variabile ambiente `DATABASE_URL`
+- **Query**: Usare il client `sql` da `~/lib/db`
+
+### Autenticazione
+
+- **Neon Auth**: Usare il servizio managed Neon Auth
+- **Auth helpers**: Usare le funzioni da `~/lib/auth`
+- **Session**: Gestire le sessioni tramite Neon Auth API
+
+### Routing
+
+- **TanStack Start**: Usare file-system routing di TanStack Start
+- **Route files**: Creare file route in `app/` directory
+- **Navigation**: Usare `useNavigate` da `@tanstack/react-router`
+
+### Versioning
+
+- **Conventional Commits**: Usare Conventional Commits per i messaggi di commit
+- **Semantic Versioning**: Il versioning semantico è gestito automaticamente da GitHub Actions
+- **Pattern commit**:
+  - `feat:` per nuove funzionalità (minor version bump)
+  - `fix:` per bug fix (patch version bump)
+  - `BREAKING CHANGE:` o `!` per breaking changes (major version bump)
+
+## Best Practices
+
+1. **Componenti riutilizzabili**: Creare componenti riutilizzabili in `app/components/`
+2. **Utilities**: Mettere funzioni di utilità in `app/lib/`
+3. **Type safety**: Mantenere la type safety in tutto il codice
+4. **Error handling**: Gestire sempre gli errori in modo appropriato
+5. **Performance**: Ottimizzare per le performance, specialmente su mobile
+6. **Accessibility**: Assicurarsi che l'app sia accessibile
+7. **Documentation**: Documentare funzioni e componenti complessi
+
+## File Structure
+
+- `app/` - Codice sorgente principale
+- `app/components/` - Componenti React
+- `app/lib/` - Utilities e helpers
+- `app/icons/` - Icone SVG locali
+- `app/styles/` - Stili globali
+- `tests/` - Test files
+- `public/` - File statici
+
+## Import Aliases
+
+- `~/` - Alias per `app/`
+- `@/` - Alias per root directory
+
+## Note Importanti
+
+- Tutte le librerie devono essere all'ultima versione disponibile
+- Non committare `.env.local`, solo `.env.example`
+- Il font Noto Sans è importato da Google Fonts
+- Le icone Google Icons sono scaricate come SVG locali e organizzate in `/app/icons` con export centralizzato
