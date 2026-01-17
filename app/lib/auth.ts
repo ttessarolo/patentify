@@ -1,27 +1,14 @@
-// Neon Auth configuration
-// This will be configured with the Neon Auth managed service credentials
+import { createAuthClient } from '@neondatabase/neon-js/auth';
+import { BetterAuthReactAdapter } from '@neondatabase/neon-js/auth/react';
 
-export const authConfig = {
-  baseURL: process.env.NEON_AUTH_URL || '',
-  apiKey: process.env.NEON_AUTH_API_KEY || '',
-};
+const authUrl = import.meta.env.VITE_NEON_AUTH_URL;
 
-// Auth helper functions will be added here
-export async function getSession(): Promise<any> {
-  // Implementation will use Neon Auth API
-  return null;
+if (!authUrl) {
+  throw new Error(
+    'VITE_NEON_AUTH_URL is not defined. Please set it in your .env file.'
+  );
 }
 
-export async function signIn(_email: string, _password: string): Promise<any> {
-  // Implementation will use Neon Auth API
-  return null;
-}
-
-export async function signUp(_email: string, _password: string): Promise<any> {
-  // Implementation will use Neon Auth API
-  return null;
-}
-
-export async function signOut(): Promise<void> {
-  // Implementation will use Neon Auth API
-}
+export const authClient = createAuthClient(authUrl, {
+  adapter: BetterAuthReactAdapter(),
+});

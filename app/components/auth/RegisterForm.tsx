@@ -7,17 +7,35 @@ import * as z from 'zod';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '~/components/ui/card';
 import { AccountIcon } from '~/icons';
 
-const registerSchema = z.object({
-  email: z.string().email('Email non valida'),
-  password: z.string().min(6, 'La password deve essere di almeno 6 caratteri'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Le password non corrispondono',
-  path: ['confirmPassword'],
-});
+const registerSchema = z
+  .object({
+    username: z
+      .string()
+      .min(3, 'Lo username deve essere di almeno 3 caratteri')
+      .max(20, 'Lo username non può superare i 20 caratteri')
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        'Lo username può contenere solo lettere, numeri e underscore'
+      ),
+    email: z.string().email('Email non valida'),
+    password: z
+      .string()
+      .min(6, 'La password deve essere di almeno 6 caratteri'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Le password non corrispondono',
+    path: ['confirmPassword'],
+  });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -25,7 +43,9 @@ interface RegisterFormProps {
   onSuccess?: () => void;
 }
 
-export function RegisterForm({ onSuccess }: RegisterFormProps): React.JSX.Element {
+export function RegisterForm({
+  onSuccess,
+}: RegisterFormProps): React.JSX.Element {
   const {
     register,
     handleSubmit,
@@ -53,6 +73,20 @@ export function RegisterForm({ onSuccess }: RegisterFormProps): React.JSX.Elemen
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              type="text"
+              placeholder="nomeutente"
+              {...register('username')}
+            />
+            {errors.username && (
+              <p className="text-sm text-destructive">
+                {errors.username.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
@@ -73,7 +107,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps): React.JSX.Elemen
               {...register('password')}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
           <div className="space-y-2">
@@ -85,7 +121,9 @@ export function RegisterForm({ onSuccess }: RegisterFormProps): React.JSX.Elemen
               {...register('confirmPassword')}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.confirmPassword.message}
+              </p>
             )}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>

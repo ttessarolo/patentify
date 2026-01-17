@@ -10,45 +10,76 @@
 
 // Import Routes
 
-import { Route as rootRoute } from './__root'
-import { Route as IndexImport } from './index'
-import { Route as MainImport } from './routes/main'
+import { Route as rootRoute } from './__root';
+import { Route as IndexImport } from './index';
+import { Route as MainImport } from './routes/main';
+import { Route as AuthPathnameImport } from './routes/auth.$pathname';
+import { Route as AccountPathnameImport } from './routes/account.$pathname';
 
 // Create/Update Routes
 
 const IndexRoute = IndexImport.update({
   path: '/',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
 
 const MainRoute = MainImport.update({
   path: '/main',
   getParentRoute: () => rootRoute,
-} as any)
+} as any);
+
+const AuthPathnameRoute = AuthPathnameImport.update({
+  path: '/auth/$pathname',
+  getParentRoute: () => rootRoute,
+} as any);
+
+const AccountPathnameRoute = AccountPathnameImport.update({
+  path: '/account/$pathname',
+  getParentRoute: () => rootRoute,
+} as any);
 
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
     '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/';
+      path: '/';
+      fullPath: '/';
+      preLoaderRoute: typeof IndexImport;
+      parentRoute: typeof rootRoute;
+    };
     '/main': {
-      id: '/main'
-      path: '/main'
-      fullPath: '/main'
-      preLoaderRoute: typeof MainImport
-      parentRoute: typeof rootRoute
-    }
+      id: '/main';
+      path: '/main';
+      fullPath: '/main';
+      preLoaderRoute: typeof MainImport;
+      parentRoute: typeof rootRoute;
+    };
+    '/account/$pathname': {
+      id: '/account/$pathname';
+      path: '/account/$pathname';
+      fullPath: '/account/$pathname';
+      preLoaderRoute: typeof AccountPathnameImport;
+      parentRoute: typeof rootRoute;
+    };
+    '/auth/$pathname': {
+      id: '/auth/$pathname';
+      path: '/auth/$pathname';
+      fullPath: '/auth/$pathname';
+      preLoaderRoute: typeof AuthPathnameImport;
+      parentRoute: typeof rootRoute;
+    };
   }
 }
 
 // Create and export the route tree
 
-export const routeTree = rootRoute.addChildren({ IndexRoute, MainRoute })
+export const routeTree = rootRoute.addChildren({
+  IndexRoute,
+  MainRoute,
+  AuthPathnameRoute,
+  AccountPathnameRoute,
+});
 
 /* prettier-ignore-end */

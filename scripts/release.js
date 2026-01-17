@@ -2,12 +2,12 @@
 
 /**
  * Script per rilasciare su GitHub con semantic versioning
- * 
+ *
  * Uso:
  *   pnpm release "feat: aggiunta nuova funzionalità"
  *   pnpm release "fix: correzione bug"
  *   pnpm release "BREAKING CHANGE: modifica importante"
- * 
+ *
  * Il messaggio di commit deve seguire il formato Conventional Commits:
  * - feat: per nuove funzionalità (minor version bump)
  * - fix: per bug fix (patch version bump)
@@ -18,7 +18,8 @@ import { execSync } from 'child_process';
 import { argv } from 'process';
 
 // Ottieni il messaggio di commit dall'argomento o dalla variabile d'ambiente
-const commitMessage = argv[2] || process.env.npm_config_message || 'chore: release';
+const commitMessage =
+  argv[2] || process.env.npm_config_message || 'chore: release';
 
 if (!commitMessage || commitMessage.trim() === '') {
   console.error('❌ Errore: devi fornire un messaggio di commit');
@@ -44,7 +45,9 @@ try {
   execSync('git push --tags', { stdio: 'inherit' });
 
   console.log('\n✅ Release completata con successo!');
-  console.log('📋 GitHub Actions genererà automaticamente la versione basata sul messaggio di commit.');
+  console.log(
+    '📋 GitHub Actions genererà automaticamente la versione basata sul messaggio di commit.'
+  );
 } catch (error) {
   console.error('\n❌ Errore durante il release:', error.message);
   process.exit(1);

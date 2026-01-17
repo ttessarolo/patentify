@@ -20,21 +20,26 @@ Applicazione mobile-first per la gestione dei brevetti.
 ## Setup
 
 1. Installare le dipendenze:
+
 ```bash
 pnpm install
 ```
 
 2. Configurare le variabili ambiente:
+
 ```bash
 cp .env.example .env.local
 ```
 
 Compilare i valori necessari in `.env.local`:
+
 - `DATABASE_URL`: Connection string per Neon DB
-- `NEON_AUTH_URL`: URL del servizio Neon Auth
-- `NEON_AUTH_API_KEY`: API key per Neon Auth
+- `VITE_NEON_AUTH_URL`: URL del servizio Neon Auth (ottieni dalla [console Neon](https://console.neon.tech) > Progetto > Auth > Configuration tab)
+
+**Nota**: L'Auth URL ha il formato: `https://ep-xxx.neonauth.region.aws.neon.tech/neondb/auth`
 
 3. Avviare il server di sviluppo:
+
 ```bash
 pnpm dev
 ```
