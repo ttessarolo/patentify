@@ -19,7 +19,7 @@ function Index(): React.JSX.Element {
   }, [session.data, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="h-screen w-full overflow-hidden flex items-center justify-center p-4 bg-background">
       <div className="flex flex-col items-center space-y-8">
         <img
           src="/hero_patentify.png"

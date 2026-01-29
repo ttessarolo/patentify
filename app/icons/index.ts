@@ -5,3 +5,6 @@ export { default as AccountIcon } from './account.svg?react';
 export { default as OverallIcon } from './overall.svg?react';
 export { default as AmbiguitaIcon } from './ambiguita.svg?react';
 export { default as DifficoltaIcon } from './difficoltà.svg?react';
+export { default as QuizIcon } from './quiz.svg?react';
+export { default as CorrectIcon } from './correct.svg?react';
+export { default as WrongIcon } from './wrong.svg?react';

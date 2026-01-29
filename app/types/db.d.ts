@@ -119,3 +119,16 @@ export interface TrackAttemptResult {
   is_correct: boolean;
   attempt_id?: number;
 }
+
+/** Parametri per domandaUserStats */
+export interface DomandaUserStatsParams {
+  user_id: string;
+  domanda_id: number;
+}
+
+/** Risultato di domandaUserStats */
+export interface DomandaUserStatsResult {
+  total: number;
+  correct: number;
+  wrong: number;
+}

@@ -52,8 +52,18 @@ function EsercitazionePage(): React.JSX.Element {
   const [difficolta, setDifficolta] = useState('all');
   const [titoloQuesito, setTitoloQuesito] = useState('all');
   const [isFiltersSectionVisible, setIsFiltersSectionVisible] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const filtersSectionRef = useRef<HTMLDivElement>(null);
+
+  // Carica userId dalla sessione al mount
+  useEffect(() => {
+    const loadUserId = async (): Promise<void> => {
+      const session = await authClient.getSession();
+      setUserId(session?.data?.user?.id ?? null);
+    };
+    void loadUserId();
+  }, []);
 
   const getDomandeFn = useServerFn(getDomandeEsercitazione);
   const getAmbitiFn = useServerFn(getAmbitiDistinct);
@@ -298,6 +308,7 @@ function EsercitazionePage(): React.JSX.Element {
               onAnswer={handleAnswer}
               showAnswerAfterResponse={true}
               onCheckResponse={handleCheckResponse}
+              userId={userId}
             />
           ))}
 

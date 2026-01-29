@@ -1,9 +1,28 @@
 import React, { useCallback, useState } from 'react';
+import { useServerFn } from '@tanstack/react-start';
 import { Card, CardContent } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { Pill } from '~/components/ui/pill';
-import { OverallIcon, AmbiguitaIcon, DifficoltaIcon } from '~/icons';
-import type { Domanda } from '~/types/db';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from '~/components/ui/dropdown-menu';
+import {
+  OverallIcon,
+  AmbiguitaIcon,
+  DifficoltaIcon,
+  QuizIcon,
+  CorrectIcon,
+  WrongIcon,
+} from '~/icons';
+import { domandaUserStats } from '~/server/domandaUserStats';
+import type { Domanda, DomandaUserStatsResult } from '~/types/db';
+
+/** Payload per domandaUserStats */
+type DomandaUserStatsPayload = {
+  data: { user_id: string; domanda_id: number };
+};
 
 export interface DomandaCardProps {
   domanda: Domanda;
@@ -15,6 +34,8 @@ export interface DomandaCardProps {
     domandaId: number,
     answerGiven: string
   ) => Promise<boolean>;
+  /** ID dell'utente loggato (se presente, mostra icona statistiche) */
+  userId?: string | null;
 }
 
 const IMAGE_PREFIX_PATH = import.meta.env.VITE_IMAGE_PREFIX_PATH ?? '';
@@ -58,6 +79,7 @@ export function DomandaCard({
   onAnswer,
   showAnswerAfterResponse = false,
   onCheckResponse,
+  userId,
 }: DomandaCardProps): React.JSX.Element {
   const [answered, setAnswered] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
@@ -67,9 +89,45 @@ export function DomandaCard({
   const [showAmbiguitaFactors, setShowAmbiguitaFactors] = useState(false);
   const [showDifficoltaFactors, setShowDifficoltaFactors] = useState(false);
 
+  // Stati per le statistiche utente
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState(false);
+  const [stats, setStats] = useState<DomandaUserStatsResult | null>(null);
+  const [statsFetched, setStatsFetched] = useState(false);
+
+  // Server function per statistiche
+  const domandaUserStatsFn = useServerFn(domandaUserStats);
+
   // Parse dei fattori
   const ambiguitaFactors = parseFactors(domanda.ambiguita_triggers);
   const difficoltaFactors = parseFactors(domanda.difficolta_fattori);
+
+  // Fetch statistiche quando il dropdown viene aperto (lazy loading)
+  const handleStatsOpenChange = useCallback(
+    async (open: boolean): Promise<void> => {
+      setStatsOpen(open);
+      if (open && !statsFetched && userId) {
+        setStatsLoading(true);
+        setStatsError(false);
+        try {
+          const result = await (
+            domandaUserStatsFn as unknown as (
+              opts: DomandaUserStatsPayload
+            ) => Promise<DomandaUserStatsResult>
+          )({ data: { user_id: userId, domanda_id: domanda.id } });
+          setStats(result);
+          setStatsFetched(true);
+        } catch (error) {
+          console.error('Errore nel caricamento statistiche:', error);
+          setStatsError(true);
+        } finally {
+          setStatsLoading(false);
+        }
+      }
+    },
+    [statsFetched, userId, domandaUserStatsFn, domanda.id]
+  );
 
   const handleAnswer = useCallback(
     async (value: string): Promise<void> => {
@@ -78,6 +136,9 @@ export function DomandaCard({
       setAnswered(true);
       setSelectedAnswer(value);
       onAnswer(domanda.id, value);
+
+      // Invalida le statistiche così verranno ricaricate alla prossima apertura del dropdown
+      setStatsFetched(false);
 
       // Verifica la risposta se richiesto
       if (showAnswerAfterResponse && onCheckResponse) {
@@ -162,6 +223,74 @@ export function DomandaCard({
                 {domanda.difficolta ?? '—'}
               </span>
             </button>
+
+            {/* Icona statistiche utente - solo se userId presente */}
+            {userId && (
+              <DropdownMenu
+                open={statsOpen}
+                onOpenChange={handleStatsOpenChange}
+              >
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="ml-auto flex items-center justify-center p-2 text-teal-500 transition-opacity hover:opacity-80"
+                    aria-label="Statistiche tentativi su questa domanda"
+                  >
+                    <OverallIcon className="h-5 w-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[180px] p-3">
+                  {statsLoading && (
+                    <p className="text-center text-sm text-muted-foreground">
+                      Caricamento...
+                    </p>
+                  )}
+                  {statsError && (
+                    <p className="text-center text-sm text-red-500">
+                      Errore nel caricamento
+                    </p>
+                  )}
+                  {!statsLoading && !statsError && stats && (
+                    <>
+                      {stats.total === 0 ? (
+                        <p className="text-sm text-muted-foreground">
+                          Non hai mai risposto a questa domanda
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {/* Tentativi totali */}
+                          <div className="flex items-center gap-2">
+                            <QuizIcon className="h-5 w-5 shrink-0 text-pink-500" />
+                            <span className="text-sm">
+                              <span className="font-medium">{stats.total}</span>{' '}
+                              hai risposto alla domanda
+                            </span>
+                          </div>
+                          {/* Risposte corrette */}
+                          <div className="flex items-center gap-2">
+                            <CorrectIcon className="h-5 w-5 shrink-0 text-green-500" />
+                            <span className="text-sm">
+                              <span className="font-medium">
+                                {stats.correct}
+                              </span>{' '}
+                              hai indovinato
+                            </span>
+                          </div>
+                          {/* Risposte sbagliate */}
+                          <div className="flex items-center gap-2">
+                            <WrongIcon className="h-5 w-5 shrink-0 text-red-500" />
+                            <span className="text-sm">
+                              <span className="font-medium">{stats.wrong}</span>{' '}
+                              hai sbagliato
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
 
           {/* Ambito della domanda */}
