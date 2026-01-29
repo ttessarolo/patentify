@@ -2,11 +2,11 @@ import React, { StrictMode } from 'react';
 import { hydrateRoot, createRoot } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createRouter } from './router';
+import { getRouter } from './router';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient();
-const router = createRouter();
+const router = getRouter();
 
 function App(): React.JSX.Element {
   return (

@@ -1,0 +1,9 @@
+# Configurazione deploy Netlify per TanStack Start
+# https://docs.netlify.com/build/frameworks/framework-setup-guides/tanstack-start
+
+[build]
+  command = "pnpm run build"
+  publish = "dist/client"
+
+[build.environment]
+  NODE_VERSION = "24"

@@ -1,0 +1,26 @@
+import React, { StrictMode } from 'react';
+import { hydrateRoot, createRoot } from 'react-dom/client';
+import { RouterProvider } from '@tanstack/react-router';
+import { getRouter } from './router';
+import '~/styles/globals.css';
+
+const router = getRouter();
+
+function App(): React.JSX.Element {
+  return (
+    <StrictMode>
+      <RouterProvider router={router} />
+    </StrictMode>
+  );
+}
+
+const rootElement = document.getElementById('root');
+
+if (rootElement) {
+  if (rootElement.hasChildNodes()) {
+    hydrateRoot(rootElement, <App />);
+  } else {
+    const root = createRoot(rootElement);
+    root.render(<App />);
+  }
+}

@@ -44,6 +44,26 @@ Compilare i valori necessari in `.env.local`:
 pnpm dev
 ```
 
+## Deploy su Netlify
+
+Il progetto è predisposto per il deploy su [Netlify](https://www.netlify.com/) tramite il plugin ufficiale [@netlify/vite-plugin-tanstack-start](https://docs.netlify.com/build/frameworks/framework-setup-guides/tanstack-start).
+
+**Configurazione:**
+
+- `netlify.toml`: comando di build `pnpm run build`, cartella di publish `dist/client`
+- SSR, Server Routes, Server Functions e middleware vengono deployati su Netlify serverless functions
+
+**Passi per il deploy:**
+
+1. Collega il repository a Netlify (Site settings → Build & deploy).
+2. Imposta le **variabili d’ambiente** in Netlify (Site settings → Environment variables):
+   - `DATABASE_URL`: connection string Neon DB
+   - `VITE_NEON_AUTH_URL`: URL del servizio Neon Auth (per il frontend)
+3. Build command: `pnpm run build` (o lascia che Netlify usi `netlify.toml`)
+4. Publish directory: `dist/client`
+
+**Requisiti:** Netlify CLI 17.31+ se usi il deploy da CLI.
+
 ## Comandi Disponibili
 
 - `pnpm dev` - Avvia il server di sviluppo
