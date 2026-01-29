@@ -73,6 +73,17 @@ body {
   -webkit-backdrop-filter: blur(8px);
 }
 
+/* Dropdown menu content trasparente (UserButton e altri dropdown) */
+[data-slot='dropdown-menu-content'] {
+  background-color: color-mix(
+    in oklch,
+    var(--color-card) 85%,
+    transparent
+  ) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
 /* Riduce padding degli item nel menu */
 [data-radix-popper-content-wrapper] [role='menuitem'] {
   padding: 0.375rem 0.75rem !important;

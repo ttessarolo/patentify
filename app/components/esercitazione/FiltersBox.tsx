@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { Card, CardContent } from '~/components/ui/card';
 import { Label } from '~/components/ui/label';
 import {
   Select,
@@ -40,10 +40,7 @@ export function FiltersBox({
 }: FiltersBoxProps): React.JSX.Element {
   return (
     <Card className="w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">Filtri</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Difficoltà Generale (IRE+) */}
           <div className="space-y-2">

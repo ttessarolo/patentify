@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { SearchField } from '~/components/esercitazione/SearchField';
 import { FiltersBox } from '~/components/esercitazione/FiltersBox';
 import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
+import { Label } from '~/components/ui/label';
 import {
   getDomandeEsercitazione,
   getAmbitiDistinct,
@@ -50,6 +51,9 @@ function EsercitazionePage(): React.JSX.Element {
   const [ambiguita, setAmbiguita] = useState('all');
   const [difficolta, setDifficolta] = useState('all');
   const [titoloQuesito, setTitoloQuesito] = useState('all');
+  const [isFiltersSectionVisible, setIsFiltersSectionVisible] = useState(true);
+
+  const filtersSectionRef = useRef<HTMLDivElement>(null);
 
   const getDomandeFn = useServerFn(getDomandeEsercitazione);
   const getAmbitiFn = useServerFn(getAmbitiDistinct);
@@ -193,30 +197,82 @@ function EsercitazionePage(): React.JSX.Element {
     [checkResponseFn]
   );
 
+  // Intersection Observer per rilevare quando i filtri escono dalla viewport
+  useEffect(() => {
+    const ref = filtersSectionRef.current;
+    if (!ref) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsFiltersSectionVisible(entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(ref);
+    return (): void => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Calcola il numero di filtri attivi
+  const activeFiltersCount = [
+    search !== '',
+    irePlus !== 'all',
+    ambiguita !== 'all',
+    difficolta !== 'all',
+    titoloQuesito !== 'all',
+  ].filter(Boolean).length;
+
+  // Handler per scrollare ai filtri
+  const handleScrollToFilters = useCallback((): void => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-2 py-4 sm:px-4">
-      {/* Titolo */}
-      <h1 className="text-2xl font-bold">Esercitazione Libera</h1>
+    <div className="mx-auto max-w-4xl space-y-4 px-2 pt-1 pb-4 -mt-2.5 sm:mt-0 sm:space-y-6 sm:px-4 sm:pt-4">
+      {/* Box sticky filtri - appare quando i filtri escono dalla viewport */}
+      {!isFiltersSectionVisible && (
+        <button
+          type="button"
+          onClick={handleScrollToFilters}
+          className="fixed left-1/2 top-[calc(var(--header-height,3.5rem)+2px)] z-9 -translate-x-1/2 cursor-pointer rounded-full bg-orange-500/65 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-orange-600 flex items-center gap-2"
+        >
+          Filtri
+          <span className="inline-flex items-center justify-center rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-orange-600">
+            {activeFiltersCount}
+          </span>
+        </button>
+      )}
 
-      {/* Campo di ricerca */}
-      <SearchField
-        value={search}
-        onChange={handleSearchChange}
-        placeholder="Cerca nella domanda..."
-      />
+      {/* Sezione filtri (osservata dall'Intersection Observer) */}
+      <div ref={filtersSectionRef} className="space-y-4 sm:space-y-6">
+        {/* Titolo */}
+        <h1 className="text-2xl font-bold">Esercitazione Libera</h1>
 
-      {/* Box filtri */}
-      <FiltersBox
-        irePlus={irePlus}
-        ambiguita={ambiguita}
-        difficolta={difficolta}
-        titoloQuesito={titoloQuesito}
-        ambitiOptions={ambitiQuery.data ?? []}
-        onIrePlusChange={handleIrePlusChange}
-        onAmbiguitaChange={handleAmbiguitaChange}
-        onDifficoltaChange={handleDifficoltaChange}
-        onTitoloQuesitoChange={handleTitoloQuesitoChange}
-      />
+        {/* Campo di ricerca */}
+        <SearchField
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Cerca nella domanda..."
+        />
+
+        {/* Box filtri */}
+        <div className="space-y-2">
+          <Label>Filtri</Label>
+          <FiltersBox
+            irePlus={irePlus}
+            ambiguita={ambiguita}
+            difficolta={difficolta}
+            titoloQuesito={titoloQuesito}
+            ambitiOptions={ambitiQuery.data ?? []}
+            onIrePlusChange={handleIrePlusChange}
+            onAmbiguitaChange={handleAmbiguitaChange}
+            onDifficoltaChange={handleDifficoltaChange}
+            onTitoloQuesitoChange={handleTitoloQuesitoChange}
+          />
+        </div>
+      </div>
 
       {/* Stato di caricamento iniziale */}
       {domandeQuery.isLoading && (

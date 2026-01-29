@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
 import {
   SignedIn,
@@ -11,11 +11,48 @@ export const Route = createFileRoute('/main')({
 });
 
 function MainLayout(): React.JSX.Element {
+  const headerRef = useRef<HTMLElement>(null);
+
+  // Imposta --header-height su document.documentElement per posizionamento relativo
+  useEffect(() => {
+    const updateHeaderHeight = (): void => {
+      if (headerRef.current) {
+        const height = headerRef.current.offsetHeight;
+        document.documentElement.style.setProperty(
+          '--header-height',
+          `${height}px`
+        );
+      }
+    };
+
+    // Imposta l'altezza iniziale
+    updateHeaderHeight();
+
+    // Aggiorna su resize e orientationchange
+    window.addEventListener('resize', updateHeaderHeight);
+    window.addEventListener('orientationchange', updateHeaderHeight);
+
+    // ResizeObserver per cambiamenti del contenuto dell'header
+    const resizeObserver = new ResizeObserver(updateHeaderHeight);
+    if (headerRef.current) {
+      resizeObserver.observe(headerRef.current);
+    }
+
+    return (): void => {
+      window.removeEventListener('resize', updateHeaderHeight);
+      window.removeEventListener('orientationchange', updateHeaderHeight);
+      resizeObserver.disconnect();
+    };
+  }, []);
+
   return (
     <>
       <SignedIn>
         <div className="min-h-screen bg-background">
-          <header className="sticky top-0 z-10 border-b bg-card">
+          <header
+            ref={headerRef}
+            className="sticky top-0 z-10 border-b bg-card"
+          >
             <div className="container mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link
@@ -36,7 +73,14 @@ function MainLayout(): React.JSX.Element {
                 </div>
                 {/* Desktop: avatar + nome + freccette */}
                 <div className="hidden md:block">
-                  <UserButton size="default" />
+                  <UserButton
+                    size="default"
+                    classNames={{
+                      trigger: {
+                        base: '!bg-transparent !border-none text-white hover:bg-accent/50',
+                      },
+                    }}
+                  />
                 </div>
               </div>
             </div>
