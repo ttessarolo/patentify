@@ -10,8 +10,8 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
-import { NeonAuthUIProvider } from '@neondatabase/neon-js/auth/react';
-import { authClient } from '~/lib/auth';
+import { ClerkProvider } from '@clerk/tanstack-react-start';
+import { itIT } from '@clerk/localizations';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient();
@@ -81,8 +81,34 @@ function Providers({
   children,
 }: Readonly<{ children: ReactNode }>): React.JSX.Element {
   return (
-    <QueryClientProvider client={queryClient}>
-      <NeonAuthUIProvider authClient={authClient}>
+    <ClerkProvider
+      publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+      localization={itIT}
+      appearance={{
+        variables: {
+          colorBackground: 'oklch(0.22 0.02 250.01)',
+          colorForeground: 'var(--color-foreground)',
+          colorPrimary: 'var(--color-primary)',
+          colorPrimaryForeground: 'var(--color-primary-foreground)',
+          colorMuted: 'var(--color-muted)',
+          colorMutedForeground: 'var(--color-muted-foreground)',
+          colorInput: 'var(--color-input)',
+          colorInputForeground: 'var(--color-foreground)',
+          colorBorder: 'var(--color-border)',
+          colorRing: 'var(--color-ring)',
+          colorShadow: 'transparent',
+        },
+        elements: {
+          card: {
+            borderWidth: '2px',
+          },
+          socialButtonsBlockButton: {
+            borderColor: 'oklch(0.55 0.02 250)',
+          },
+        },
+      }}
+    >
+      <QueryClientProvider client={queryClient}>
         {children}
         {import.meta.env.DEV && (
           <>
@@ -96,8 +122,8 @@ function Providers({
             />
           </>
         )}
-      </NeonAuthUIProvider>
-    </QueryClientProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
   );
 }
 

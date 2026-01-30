@@ -19,9 +19,9 @@ import {
 import { domandaUserStats } from '~/server/domandaUserStats';
 import type { Domanda, DomandaUserStatsResult } from '~/types/db';
 
-/** Payload per domandaUserStats */
+/** Payload per domandaUserStats (user_id handled server-side via Clerk) */
 type DomandaUserStatsPayload = {
-  data: { user_id: string; domanda_id: number };
+  data: { domanda_id: number };
 };
 
 export interface DomandaCardProps {
@@ -111,11 +111,12 @@ export function DomandaCard({
         setStatsLoading(true);
         setStatsError(false);
         try {
+          // user_id is handled server-side via Clerk auth()
           const result = await (
             domandaUserStatsFn as unknown as (
               opts: DomandaUserStatsPayload
             ) => Promise<DomandaUserStatsResult>
-          )({ data: { user_id: userId, domanda_id: domanda.id } });
+          )({ data: { domanda_id: domanda.id } });
           setStats(result);
           setStatsFetched(true);
         } catch (error) {

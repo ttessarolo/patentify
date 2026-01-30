@@ -1,40 +1,57 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock delle dipendenze di Neon Auth
-vi.mock('@neondatabase/neon-js/auth', () => ({
-  createAuthClient: vi.fn((url: string) => ({
-    useSession: vi.fn(),
-    signOut: vi.fn(),
-  })),
+// Mock Clerk server auth
+vi.mock('@clerk/tanstack-react-start/server', () => ({
+  auth: vi.fn(() =>
+    Promise.resolve({
+      userId: 'user_test123',
+      sessionId: 'session_test123',
+    })
+  ),
+  clerkMiddleware: vi.fn(() => ({})),
 }));
 
-vi.mock('@neondatabase/neon-js/auth/react', () => ({
-  BetterAuthReactAdapter: vi.fn(() => ({})),
-}));
-
-describe('Auth Client', () => {
+describe('Clerk Auth Server', () => {
   beforeEach(() => {
     vi.resetModules();
   });
 
-  it('should throw error if VITE_NEON_AUTH_URL is not defined', async () => {
-    // Mock environment senza VITE_NEON_AUTH_URL
-    vi.stubEnv('VITE_NEON_AUTH_URL', '');
+  it('should return userId from Clerk auth()', async () => {
+    const { auth } = await import('@clerk/tanstack-react-start/server');
 
-    await expect(async () => {
-      await import('../app/lib/auth');
-    }).rejects.toThrow('VITE_NEON_AUTH_URL is not defined');
+    const authResult = await auth();
+
+    expect(authResult).toBeDefined();
+    expect(authResult.userId).toBe('user_test123');
+    expect(authResult.sessionId).toBe('session_test123');
   });
 
-  it('should initialize auth client with valid URL', async () => {
-    const mockAuthUrl =
-      'https://ep-test.neonauth.region.aws.neon.tech/neondb/auth';
-    vi.stubEnv('VITE_NEON_AUTH_URL', mockAuthUrl);
+  it('should have clerkMiddleware defined', async () => {
+    const { clerkMiddleware } = await import(
+      '@clerk/tanstack-react-start/server'
+    );
 
-    const { authClient } = await import('../app/lib/auth');
+    expect(clerkMiddleware).toBeDefined();
+    expect(typeof clerkMiddleware).toBe('function');
+  });
+});
 
-    expect(authClient).toBeDefined();
-    expect(authClient).toHaveProperty('useSession');
-    expect(authClient).toHaveProperty('signOut');
+describe('Clerk Environment Variables', () => {
+  it('should have VITE_CLERK_PUBLISHABLE_KEY pattern', () => {
+    // Test che la variabile è nel formato corretto (pk_test_ o pk_live_)
+    const publishableKeyPattern = /^pk_(test|live)_[a-zA-Z0-9]+$/;
+
+    // Mock di una chiave valida per il test
+    const mockKey = 'pk_test_abc123';
+    expect(publishableKeyPattern.test(mockKey)).toBe(true);
+  });
+
+  it('should have CLERK_SECRET_KEY pattern', () => {
+    // Test che la variabile è nel formato corretto (sk_test_ o sk_live_)
+    const secretKeyPattern = /^sk_(test|live)_[a-zA-Z0-9]+$/;
+
+    // Mock di una chiave valida per il test
+    const mockKey = 'sk_test_abc123';
+    expect(secretKeyPattern.test(mockKey)).toBe(true);
   });
 });

@@ -1,4 +1,5 @@
 import { createServerFn } from '@tanstack/react-start';
+import { auth } from '@clerk/tanstack-react-start/server';
 import { z } from 'zod';
 import { sql } from '~/lib/db';
 import type { TrackAttemptResult } from '~/types/db';
@@ -8,22 +9,25 @@ import { verifyAnswer } from './verifyAnswer';
 const trackAttemptInputSchema = z.object({
   domanda_id: z.number().int().positive(),
   answer_given: z.string(),
-  user_id: z.string().min(1, 'user_id obbligatorio'),
 });
 
 /**
  * Server function per tracciare un tentativo di risposta.
- * Lo user_id deve essere passato obbligatoriamente dal client.
+ * Lo user_id viene ottenuto server-side tramite Clerk auth().
  */
 export const trackAttempt = createServerFn({ method: 'POST' }).handler(
-  async ({ data }) => {
+  async ({ data }): Promise<TrackAttemptResult> => {
+    // Get userId from Clerk server-side auth
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error('Autenticazione richiesta per tracciare i tentativi');
+    }
+
     const parsed = trackAttemptInputSchema.safeParse(data);
     if (!parsed.success) {
-      throw new Error(
-        'Parametri domanda_id, answer_given e user_id richiesti e validi'
-      );
+      throw new Error('Parametri domanda_id e answer_given richiesti e validi');
     }
-    const { domanda_id, answer_given, user_id } = parsed.data;
+    const { domanda_id, answer_given } = parsed.data;
 
     const is_correct = await verifyAnswer(domanda_id, answer_given);
 
@@ -39,7 +43,7 @@ export const trackAttempt = createServerFn({ method: 'POST' }).handler(
         answer_given,
         is_correct
       ) VALUES (
-        ${user_id},
+        ${userId},
         ${domanda_id},
         ${null},
         ${null},
@@ -57,6 +61,6 @@ export const trackAttempt = createServerFn({ method: 'POST' }).handler(
       success: true,
       is_correct,
       attempt_id,
-    } as TrackAttemptResult;
+    };
   }
 );

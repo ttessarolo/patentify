@@ -1,7 +1,8 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useCallback, useRef, useEffect, useState } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
+import { useAuth } from '@clerk/tanstack-react-start';
 import { SearchField } from '~/components/esercitazione/SearchField';
 import { FiltersBox } from '~/components/esercitazione/FiltersBox';
 import { DomandaCard } from '~/components/domanda';
@@ -11,7 +12,6 @@ import {
   getDomandeEsercitazione,
   getAmbitiDistinct,
 } from '~/server/esercitazione';
-import { authClient } from '~/lib/auth';
 import { trackAttempt } from '~/server/track_attempt';
 import { checkResponse } from '~/server/checkResponse';
 import type {
@@ -36,9 +36,9 @@ type CheckResponsePayload = {
   data: { domanda_id: number; answer_given: string };
 };
 
-/** Payload per trackAttempt (user_id obbligatorio dal client) */
+/** Payload per trackAttempt (user_id handled server-side via Clerk) */
 type TrackAttemptPayload = {
-  data: { domanda_id: number; answer_given: string; user_id: string };
+  data: { domanda_id: number; answer_given: string };
 };
 
 export const Route = createFileRoute('/main/esercitazione')({
@@ -52,18 +52,11 @@ function EsercitazionePage(): React.JSX.Element {
   const [difficolta, setDifficolta] = useState('all');
   const [titoloQuesito, setTitoloQuesito] = useState('all');
   const [isFiltersSectionVisible, setIsFiltersSectionVisible] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
 
   const filtersSectionRef = useRef<HTMLDivElement>(null);
 
-  // Carica userId dalla sessione al mount
-  useEffect(() => {
-    const loadUserId = async (): Promise<void> => {
-      const session = await authClient.getSession();
-      setUserId(session?.data?.user?.id ?? null);
-    };
-    void loadUserId();
-  }, []);
+  // Get userId from Clerk (for UI purposes only - server handles auth)
+  const { userId } = useAuth();
 
   const getDomandeFn = useServerFn(getDomandeEsercitazione);
   const getAmbitiFn = useServerFn(getAmbitiDistinct);
@@ -126,22 +119,20 @@ function EsercitazionePage(): React.JSX.Element {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Mutation per tracciare i tentativi (user_id obbligatorio dal client)
+  // Mutation per tracciare i tentativi (user_id handled server-side via Clerk)
   const trackMutation = useMutation({
     mutationFn: async ({
       domanda_id,
       answer_given,
-      user_id,
     }: {
       domanda_id: number;
       answer_given: string;
-      user_id: string;
     }) =>
       (
         trackAttemptFn as unknown as (
           opts: TrackAttemptPayload
         ) => Promise<TrackAttemptResult>
-      )({ data: { domanda_id, answer_given, user_id } }),
+      )({ data: { domanda_id, answer_given } }),
     onSuccess: () => {
       console.log('[client] trackAttempt completato con successo');
     },
@@ -171,19 +162,13 @@ function EsercitazionePage(): React.JSX.Element {
     setTitoloQuesito(value);
   }, []);
 
-  // Handler quando l'utente risponde - traccia il tentativo (user_id dalla sessione)
+  // Handler quando l'utente risponde - traccia il tentativo (user_id handled server-side)
   const handleAnswer = useCallback(
     async (domandaId: number, value: string): Promise<void> => {
-      const session = await authClient.getSession();
-      const user_id = session?.data?.user?.id;
-      if (!user_id) {
-        console.warn('[client] Nessuna sessione: tentativo non tracciato');
-        return;
-      }
+      // Server will get userId from Clerk auth() - no need to pass it from client
       trackMutation.mutate({
         domanda_id: domandaId,
         answer_given: value,
-        user_id,
       });
     },
     [trackMutation]

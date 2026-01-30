@@ -2,25 +2,32 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-// Mock Neon Auth UI components
-const mockAuthView = vi.fn(({ pathname }: { pathname: string }) => (
-  <div data-testid="auth-view">Auth View: {pathname}</div>
+// Mock Clerk components
+const mockSignIn = vi.fn(() => <div data-testid="clerk-sign-in">Sign In</div>);
+const mockSignUp = vi.fn(() => <div data-testid="clerk-sign-up">Sign Up</div>);
+const mockUserProfile = vi.fn(() => (
+  <div data-testid="clerk-user-profile">User Profile</div>
 ));
 
-const mockAccountView = vi.fn(({ pathname }: { pathname: string }) => (
-  <div data-testid="account-view">Account View: {pathname}</div>
-));
-
-vi.mock('@neondatabase/neon-js/auth/react/ui', () => ({
-  AuthView: mockAuthView,
-  AccountView: mockAccountView,
+vi.mock('@clerk/tanstack-react-start', () => ({
+  SignIn: mockSignIn,
+  SignUp: mockSignUp,
+  UserProfile: mockUserProfile,
   SignedIn: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="signed-in">{children}</div>
   ),
-  RedirectToSignIn: () => (
-    <div data-testid="redirect-to-sign-in">Redirecting...</div>
+  SignedOut: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="signed-out">{children}</div>
   ),
   UserButton: () => <button data-testid="user-button">User Button</button>,
+  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="clerk-provider">{children}</div>
+  ),
+  useAuth: vi.fn(() => ({
+    isSignedIn: false,
+    isLoaded: true,
+    userId: null,
+  })),
 }));
 
 // Mock TanStack Router
@@ -35,39 +42,48 @@ vi.mock('@tanstack/react-router', () => ({
       };
     };
   }),
+  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+    <a href={to} data-testid="link">
+      {children}
+    </a>
+  ),
+  useNavigate: vi.fn(() => vi.fn()),
 }));
 
 describe('Auth Components', () => {
-  it('should render AuthView component with pathname', async () => {
-    const { Route } = await import('../app/routes/auth.$pathname');
-    const AuthComponent = Route.component;
+  it('should render SignIn component', async () => {
+    const { Route } = await import('../app/routes/sign-in/index');
+    const SignInComponent = Route.component;
 
-    render(<AuthComponent />);
+    render(<SignInComponent />);
 
-    expect(screen.getByTestId('auth-view')).toBeInTheDocument();
-    expect(mockAuthView).toHaveBeenCalled();
-    const callArgs = mockAuthView.mock.calls[0];
-    expect(callArgs[0]).toHaveProperty('pathname');
+    expect(screen.getByTestId('clerk-sign-in')).toBeInTheDocument();
+    expect(mockSignIn).toHaveBeenCalled();
   });
 
-  it('should render AccountView component with pathname', async () => {
-    const { Route } = await import('../app/routes/account.$pathname');
-    const AccountComponent = Route.component;
+  it('should render SignUp component', async () => {
+    const { Route } = await import('../app/routes/sign-up');
+    const SignUpComponent = Route.component;
 
-    render(<AccountComponent />);
+    render(<SignUpComponent />);
 
-    expect(screen.getByTestId('account-view')).toBeInTheDocument();
-    expect(mockAccountView).toHaveBeenCalled();
-    const callArgs = mockAccountView.mock.calls[0];
-    expect(callArgs[0]).toHaveProperty('pathname');
+    expect(screen.getByTestId('clerk-sign-up')).toBeInTheDocument();
+    expect(mockSignUp).toHaveBeenCalled();
   });
 
-  it('should have AuthView and AccountView components defined', () => {
-    const {
-      AuthView,
-      AccountView,
-    } = require('@neondatabase/neon-js/auth/react/ui');
-    expect(AuthView).toBeDefined();
-    expect(AccountView).toBeDefined();
+  it('should have Clerk components defined', () => {
+    const { SignIn, SignUp, SignedIn, SignedOut, UserButton } =
+      require('@clerk/tanstack-react-start') as {
+        SignIn: typeof mockSignIn;
+        SignUp: typeof mockSignUp;
+        SignedIn: React.ComponentType;
+        SignedOut: React.ComponentType;
+        UserButton: React.ComponentType;
+      };
+    expect(SignIn).toBeDefined();
+    expect(SignUp).toBeDefined();
+    expect(SignedIn).toBeDefined();
+    expect(SignedOut).toBeDefined();
+    expect(UserButton).toBeDefined();
   });
 });
