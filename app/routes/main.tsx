@@ -1,6 +1,16 @@
 import React, { useRef, useEffect } from 'react';
-import { createFileRoute, Link, Outlet, useNavigate } from '@tanstack/react-router';
-import { SignedIn, SignedOut, UserButton, useAuth } from '@clerk/tanstack-react-start';
+import {
+  createFileRoute,
+  Link,
+  Outlet,
+  useNavigate,
+} from '@tanstack/react-router';
+import {
+  SignedIn,
+  SignedOut,
+  UserButton,
+  useAuth,
+} from '@clerk/tanstack-react-start';
 
 export const Route = createFileRoute('/main')({
   component: MainLayout,
