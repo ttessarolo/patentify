@@ -9,7 +9,7 @@
   NODE_VERSION = "24"
   # Variabili VITE_ sono inlined nel bundle client da Vite (comportamento atteso).
   # Escludiamole dallo scan segreti per evitare falsi positivi.
-  SECRETS_SCAN_OMIT_KEYS = "VITE_NEON_AUTH_URL,VITE_IMAGE_PREFIX_PATH"
+  SECRETS_SCAN_OMIT_KEYS = "VITE_NEON_AUTH_URL,VITE_IMAGE_PREFIX_PATH,VITE_CLERK_PUBLISHABLE_KEY"
 
 # Content-Security-Policy per supportare Clerk
 # https://clerk.com/docs/security/clerk-csp
