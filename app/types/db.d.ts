@@ -1,36 +1,21 @@
 /**
  * Tipi per le tabelle NeonDB (introspezionati via Neon MCP).
- * - user, session: schema neon_auth (Neon Auth managed)
+ * - utente: schema public (sincronizzato da Clerk webhook)
  * - domande, quiz, user_domanda_attempt: schema public
+ *
+ * Autenticazione gestita da Clerk. user_id nelle tabelle è l'ID Clerk (text).
  */
 
-/** Schema neon_auth - utente gestito da Neon Auth */
-export interface User {
+/** Schema public - utente sincronizzato da Clerk webhook */
+export interface Utente {
+  /** ID Clerk (es. user_2xxx) - PK */
   id: string;
   name: string;
   email: string;
-  emailVerified: boolean;
-  image: string | null;
-  createdAt: string;
-  updatedAt: string;
-  role: string | null;
-  banned: boolean | null;
-  banReason: string | null;
-  banExpires: string | null;
-}
-
-/** Schema neon_auth - sessione Neon Auth */
-export interface Session {
-  id: string;
-  expiresAt: string;
-  token: string;
-  createdAt: string;
-  updatedAt: string;
-  ipAddress: string | null;
-  userAgent: string | null;
-  userId: string;
-  impersonatedBy: string | null;
-  activeOrganizationId: string | null;
+  email_verified: boolean;
+  image_url: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /** Tabella public.domande */
@@ -55,6 +40,7 @@ export type QuizStatus = 'in_progress' | 'completed' | 'abandoned';
 /** Tabella public.quiz */
 export interface Quiz {
   id: number;
+  /** ID Clerk (FK a utente.id) */
   user_id: string;
   created_at: string;
   completed_at: string | null;
@@ -64,6 +50,7 @@ export interface Quiz {
 /** Tabella public.user_domanda_attempt */
 export interface UserDomandaAttempt {
   id: number;
+  /** ID Clerk (FK a utente.id) */
   user_id: string;
   domanda_id: number;
   quiz_id: number | null;
@@ -106,11 +93,10 @@ export interface CheckResponseResult {
   is_correct: boolean;
 }
 
-/** Parametri per trackAttempt (user_id obbligatorio, passato dal client) */
+/** Parametri per trackAttempt (user_id ottenuto server-side via Clerk auth()) */
 export interface TrackAttemptParams {
   domanda_id: number;
   answer_given: string;
-  user_id: string;
 }
 
 /** Risultato di trackAttempt */
@@ -120,9 +106,8 @@ export interface TrackAttemptResult {
   attempt_id?: number;
 }
 
-/** Parametri per domandaUserStats */
+/** Parametri per domandaUserStats (user_id ottenuto server-side via Clerk auth()) */
 export interface DomandaUserStatsParams {
-  user_id: string;
   domanda_id: number;
 }
 

@@ -10,3 +10,10 @@
   # Variabili VITE_ sono inlined nel bundle client da Vite (comportamento atteso).
   # Escludiamole dallo scan segreti per evitare falsi positivi.
   SECRETS_SCAN_OMIT_KEYS = "VITE_NEON_AUTH_URL,VITE_IMAGE_PREFIX_PATH"
+
+# Content-Security-Policy per supportare Clerk
+# https://clerk.com/docs/security/clerk-csp
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev https://challenges.cloudflare.com; connect-src 'self' https://*.clerk.accounts.dev; img-src 'self' https://img.clerk.com data:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; frame-src 'self' https://challenges.cloudflare.com;"

@@ -1,24 +1,32 @@
 import { createServerFn } from '@tanstack/react-start';
+import { auth } from '@clerk/tanstack-react-start/server';
 import { z } from 'zod';
 import { sql } from '~/lib/db';
 import type { DomandaUserStatsResult } from '~/types/db';
 
 const domandaUserStatsInputSchema = z.object({
-  user_id: z.string().min(1, 'user_id obbligatorio'),
   domanda_id: z.number().int().positive(),
 });
 
 /**
  * Server function per ottenere le statistiche di un utente su una specifica domanda.
+ * Lo user_id viene ottenuto server-side tramite Clerk auth().
  * Restituisce il numero totale di tentativi, quelli corretti e quelli sbagliati.
  */
 export const domandaUserStats = createServerFn({ method: 'POST' }).handler(
   async ({ data }): Promise<DomandaUserStatsResult> => {
+    // Get userId from Clerk server-side auth
+    const { userId } = await auth();
+    if (!userId) {
+      // Return empty stats if not authenticated
+      return { total: 0, correct: 0, wrong: 0 };
+    }
+
     const parsed = domandaUserStatsInputSchema.safeParse(data);
     if (!parsed.success) {
-      throw new Error('Parametri user_id e domanda_id richiesti e validi');
+      throw new Error('Parametro domanda_id richiesto e valido');
     }
-    const { user_id, domanda_id } = parsed.data;
+    const { domanda_id } = parsed.data;
 
     const result = await sql`
       SELECT
@@ -26,7 +34,7 @@ export const domandaUserStats = createServerFn({ method: 'POST' }).handler(
         COUNT(*) FILTER (WHERE is_correct = true)::int AS correct,
         COUNT(*) FILTER (WHERE is_correct = false)::int AS wrong
       FROM user_domanda_attempt
-      WHERE user_id = ${user_id} AND domanda_id = ${domanda_id}
+      WHERE user_id = ${userId} AND domanda_id = ${domanda_id}
     `;
 
     // Se nessuna riga, i contatori saranno 0

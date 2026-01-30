@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
-import { SignedIn, SignedOut } from '@neondatabase/neon-js/auth/react/ui';
-import { authClient } from '~/lib/auth';
+import { SignedIn, SignedOut, useAuth } from '@clerk/tanstack-react-start';
 import { Button } from '~/components/ui/button';
 
 export const Route = createFileRoute('/')({
@@ -10,13 +9,13 @@ export const Route = createFileRoute('/')({
 
 function Index(): React.JSX.Element {
   const navigate = useNavigate();
-  const session = authClient.useSession();
+  const { isSignedIn, isLoaded } = useAuth();
 
   useEffect(() => {
-    if (session.data) {
+    if (isLoaded && isSignedIn) {
       navigate({ to: '/main' });
     }
-  }, [session.data, navigate]);
+  }, [isSignedIn, isLoaded, navigate]);
 
   return (
     <div className="h-screen w-full overflow-hidden flex items-center justify-center p-4 bg-background">
@@ -32,7 +31,7 @@ function Index(): React.JSX.Element {
         </SignedIn>
 
         <SignedOut>
-          <Link to="/auth/$pathname" params={{ pathname: 'login' }}>
+          <Link to="/sign-in">
             <Button size="lg">Accedi</Button>
           </Link>
         </SignedOut>

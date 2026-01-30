@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
 @import 'tailwindcss';
-@import '@neondatabase/neon-js/ui/tailwind';
 
 @theme {
   --color-background: oklch(100% 0 0);
@@ -84,7 +83,13 @@ body {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* Riduce padding degli item nel menu */
+/* Riduce padding degli item nel menu - testo bianco per leggibilità su sfondo scuro */
 [data-radix-popper-content-wrapper] [role='menuitem'] {
   padding: 0.375rem 0.75rem !important;
+  color: #ffffff !important;
+}
+
+/* UserButton Clerk - testo bianco per "Gestisci account" e "Disconnetti" */
+.cl-userButtonPopoverActionButton {
+  color: white !important;
 }

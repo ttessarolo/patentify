@@ -9,16 +9,25 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as MainRouteImport } from './routes/main'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignUpIndexRouteImport } from './routes/sign-up.index'
+import { Route as SignInIndexRouteImport } from './routes/sign-in/index'
 import { Route as MainIndexRouteImport } from './routes/main.index'
+import { Route as SignUpVerifyEmailAddressRouteImport } from './routes/sign-up.verify-email-address'
+import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as MainStatisticheRouteImport } from './routes/main.statistiche'
 import { Route as MainSimulazioneQuizRouteImport } from './routes/main.simulazione-quiz'
 import { Route as MainEsercitazioneRouteImport } from './routes/main.esercitazione'
 import { Route as MainErroriRicorrentiRouteImport } from './routes/main.errori-ricorrenti'
-import { Route as AuthPathnameRouteImport } from './routes/auth.$pathname'
-import { Route as AccountPathnameRouteImport } from './routes/account.$pathname'
+import { Route as ApiWebhooksClerkRouteImport } from './routes/api/webhooks/clerk'
 
+const SignUpRoute = SignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MainRoute = MainRouteImport.update({
   id: '/main',
   path: '/main',
@@ -29,10 +38,31 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignUpIndexRoute = SignUpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SignUpRoute,
+} as any)
+const SignInIndexRoute = SignInIndexRouteImport.update({
+  id: '/sign-in/',
+  path: '/sign-in/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MainIndexRoute = MainIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => MainRoute,
+} as any)
+const SignUpVerifyEmailAddressRoute =
+  SignUpVerifyEmailAddressRouteImport.update({
+    id: '/verify-email-address',
+    path: '/verify-email-address',
+    getParentRoute: () => SignUpRoute,
+  } as any)
+const SignInSplatRoute = SignInSplatRouteImport.update({
+  id: '/sign-in/$',
+  path: '/sign-in/$',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MainStatisticheRoute = MainStatisticheRouteImport.update({
   id: '/statistiche',
@@ -54,94 +84,120 @@ const MainErroriRicorrentiRoute = MainErroriRicorrentiRouteImport.update({
   path: '/errori-ricorrenti',
   getParentRoute: () => MainRoute,
 } as any)
-const AuthPathnameRoute = AuthPathnameRouteImport.update({
-  id: '/auth/$pathname',
-  path: '/auth/$pathname',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AccountPathnameRoute = AccountPathnameRouteImport.update({
-  id: '/account/$pathname',
-  path: '/account/$pathname',
+const ApiWebhooksClerkRoute = ApiWebhooksClerkRouteImport.update({
+  id: '/api/webhooks/clerk',
+  path: '/api/webhooks/clerk',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/main': typeof MainRouteWithChildren
-  '/account/$pathname': typeof AccountPathnameRoute
-  '/auth/$pathname': typeof AuthPathnameRoute
+  '/sign-up': typeof SignUpRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/verify-email-address': typeof SignUpVerifyEmailAddressRoute
   '/main/': typeof MainIndexRoute
+  '/sign-in/': typeof SignInIndexRoute
+  '/sign-up/': typeof SignUpIndexRoute
+  '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/account/$pathname': typeof AccountPathnameRoute
-  '/auth/$pathname': typeof AuthPathnameRoute
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/verify-email-address': typeof SignUpVerifyEmailAddressRoute
   '/main': typeof MainIndexRoute
+  '/sign-in': typeof SignInIndexRoute
+  '/sign-up': typeof SignUpIndexRoute
+  '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/main': typeof MainRouteWithChildren
-  '/account/$pathname': typeof AccountPathnameRoute
-  '/auth/$pathname': typeof AuthPathnameRoute
+  '/sign-up': typeof SignUpRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
+  '/sign-in/$': typeof SignInSplatRoute
+  '/sign-up/verify-email-address': typeof SignUpVerifyEmailAddressRoute
   '/main/': typeof MainIndexRoute
+  '/sign-in/': typeof SignInIndexRoute
+  '/sign-up/': typeof SignUpIndexRoute
+  '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/main'
-    | '/account/$pathname'
-    | '/auth/$pathname'
+    | '/sign-up'
     | '/main/errori-ricorrenti'
     | '/main/esercitazione'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
+    | '/sign-in/$'
+    | '/sign-up/verify-email-address'
     | '/main/'
+    | '/sign-in/'
+    | '/sign-up/'
+    | '/api/webhooks/clerk'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/account/$pathname'
-    | '/auth/$pathname'
     | '/main/errori-ricorrenti'
     | '/main/esercitazione'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
+    | '/sign-in/$'
+    | '/sign-up/verify-email-address'
     | '/main'
+    | '/sign-in'
+    | '/sign-up'
+    | '/api/webhooks/clerk'
   id:
     | '__root__'
     | '/'
     | '/main'
-    | '/account/$pathname'
-    | '/auth/$pathname'
+    | '/sign-up'
     | '/main/errori-ricorrenti'
     | '/main/esercitazione'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
+    | '/sign-in/$'
+    | '/sign-up/verify-email-address'
     | '/main/'
+    | '/sign-in/'
+    | '/sign-up/'
+    | '/api/webhooks/clerk'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MainRoute: typeof MainRouteWithChildren
-  AccountPathnameRoute: typeof AccountPathnameRoute
-  AuthPathnameRoute: typeof AuthPathnameRoute
+  SignUpRoute: typeof SignUpRouteWithChildren
+  SignInSplatRoute: typeof SignInSplatRoute
+  SignInIndexRoute: typeof SignInIndexRoute
+  ApiWebhooksClerkRoute: typeof ApiWebhooksClerkRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sign-up': {
+      id: '/sign-up'
+      path: '/sign-up'
+      fullPath: '/sign-up'
+      preLoaderRoute: typeof SignUpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/main': {
       id: '/main'
       path: '/main'
@@ -156,12 +212,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sign-up/': {
+      id: '/sign-up/'
+      path: '/'
+      fullPath: '/sign-up/'
+      preLoaderRoute: typeof SignUpIndexRouteImport
+      parentRoute: typeof SignUpRoute
+    }
+    '/sign-in/': {
+      id: '/sign-in/'
+      path: '/sign-in'
+      fullPath: '/sign-in/'
+      preLoaderRoute: typeof SignInIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/main/': {
       id: '/main/'
       path: '/'
       fullPath: '/main/'
       preLoaderRoute: typeof MainIndexRouteImport
       parentRoute: typeof MainRoute
+    }
+    '/sign-up/verify-email-address': {
+      id: '/sign-up/verify-email-address'
+      path: '/verify-email-address'
+      fullPath: '/sign-up/verify-email-address'
+      preLoaderRoute: typeof SignUpVerifyEmailAddressRouteImport
+      parentRoute: typeof SignUpRoute
+    }
+    '/sign-in/$': {
+      id: '/sign-in/$'
+      path: '/sign-in/$'
+      fullPath: '/sign-in/$'
+      preLoaderRoute: typeof SignInSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/main/statistiche': {
       id: '/main/statistiche'
@@ -191,18 +275,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainErroriRicorrentiRouteImport
       parentRoute: typeof MainRoute
     }
-    '/auth/$pathname': {
-      id: '/auth/$pathname'
-      path: '/auth/$pathname'
-      fullPath: '/auth/$pathname'
-      preLoaderRoute: typeof AuthPathnameRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/account/$pathname': {
-      id: '/account/$pathname'
-      path: '/account/$pathname'
-      fullPath: '/account/$pathname'
-      preLoaderRoute: typeof AccountPathnameRouteImport
+    '/api/webhooks/clerk': {
+      id: '/api/webhooks/clerk'
+      path: '/api/webhooks/clerk'
+      fullPath: '/api/webhooks/clerk'
+      preLoaderRoute: typeof ApiWebhooksClerkRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -226,21 +303,37 @@ const MainRouteChildren: MainRouteChildren = {
 
 const MainRouteWithChildren = MainRoute._addFileChildren(MainRouteChildren)
 
+interface SignUpRouteChildren {
+  SignUpVerifyEmailAddressRoute: typeof SignUpVerifyEmailAddressRoute
+  SignUpIndexRoute: typeof SignUpIndexRoute
+}
+
+const SignUpRouteChildren: SignUpRouteChildren = {
+  SignUpVerifyEmailAddressRoute: SignUpVerifyEmailAddressRoute,
+  SignUpIndexRoute: SignUpIndexRoute,
+}
+
+const SignUpRouteWithChildren =
+  SignUpRoute._addFileChildren(SignUpRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MainRoute: MainRouteWithChildren,
-  AccountPathnameRoute: AccountPathnameRoute,
-  AuthPathnameRoute: AuthPathnameRoute,
+  SignUpRoute: SignUpRouteWithChildren,
+  SignInSplatRoute: SignInSplatRoute,
+  SignInIndexRoute: SignInIndexRoute,
+  ApiWebhooksClerkRoute: ApiWebhooksClerkRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

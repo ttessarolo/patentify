@@ -1,10 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { createFileRoute, Link, Outlet } from '@tanstack/react-router';
-import {
-  SignedIn,
-  RedirectToSignIn,
-  UserButton,
-} from '@neondatabase/neon-js/auth/react/ui';
+import { createFileRoute, Link, Outlet, useNavigate } from '@tanstack/react-router';
+import { SignedIn, SignedOut, UserButton, useAuth } from '@clerk/tanstack-react-start';
 
 export const Route = createFileRoute('/main')({
   component: MainLayout,
@@ -12,6 +8,15 @@ export const Route = createFileRoute('/main')({
 
 function MainLayout(): React.JSX.Element {
   const headerRef = useRef<HTMLElement>(null);
+  const navigate = useNavigate();
+  const { isLoaded, isSignedIn } = useAuth();
+
+  // Redirect to sign-in if not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      navigate({ to: '/sign-in' });
+    }
+  }, [isLoaded, isSignedIn, navigate]);
 
   // Imposta --header-height su document.documentElement per posizionamento relativo
   useEffect(() => {
@@ -47,6 +52,11 @@ function MainLayout(): React.JSX.Element {
 
   return (
     <>
+      <SignedOut>
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-muted-foreground">Reindirizzamento al login...</p>
+        </div>
+      </SignedOut>
       <SignedIn>
         <div className="min-h-screen bg-background">
           <header
@@ -67,21 +77,14 @@ function MainLayout(): React.JSX.Element {
                 </Link>
               </div>
               <div className="flex items-center">
-                {/* Mobile: solo avatar + freccette */}
-                <div className="md:hidden">
-                  <UserButton size="icon" />
-                </div>
-                {/* Desktop: avatar + nome + freccette */}
-                <div className="hidden md:block">
-                  <UserButton
-                    size="default"
-                    classNames={{
-                      trigger: {
-                        base: '!bg-transparent !border-none text-white hover:bg-accent/50',
-                      },
-                    }}
-                  />
-                </div>
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: 'h-8 w-8',
+                      userButtonPopoverActionButton: 'text-white',
+                    },
+                  }}
+                />
               </div>
             </div>
           </header>
@@ -91,7 +94,6 @@ function MainLayout(): React.JSX.Element {
           </main>
         </div>
       </SignedIn>
-      <RedirectToSignIn />
     </>
   );
 }
