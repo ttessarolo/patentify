@@ -1,7 +1,8 @@
 import { createServerFn } from '@tanstack/react-start';
+import { auth } from '@clerk/tanstack-react-start/server';
 import { TTLMap } from '@ttessarolo/ttl-map-array';
 import { sql } from '~/lib/db';
-import type { Domanda } from '~/types/db';
+import type { DomandaWithSkull } from '~/types/db';
 
 // Cache per gli ambiti (TTL parametrico, default 5 minuti)
 const cache = new TTLMap<string, string[]>();
@@ -9,10 +10,15 @@ const cache = new TTLMap<string, string[]>();
 /**
  * Server function per ottenere le domande filtrate per l'esercitazione.
  * Se nessun parametro è valorizzato, restituisce domande random.
+ * Include il flag skull per ogni domanda (true se l'utente l'ha segnata).
  */
 export const getDomandeEsercitazione = createServerFn({
   method: 'GET',
-}).handler(async ({ data }) => {
+}).handler(async ({ data }): Promise<DomandaWithSkull[]> => {
+  // Get userId from Clerk server-side auth (può essere null se non loggato)
+  const { userId } = await auth();
+  const userIdForQuery = userId ?? '';
+
   const params = (data ?? {}) as {
     search?: string;
     ire_plus?: number;
@@ -40,11 +46,16 @@ export const getDomandeEsercitazione = createServerFn({
   if (!hasFilters) {
     // Nessun filtro: restituisce domande random (ignora offset)
     const result = await sql`
-        SELECT * FROM domande
-        ORDER BY RANDOM()
-        LIMIT ${limit}
-      `;
-    return result as Domanda[];
+      SELECT 
+        d.*,
+        (uds.domanda_id IS NOT NULL) AS skull
+      FROM domande d
+      LEFT JOIN user_domanda_skull uds 
+        ON d.id = uds.domanda_id AND uds.user_id = ${userIdForQuery}
+      ORDER BY RANDOM()
+      LIMIT ${limit}
+    `;
+    return result as DomandaWithSkull[];
   }
 
   // Per query con filtri dinamici, costruiamo le condizioni
@@ -52,19 +63,24 @@ export const getDomandeEsercitazione = createServerFn({
   const searchPattern = search ? `%${search}%` : null;
 
   const result = await sql`
-      SELECT * FROM domande
-      WHERE 1=1
-        ${searchPattern ? sql`AND domanda ILIKE ${searchPattern}` : sql``}
-        ${ire_plus !== undefined ? sql`AND ire_plus = ${ire_plus}` : sql``}
-        ${ambiguita !== undefined ? sql`AND ambiguita = ${ambiguita}` : sql``}
-        ${difficolta !== undefined ? sql`AND difficolta = ${difficolta}` : sql``}
-        ${titolo_quesito ? sql`AND titolo_quesito = ${titolo_quesito}` : sql``}
-      ORDER BY id
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
+    SELECT 
+      d.*,
+      (uds.domanda_id IS NOT NULL) AS skull
+    FROM domande d
+    LEFT JOIN user_domanda_skull uds 
+      ON d.id = uds.domanda_id AND uds.user_id = ${userIdForQuery}
+    WHERE 1=1
+      ${searchPattern ? sql`AND d.domanda ILIKE ${searchPattern}` : sql``}
+      ${ire_plus !== undefined ? sql`AND d.ire_plus = ${ire_plus}` : sql``}
+      ${ambiguita !== undefined ? sql`AND d.ambiguita = ${ambiguita}` : sql``}
+      ${difficolta !== undefined ? sql`AND d.difficolta = ${difficolta}` : sql``}
+      ${titolo_quesito ? sql`AND d.titolo_quesito = ${titolo_quesito}` : sql``}
+    ORDER BY d.id
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `;
 
-  return result as Domanda[];
+  return result as DomandaWithSkull[];
 });
 
 /**

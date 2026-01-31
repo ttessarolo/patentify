@@ -15,7 +15,7 @@ import {
 import { trackAttempt } from '~/server/track_attempt';
 import { checkResponse } from '~/server/checkResponse';
 import type {
-  Domanda,
+  DomandaWithSkull,
   CheckResponseResult,
   TrackAttemptResult,
 } from '~/types/db';
@@ -92,7 +92,7 @@ function EsercitazionePage(): React.JSX.Element {
       return (
         getDomandeFn as unknown as (opts: {
           data: DomandeQueryParams;
-        }) => Promise<Domanda[]>
+        }) => Promise<DomandaWithSkull[]>
       )({ data: params });
     },
     initialPageParam: 0,
@@ -286,7 +286,7 @@ function EsercitazionePage(): React.JSX.Element {
       {/* Lista domande */}
       {domande.length > 0 && (
         <div className="space-y-4">
-          {domande.map((domanda: Domanda) => (
+          {domande.map((domanda: DomandaWithSkull) => (
             <DomandaCard
               key={domanda.id}
               domanda={domanda}

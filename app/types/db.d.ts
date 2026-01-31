@@ -62,6 +62,20 @@ export interface UserDomandaAttempt {
   is_correct: boolean | null;
 }
 
+/** Tabella public.user_domanda_skull */
+export interface UserDomandaSkull {
+  /** ID Clerk (FK a utente.id) */
+  user_id: string;
+  /** FK a domande.id */
+  domanda_id: number;
+  inserted_at: string;
+}
+
+/** Domanda con flag skull (usato quando la query fa JOIN con user_domanda_skull) */
+export interface DomandaWithSkull extends Domanda {
+  skull: boolean;
+}
+
 // ============================================================
 // Tipi per parametri e risposte delle Server Functions
 // ============================================================
@@ -116,4 +130,14 @@ export interface DomandaUserStatsResult {
   total: number;
   correct: number;
   wrong: number;
+}
+
+/** Parametri per addSkull/removeSkull (user_id ottenuto server-side via Clerk auth()) */
+export interface SkullParams {
+  domanda_id: number;
+}
+
+/** Risultato di addSkull/removeSkull */
+export interface SkullResult {
+  success: boolean;
 }
