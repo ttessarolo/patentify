@@ -218,3 +218,42 @@ export interface GetQuizBoostCountsResult {
   /** Numero di domande marcate come skull dall'utente */
   skull_count: number;
 }
+
+// ============================================================
+// Tipi per getFullQuiz (condivisione quiz)
+// ============================================================
+
+/** Parametri per getFullQuiz (NON richiede autenticazione per permettere condivisione) */
+export interface GetFullQuizParams {
+  quiz_id: number;
+}
+
+/** Singola domanda del quiz con risposta data */
+export interface QuizDomandaWithAnswer {
+  /** Posizione della domanda nel quiz (1-40) */
+  quiz_pos: number;
+  /** Dati della domanda */
+  domanda: Domanda;
+  /** Risposta data dall'utente (null se non risposta) */
+  answer_given: string | null;
+  /** Se la risposta era corretta (null se non risposta) */
+  is_correct: boolean | null;
+}
+
+/** Risultato di getFullQuiz */
+export interface GetFullQuizResult {
+  /** ID del quiz */
+  quiz_id: number;
+  /** Tipo di quiz */
+  quiz_type: QuizType;
+  /** Status del quiz */
+  status: QuizStatus;
+  /** Esito del quiz (null se non completato) */
+  promosso: boolean | null;
+  /** Data di creazione */
+  created_at: string;
+  /** Data di completamento (null se non completato) */
+  completed_at: string | null;
+  /** Array delle domande con risposte */
+  domande: QuizDomandaWithAnswer[];
+}

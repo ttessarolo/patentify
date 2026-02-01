@@ -3,11 +3,9 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
-import { SearchField } from '~/components/esercitazione/SearchField';
-import { FiltersBox } from '~/components/esercitazione/FiltersBox';
+import { FiltersReveal } from '~/components/esercitazione/FiltersReveal';
 import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
-import { Label } from '~/components/ui/label';
 import {
   getDomandeEsercitazione,
   getAmbitiDistinct,
@@ -249,28 +247,21 @@ function EsercitazionePage(): React.JSX.Element {
         {/* Titolo */}
         <h1 className="text-2xl font-bold">Esercitazione Libera</h1>
 
-        {/* Campo di ricerca */}
-        <SearchField
-          value={search}
-          onChange={handleSearchChange}
-          placeholder="Cerca nella domanda..."
+        {/* Filtri collapsible */}
+        <FiltersReveal
+          search={search}
+          onSearchChange={handleSearchChange}
+          irePlus={irePlus}
+          ambiguita={ambiguita}
+          difficolta={difficolta}
+          titoloQuesito={titoloQuesito}
+          ambitiOptions={ambitiQuery.data ?? []}
+          onIrePlusChange={handleIrePlusChange}
+          onAmbiguitaChange={handleAmbiguitaChange}
+          onDifficoltaChange={handleDifficoltaChange}
+          onTitoloQuesitoChange={handleTitoloQuesitoChange}
+          activeFiltersCount={activeFiltersCount}
         />
-
-        {/* Box filtri */}
-        <div className="space-y-2">
-          <Label>Filtri</Label>
-          <FiltersBox
-            irePlus={irePlus}
-            ambiguita={ambiguita}
-            difficolta={difficolta}
-            titoloQuesito={titoloQuesito}
-            ambitiOptions={ambitiQuery.data ?? []}
-            onIrePlusChange={handleIrePlusChange}
-            onAmbiguitaChange={handleAmbiguitaChange}
-            onDifficoltaChange={handleDifficoltaChange}
-            onTitoloQuesitoChange={handleTitoloQuesitoChange}
-          />
-        </div>
       </div>
 
       {/* Stato di caricamento iniziale */}

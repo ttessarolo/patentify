@@ -11,3 +11,6 @@ export { default as CorrectIcon } from './correct.svg?react';
 export { default as WrongIcon } from './wrong.svg?react';
 export { default as SkullIcon } from './skull.svg?react';
 export { default as StopIcon } from './stop.svg?react';
+export { default as TimelapseIcon } from './timelapse.svg?react';
+export { default as ShareIcon } from './share.svg?react';
+export { default as AvgTimeIcon } from './avg_time.svg?react';

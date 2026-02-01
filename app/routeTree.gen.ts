@@ -19,6 +19,7 @@ import { Route as SignUpVerifyEmailAddressRouteImport } from './routes/sign-up.v
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as MainStatisticheRouteImport } from './routes/main.statistiche'
 import { Route as MainSimulazioneQuizRouteImport } from './routes/main.simulazione-quiz'
+import { Route as MainRivediQuizRouteImport } from './routes/main.rivedi-quiz'
 import { Route as MainEsercitazioneRouteImport } from './routes/main.esercitazione'
 import { Route as MainErroriRicorrentiRouteImport } from './routes/main.errori-ricorrenti'
 import { Route as ApiWebhooksClerkRouteImport } from './routes/api/webhooks/clerk'
@@ -74,6 +75,11 @@ const MainSimulazioneQuizRoute = MainSimulazioneQuizRouteImport.update({
   path: '/simulazione-quiz',
   getParentRoute: () => MainRoute,
 } as any)
+const MainRivediQuizRoute = MainRivediQuizRouteImport.update({
+  id: '/rivedi-quiz',
+  path: '/rivedi-quiz',
+  getParentRoute: () => MainRoute,
+} as any)
 const MainEsercitazioneRoute = MainEsercitazioneRouteImport.update({
   id: '/esercitazione',
   path: '/esercitazione',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
+  '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
+  '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
+  '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/main/errori-ricorrenti'
     | '/main/esercitazione'
+    | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/'
     | '/main/errori-ricorrenti'
     | '/main/esercitazione'
+    | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -170,6 +181,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/main/errori-ricorrenti'
     | '/main/esercitazione'
+    | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -261,6 +273,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainSimulazioneQuizRouteImport
       parentRoute: typeof MainRoute
     }
+    '/main/rivedi-quiz': {
+      id: '/main/rivedi-quiz'
+      path: '/rivedi-quiz'
+      fullPath: '/main/rivedi-quiz'
+      preLoaderRoute: typeof MainRivediQuizRouteImport
+      parentRoute: typeof MainRoute
+    }
     '/main/esercitazione': {
       id: '/main/esercitazione'
       path: '/esercitazione'
@@ -288,6 +307,7 @@ declare module '@tanstack/react-router' {
 interface MainRouteChildren {
   MainErroriRicorrentiRoute: typeof MainErroriRicorrentiRoute
   MainEsercitazioneRoute: typeof MainEsercitazioneRoute
+  MainRivediQuizRoute: typeof MainRivediQuizRoute
   MainSimulazioneQuizRoute: typeof MainSimulazioneQuizRoute
   MainStatisticheRoute: typeof MainStatisticheRoute
   MainIndexRoute: typeof MainIndexRoute
@@ -296,6 +316,7 @@ interface MainRouteChildren {
 const MainRouteChildren: MainRouteChildren = {
   MainErroriRicorrentiRoute: MainErroriRicorrentiRoute,
   MainEsercitazioneRoute: MainEsercitazioneRoute,
+  MainRivediQuizRoute: MainRivediQuizRoute,
   MainSimulazioneQuizRoute: MainSimulazioneQuizRoute,
   MainStatisticheRoute: MainStatisticheRoute,
   MainIndexRoute: MainIndexRoute,

@@ -15,7 +15,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog';
-import { StopIcon } from '~/icons';
+import { useNavigate } from '@tanstack/react-router';
+import { StopIcon, QuizIcon, CorrectIcon, WrongIcon, TimelapseIcon, AvgTimeIcon } from '~/icons';
 import { getQuizDomanda, abortQuiz, completeQuiz } from '~/server/quiz';
 import { trackAttempt } from '~/server/track_attempt';
 import type {
@@ -71,6 +72,7 @@ import { QUIZ_SIZE, QUIZ_DURATION_SECONDS, MAX_ERRORS } from '~/commons';
 
 export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
   const { userId } = useAuth();
+  const navigate = useNavigate();
 
   // Stato
   const [currentPos, setCurrentPos] = useState(1);
@@ -267,6 +269,14 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
   // Render schermate di fine
   // ============================================================
 
+  // Handler per navigare alla pagina di revisione quiz
+  const handleReviewQuiz = useCallback((): void => {
+    void navigate({
+      to: '/main/rivedi-quiz',
+      search: { quizId },
+    });
+  }, [navigate, quizId]);
+
   if (status === 'finished') {
     const totalAnswered = correctCount + wrongCount;
     const isPassed = wrongCount <= MAX_ERRORS;
@@ -276,28 +286,31 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
         : null;
 
     return (
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-16">
-        {/* Risultato principale */}
-        <div className="text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-start gap-6 px-4 py-4 md:py-16">
+        {/* Risultato principale - allineato a sinistra */}
+        <div className="w-full">
           {isPassed ? (
-            <h1 className="text-4xl font-bold text-green-600">Promosso!!!</h1>
+            <h1 className="text-4xl font-bold text-green-600">Promosso 🥳 !!!</h1>
           ) : (
             <h1 className="text-4xl font-bold text-red-600">Bocciato</h1>
           )}
         </div>
 
-        {/* Statistiche */}
-        <div className="mt-4 space-y-2 text-center text-lg">
-          <p>
-            <span className="font-semibold">Domande risposte:</span>{' '}
+        {/* Statistiche - allineate a sinistra con icone */}
+        <div className="mt-4 w-full space-y-3 text-lg">
+          <div className="flex items-center gap-2">
+            <QuizIcon className="h-5 w-5 shrink-0 text-pink-500" />
+            <span className="font-semibold">Domande Totali:</span>{' '}
             {totalAnswered}
-          </p>
-          <p>
+          </div>
+          <div className="flex items-center gap-2">
+            <CorrectIcon className="h-5 w-5 shrink-0 text-green-500" />
             <span className="font-semibold text-green-600">Corrette:</span>{' '}
             {correctCount}
-          </p>
-          <p>
-            <span className="font-semibold text-red-600">Errori:</span>{' '}
+          </div>
+          <div className="flex items-center gap-2">
+            <WrongIcon className="h-5 w-5 shrink-0 text-red-500" />
+            <span className="font-semibold text-red-600">Sbagliate:</span>{' '}
             {wrongCount}
             {wrongCount > MAX_ERRORS && (
               <span className="text-sm text-muted-foreground">
@@ -305,31 +318,45 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
                 (max {MAX_ERRORS})
               </span>
             )}
-          </p>
+          </div>
           {/* Tempo totale */}
           {finalTotalSeconds != null && (
-            <p>
+            <div className="flex items-center gap-2">
+              <TimelapseIcon className="h-5 w-5 shrink-0 text-blue-500" />
               <span className="font-semibold">Tempo totale:</span>{' '}
               {formatSecondsToHHMMSS(finalTotalSeconds)}
-            </p>
+            </div>
           )}
           {/* Tempo medio per domanda */}
           {avgTimePerQuestion != null && (
-            <p>
+            <div className="flex items-center gap-2">
+              <AvgTimeIcon className="h-5 w-5 shrink-0 text-blue-500" />
               <span className="font-semibold">Tempo medio per domanda:</span>{' '}
               {avgTimePerQuestion} s
-            </p>
+            </div>
           )}
         </div>
 
-        <Button onClick={handleBackToSimulazione} className="mt-6">
-          Torna a Simulazione Quiz
-        </Button>
+        {/* Bottoni */}
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <Button
+            onClick={handleBackToSimulazione}
+            className="w-full border border-white bg-transparent text-white hover:bg-white/10"
+          >
+            Torna a Simulazione Quiz
+          </Button>
+          <Button
+            onClick={handleReviewQuiz}
+            className="w-full border border-white bg-transparent text-white hover:bg-white/10"
+          >
+            Rivedi Quiz Completo
+          </Button>
+        </div>
 
         {/* Sezione Domande Sbagliate */}
         {wrongAnswers.length > 0 && (
           <div className="mt-8 w-full">
-            <h2 className="mb-4 text-center text-xl font-bold">
+            <h2 className="mb-4 text-left text-lg font-bold">
               Domande Sbagliate
             </h2>
             <div className="flex flex-col gap-4">
@@ -359,8 +386,8 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
         : null;
 
     return (
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-16">
-        <div className="text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-start gap-6 px-4 py-4 md:py-16">
+        <div className="w-full">
           <h1 className="text-4xl font-bold text-red-600">Tempo Scaduto!</h1>
           <p className="mt-2 text-muted-foreground">
             Il tempo a disposizione è terminato. Le domande rimanenti non sono
@@ -368,44 +395,61 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
           </p>
         </div>
 
-        {/* Statistiche parziali */}
-        <div className="mt-4 space-y-2 text-center text-lg">
-          <p>
-            <span className="font-semibold">Domande risposte:</span>{' '}
+        {/* Statistiche parziali - allineate a sinistra con icone */}
+        <div className="mt-4 w-full space-y-3 text-lg">
+          <div className="flex items-center gap-2">
+            <QuizIcon className="h-5 w-5 shrink-0 text-pink-500" />
+            <span className="font-semibold">Domande Totali:</span>{' '}
             {totalAnswered} / {QUIZ_SIZE}
-          </p>
-          <p>
+          </div>
+          <div className="flex items-center gap-2">
+            <CorrectIcon className="h-5 w-5 shrink-0 text-green-500" />
             <span className="font-semibold text-green-600">Corrette:</span>{' '}
             {correctCount}
-          </p>
-          <p>
-            <span className="font-semibold text-red-600">Errori:</span>{' '}
+          </div>
+          <div className="flex items-center gap-2">
+            <WrongIcon className="h-5 w-5 shrink-0 text-red-500" />
+            <span className="font-semibold text-red-600">Sbagliate:</span>{' '}
             {wrongCount}
-          </p>
+          </div>
           {/* Tempo totale */}
           {finalTotalSeconds != null && (
-            <p>
+            <div className="flex items-center gap-2">
+              <TimelapseIcon className="h-5 w-5 shrink-0 text-blue-500" />
               <span className="font-semibold">Tempo totale:</span>{' '}
               {formatSecondsToHHMMSS(finalTotalSeconds)}
-            </p>
+            </div>
           )}
           {/* Tempo medio per domanda */}
           {avgTimePerQuestion != null && (
-            <p>
+            <div className="flex items-center gap-2">
+              <AvgTimeIcon className="h-5 w-5 shrink-0 text-blue-500" />
               <span className="font-semibold">Tempo medio per domanda:</span>{' '}
               {avgTimePerQuestion} s
-            </p>
+            </div>
           )}
         </div>
 
-        <Button onClick={handleBackToSimulazione} className="mt-6">
-          Torna a Simulazione Quiz
-        </Button>
+        {/* Bottoni */}
+        <div className="mt-6 flex w-full flex-col gap-3">
+          <Button
+            onClick={handleBackToSimulazione}
+            className="w-full border border-white bg-transparent text-white hover:bg-white/10"
+          >
+            Torna a Simulazione Quiz
+          </Button>
+          <Button
+            onClick={handleReviewQuiz}
+            className="w-full border border-white bg-transparent text-white hover:bg-white/10"
+          >
+            Rivedi Quiz Completo
+          </Button>
+        </div>
 
         {/* Sezione Domande Sbagliate */}
         {wrongAnswers.length > 0 && (
           <div className="mt-8 w-full">
-            <h2 className="mb-4 text-center text-xl font-bold">
+            <h2 className="mb-4 text-left text-lg font-bold">
               Domande Sbagliate
             </h2>
             <div className="flex flex-col gap-4">
@@ -429,7 +473,7 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
 
   if (status === 'abandoned') {
     return (
-      <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-16 text-center">
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-4 md:py-16 text-center">
         <h1 className="text-2xl font-bold text-orange-600">Quiz Abbandonato</h1>
         <p className="text-muted-foreground">
           Hai abbandonato il quiz. Le domande rimanenti non sono state
@@ -455,14 +499,15 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
           <span className="text-lg font-bold">
             {currentPos} / {QUIZ_SIZE}
           </span>
-          <button
+          <Button
             type="button"
+            variant="outline"
             onClick={(): void => setAbandonDialogOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-red-500 transition-colors hover:bg-red-500/10"
-            aria-label="Abbandona quiz"
+            className="group h-8 shrink-0 border border-red-600 bg-transparent px-2.5 text-white hover:bg-red-600 hover:text-white sm:px-3"
           >
-            <StopIcon className="h-5 w-5" />
-          </button>
+            <StopIcon className="h-4 w-4 shrink-0 text-red-600 sm:mr-1.5 group-hover:text-white" />
+            <span className="hidden sm:inline">Abbandona Quiz</span>
+          </Button>
         </div>
 
         {/* Destra: Timer */}
@@ -514,9 +559,9 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
             <AlertDialogCancel>Annulla</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmAbandon}
-              className="bg-red-500 text-white hover:bg-red-600"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
-              Abbandona
+              Abbandona Quiz
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -8,8 +8,11 @@ import type {
   AbortQuizResult,
   CompleteQuizResult,
   GetQuizBoostCountsResult,
+  GetFullQuizResult,
+  QuizDomandaWithAnswer,
   Domanda,
   QuizType,
+  QuizStatus,
 } from '~/types/db';
 
 // ============================================================
@@ -32,6 +35,10 @@ const abortQuizInputSchema = z.object({
 });
 
 const completeQuizInputSchema = z.object({
+  quiz_id: z.coerce.number().int().positive(),
+});
+
+const getFullQuizInputSchema = z.object({
   quiz_id: z.coerce.number().int().positive(),
 });
 
@@ -513,5 +520,123 @@ export const getQuizBoostCounts = createServerFn({ method: 'GET' }).handler(
     const skull_count = parseInt((skullResult[0] as { count: string }).count, 10) || 0;
 
     return { errors_count, skull_count };
+  }
+);
+
+// ============================================================
+// getFullQuiz
+// ============================================================
+
+/**
+ * Server function per ottenere tutte le domande di un quiz con le risposte date.
+ * NON verifica user_id per permettere la condivisione del quiz con altri utenti.
+ * Richiede comunque autenticazione per evitare accessi anonimi.
+ */
+export const getFullQuiz = createServerFn({ method: 'GET' }).handler(
+  async ({ data }): Promise<GetFullQuizResult> => {
+    // Verifica autenticazione (ma non controlla che sia il proprietario del quiz)
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error('Autenticazione richiesta per visualizzare il quiz');
+    }
+
+    const parsed = getFullQuizInputSchema.safeParse(data);
+    if (!parsed.success) {
+      throw new Error('Parametro quiz_id richiesto');
+    }
+
+    const { quiz_id } = parsed.data;
+
+    // Ottiene i dati del quiz (senza verificare user_id per permettere condivisione)
+    const quizResult = await sql`
+      SELECT id, quiz_type, status, promosso, created_at, completed_at
+      FROM quiz
+      WHERE id = ${quiz_id}
+    `;
+
+    if (!quizResult || quizResult.length === 0) {
+      throw new Error('Quiz non trovato');
+    }
+
+    const quiz = quizResult[0] as {
+      id: number;
+      quiz_type: QuizType;
+      status: QuizStatus;
+      promosso: boolean | null;
+      created_at: string;
+      completed_at: string | null;
+    };
+
+    // Ottiene tutte le domande del quiz con le risposte
+    const domandeResult = await sql`
+      SELECT 
+        uda.quiz_pos,
+        uda.answer_given,
+        uda.is_correct,
+        d.id,
+        d.ire_plus,
+        d.domanda,
+        d.risposta,
+        d.ambiguita,
+        d.ambiguita_triggers,
+        d.difficolta,
+        d.difficolta_fattori,
+        d.titolo_quesito,
+        d.id_quesito,
+        d.ire,
+        d.immagine_path
+      FROM user_domanda_attempt uda
+      JOIN domande d ON d.id = uda.domanda_id
+      WHERE uda.quiz_id = ${quiz_id}
+      ORDER BY uda.quiz_pos ASC
+    `;
+
+    const domande: QuizDomandaWithAnswer[] = (
+      domandeResult as Array<{
+        quiz_pos: number;
+        answer_given: string | null;
+        is_correct: boolean | null;
+        id: number;
+        ire_plus: number | null;
+        domanda: string | null;
+        risposta: string | null;
+        ambiguita: number | null;
+        ambiguita_triggers: string | null;
+        difficolta: number | null;
+        difficolta_fattori: string | null;
+        titolo_quesito: string | null;
+        id_quesito: string | null;
+        ire: number | null;
+        immagine_path: string | null;
+      }>
+    ).map((row) => ({
+      quiz_pos: row.quiz_pos,
+      answer_given: row.answer_given,
+      is_correct: row.is_correct,
+      domanda: {
+        id: row.id,
+        ire_plus: row.ire_plus,
+        domanda: row.domanda,
+        risposta: row.risposta,
+        ambiguita: row.ambiguita,
+        ambiguita_triggers: row.ambiguita_triggers,
+        difficolta: row.difficolta,
+        difficolta_fattori: row.difficolta_fattori,
+        titolo_quesito: row.titolo_quesito,
+        id_quesito: row.id_quesito,
+        ire: row.ire,
+        immagine_path: row.immagine_path,
+      },
+    }));
+
+    return {
+      quiz_id: quiz.id,
+      quiz_type: quiz.quiz_type,
+      status: quiz.status,
+      promosso: quiz.promosso,
+      created_at: quiz.created_at,
+      completed_at: quiz.completed_at,
+      domande,
+    };
   }
 );
