@@ -51,6 +51,16 @@ export interface DomandaCardProps {
    * Se false: modalità quiz, mostra solo immagine (opzionale), testo domanda e bottoni Vero/Falso.
    */
   learning?: boolean;
+  /**
+   * Se true, la card è in sola lettura e l'utente non può rispondere.
+   * Utile per mostrare domande già risposte nella schermata finale.
+   */
+  readOnly?: boolean;
+  /**
+   * Risposta iniziale già data (usata con readOnly=true).
+   * Se fornita, la card mostra subito il feedback visivo verde/rosso.
+   */
+  initialAnswer?: string;
 }
 
 const IMAGE_PREFIX_PATH = import.meta.env.VITE_IMAGE_PREFIX_PATH ?? '';
@@ -96,10 +106,20 @@ export function DomandaCard({
   onCheckResponse,
   userId,
   learning = true,
+  readOnly = false,
+  initialAnswer,
 }: DomandaCardProps): React.JSX.Element {
-  const [answered, setAnswered] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  // Calcola se iniziare in stato "già risposta" (per modalità readOnly con initialAnswer)
+  const isPreAnswered = readOnly && initialAnswer != null;
+  const preComputedIsCorrect = isPreAnswered && domanda.risposta != null
+    ? initialAnswer === domanda.risposta
+    : null;
+
+  const [answered, setAnswered] = useState(isPreAnswered);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(
+    isPreAnswered ? initialAnswer : null
+  );
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(preComputedIsCorrect);
   const [isChecking, setIsChecking] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showIreBox, setShowIreBox] = useState(false);
@@ -201,7 +221,7 @@ export function DomandaCard({
 
   const handleAnswer = useCallback(
     async (value: string): Promise<void> => {
-      if (answered) return;
+      if (answered || readOnly) return;
 
       setAnswered(true);
       setSelectedAnswer(value);
@@ -223,7 +243,7 @@ export function DomandaCard({
         }
       }
     },
-    [answered, domanda.id, onAnswer, showAnswerAfterResponse, onCheckResponse]
+    [answered, readOnly, domanda.id, onAnswer, showAnswerAfterResponse, onCheckResponse]
   );
 
   const handleImageError = useCallback((): void => {
@@ -498,7 +518,7 @@ export function DomandaCard({
           <Button
             variant={getButtonVariant('Vero')}
             className={`flex-1 ${getButtonClasses('Vero')}`}
-            disabled={answered}
+            disabled={answered || readOnly}
             onClick={(): void => {
               void handleAnswer('Vero');
             }}
@@ -529,7 +549,7 @@ export function DomandaCard({
           <Button
             variant={getButtonVariant('Falso')}
             className={`flex-1 ${getButtonClasses('Falso')}`}
-            disabled={answered}
+            disabled={answered || readOnly}
             onClick={(): void => {
               void handleAnswer('Falso');
             }}

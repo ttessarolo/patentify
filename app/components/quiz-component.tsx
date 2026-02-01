@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
-import { Timer } from '~/components/timer';
+import { Timer, formatSecondsToHHMMSS } from '~/components/timer';
 import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
 import {
@@ -19,11 +19,13 @@ import { StopIcon } from '~/icons';
 import { getQuizDomanda, abortQuiz, completeQuiz } from '~/server/quiz';
 import { trackAttempt } from '~/server/track_attempt';
 import type {
+  Domanda,
   GetQuizDomandaResult,
   AbortQuizResult,
   CompleteQuizResult,
   TrackAttemptResult,
 } from '~/types/db';
+import type { TimerTickPayload } from '~/types/components';
 
 // ============================================================
 // Tipi
@@ -79,9 +81,20 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
   const [correctCount, setCorrectCount] = useState(0);
   const [wrongCount, setWrongCount] = useState(0);
 
+  // Stato per tracciare il tempo finale (secondi trascorsi quando il quiz termina)
+  const [finalTotalSeconds, setFinalTotalSeconds] = useState<number | null>(null);
+
+  // Stato per accumulare le domande sbagliate
+  const [wrongAnswers, setWrongAnswers] = useState<
+    Array<{ domanda: Domanda; answerGiven: string }>
+  >([]);
+
   // Ref per tracciare se il quiz è stato abortito (per evitare chiamate doppie)
   const abortedRef = useRef(false);
   const quizIdRef = useRef(quizId);
+
+  // Ref per tracciare il tempo trascorso (aggiornato da onTick del Timer)
+  const lastElapsedRef = useRef(0);
 
   // Server functions
   const getQuizDomandaFn = useServerFn(getQuizDomanda);
@@ -136,6 +149,11 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
       )({ data: { quiz_id: quizId } }),
   });
 
+  // Handler per aggiornare il tempo trascorso (chiamato dal Timer ogni secondo)
+  const handleTimerTick = useCallback((payload: TimerTickPayload): void => {
+    lastElapsedRef.current = payload.elapsed;
+  }, []);
+
   // Handler per la risposta dell'utente
   const handleAnswer = useCallback(
     async (domandaId: number, answerGiven: string): Promise<void> => {
@@ -155,6 +173,13 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
           setCorrectCount((prev) => prev + 1);
         } else {
           setWrongCount((prev) => prev + 1);
+          // Salva la domanda sbagliata per mostrarla nella schermata finale
+          if (domandaQuery.data) {
+            setWrongAnswers((prev) => [
+              ...prev,
+              { domanda: domandaQuery.data.domanda, answerGiven },
+            ]);
+          }
         }
       } catch (error) {
         console.error('Errore nel tracciamento risposta:', error);
@@ -164,18 +189,21 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
       if (currentPos < QUIZ_SIZE) {
         setCurrentPos((prev) => prev + 1);
       } else {
-        // Quiz completato
+        // Quiz completato - salva il tempo prima di cambiare stato
+        setFinalTotalSeconds(lastElapsedRef.current);
         setStatus('finished');
         completeMutation.mutate();
       }
     },
-    [status, quizId, currentPos, trackMutation, completeMutation]
+    [status, quizId, currentPos, trackMutation, completeMutation, domandaQuery.data]
   );
 
   // Handler per scadenza timer
   const handleTimerEnd = useCallback((): void => {
     if (status !== 'playing' || abortedRef.current) return;
     abortedRef.current = true;
+    // Salva il tempo prima di cambiare stato
+    setFinalTotalSeconds(lastElapsedRef.current);
     setStatus('time_expired');
     abortMutation.mutate();
   }, [status, abortMutation]);
@@ -242,18 +270,24 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
   if (status === 'finished') {
     const totalAnswered = correctCount + wrongCount;
     const isPassed = wrongCount <= MAX_ERRORS;
+    const avgTimePerQuestion =
+      totalAnswered > 0 && finalTotalSeconds != null
+        ? Math.round(finalTotalSeconds / totalAnswered)
+        : null;
 
     return (
-      <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-16 text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-16">
         {/* Risultato principale */}
-        {isPassed ? (
-          <h1 className="text-4xl font-bold text-green-600">Promosso!!!</h1>
-        ) : (
-          <h1 className="text-4xl font-bold text-red-600">Bocciato 😢</h1>
-        )}
+        <div className="text-center">
+          {isPassed ? (
+            <h1 className="text-4xl font-bold text-green-600">Promosso!!!</h1>
+          ) : (
+            <h1 className="text-4xl font-bold text-red-600">Bocciato</h1>
+          )}
+        </div>
 
         {/* Statistiche */}
-        <div className="mt-4 space-y-2 text-lg">
+        <div className="mt-4 space-y-2 text-center text-lg">
           <p>
             <span className="font-semibold">Domande risposte:</span>{' '}
             {totalAnswered}
@@ -272,28 +306,70 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
               </span>
             )}
           </p>
+          {/* Tempo totale */}
+          {finalTotalSeconds != null && (
+            <p>
+              <span className="font-semibold">Tempo totale:</span>{' '}
+              {formatSecondsToHHMMSS(finalTotalSeconds)}
+            </p>
+          )}
+          {/* Tempo medio per domanda */}
+          {avgTimePerQuestion != null && (
+            <p>
+              <span className="font-semibold">Tempo medio per domanda:</span>{' '}
+              {avgTimePerQuestion} s
+            </p>
+          )}
         </div>
 
         <Button onClick={handleBackToSimulazione} className="mt-6">
           Torna a Simulazione Quiz
         </Button>
+
+        {/* Sezione Domande Sbagliate */}
+        {wrongAnswers.length > 0 && (
+          <div className="mt-8 w-full">
+            <h2 className="mb-4 text-center text-xl font-bold">
+              Domande Sbagliate
+            </h2>
+            <div className="flex flex-col gap-4">
+              {wrongAnswers.map((item, index) => (
+                <DomandaCard
+                  key={`wrong-${item.domanda.id}-${index}`}
+                  domanda={item.domanda}
+                  onAnswer={(): void => {}}
+                  learning={true}
+                  readOnly={true}
+                  initialAnswer={item.answerGiven}
+                  userId={userId}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
   if (status === 'time_expired') {
     const totalAnswered = correctCount + wrongCount;
+    const avgTimePerQuestion =
+      totalAnswered > 0 && finalTotalSeconds != null
+        ? Math.round(finalTotalSeconds / totalAnswered)
+        : null;
 
     return (
-      <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-16 text-center">
-        <h1 className="text-4xl font-bold text-red-600">Tempo Scaduto! 😢</h1>
-        <p className="text-muted-foreground">
-          Il tempo a disposizione è terminato. Le domande rimanenti non sono
-          state conteggiate.
-        </p>
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-6 px-4 py-16">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-red-600">Tempo Scaduto!</h1>
+          <p className="mt-2 text-muted-foreground">
+            Il tempo a disposizione è terminato. Le domande rimanenti non sono
+            state conteggiate.
+          </p>
+        </div>
 
         {/* Statistiche parziali */}
-        <div className="mt-4 space-y-2 text-lg">
+        <div className="mt-4 space-y-2 text-center text-lg">
           <p>
             <span className="font-semibold">Domande risposte:</span>{' '}
             {totalAnswered} / {QUIZ_SIZE}
@@ -306,11 +382,47 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
             <span className="font-semibold text-red-600">Errori:</span>{' '}
             {wrongCount}
           </p>
+          {/* Tempo totale */}
+          {finalTotalSeconds != null && (
+            <p>
+              <span className="font-semibold">Tempo totale:</span>{' '}
+              {formatSecondsToHHMMSS(finalTotalSeconds)}
+            </p>
+          )}
+          {/* Tempo medio per domanda */}
+          {avgTimePerQuestion != null && (
+            <p>
+              <span className="font-semibold">Tempo medio per domanda:</span>{' '}
+              {avgTimePerQuestion} s
+            </p>
+          )}
         </div>
 
         <Button onClick={handleBackToSimulazione} className="mt-6">
           Torna a Simulazione Quiz
         </Button>
+
+        {/* Sezione Domande Sbagliate */}
+        {wrongAnswers.length > 0 && (
+          <div className="mt-8 w-full">
+            <h2 className="mb-4 text-center text-xl font-bold">
+              Domande Sbagliate
+            </h2>
+            <div className="flex flex-col gap-4">
+              {wrongAnswers.map((item, index) => (
+                <DomandaCard
+                  key={`wrong-${item.domanda.id}-${index}`}
+                  domanda={item.domanda}
+                  onAnswer={(): void => {}}
+                  learning={true}
+                  readOnly={true}
+                  initialAnswer={item.answerGiven}
+                  userId={userId}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -358,6 +470,7 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
           seconds={QUIZ_DURATION_SECONDS}
           startMode="countdown"
           cycleMode={false}
+          onTick={handleTimerTick}
           onEnd={handleTimerEnd}
           className="text-sm"
         />
