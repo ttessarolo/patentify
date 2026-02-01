@@ -7,6 +7,7 @@ import type {
   GetQuizDomandaResult,
   AbortQuizResult,
   CompleteQuizResult,
+  GetQuizBoostCountsResult,
   Domanda,
   QuizType,
 } from '~/types/db';
@@ -476,5 +477,41 @@ export const completeQuiz = createServerFn({ method: 'POST' }).handler(
     `;
 
     return { success: true, promosso, errors, correct };
+  }
+);
+
+// ============================================================
+// getQuizBoostCounts
+// ============================================================
+
+/**
+ * Server function per ottenere il numero di risposte errate e domande skull dell'utente.
+ * Usata per determinare se abilitare i boost nella pagina di configurazione quiz.
+ */
+export const getQuizBoostCounts = createServerFn({ method: 'GET' }).handler(
+  async (): Promise<GetQuizBoostCountsResult> => {
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error('Autenticazione richiesta');
+    }
+
+    // Conta le domande distinte che l'utente ha sbagliato almeno una volta
+    const errorsResult = await sql`
+      SELECT COUNT(DISTINCT domanda_id) as count
+      FROM user_domanda_attempt
+      WHERE user_id = ${userId}
+        AND is_correct = false
+    `;
+    const errors_count = parseInt((errorsResult[0] as { count: string }).count, 10) || 0;
+
+    // Conta le domande marcate come skull
+    const skullResult = await sql`
+      SELECT COUNT(*) as count
+      FROM user_domanda_skull
+      WHERE user_id = ${userId}
+    `;
+    const skull_count = parseInt((skullResult[0] as { count: string }).count, 10) || 0;
+
+    return { errors_count, skull_count };
   }
 );

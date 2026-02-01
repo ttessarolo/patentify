@@ -16,29 +16,37 @@ export const Route = createFileRoute('/main/')({
 function MainIndex(): React.JSX.Element {
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="border-0">
         <CardHeader>
           <CardTitle>Benvenuto in Patentify</CardTitle>
           <CardDescription>
-            La tua dashboard per i Quiz sulla Patente di Guida
+            La guida Smart per i Quiz sulla Patente di Guida
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground">
-            Questa è la pagina principale. Qui potrai fare gli esercizi e le
-            simulazioni del quiz.
-          </p>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Button asChild variant="default">
+            <Button
+              asChild
+              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
+            >
               <Link to="/main/esercitazione">Esercitazione Libera</Link>
             </Button>
-            <Button asChild variant="default">
+            <Button
+              asChild
+              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
+            >
               <Link to="/main/simulazione-quiz">Simulazione Quiz</Link>
             </Button>
-            <Button asChild variant="default">
+            <Button
+              asChild
+              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
+            >
               <Link to="/main/errori-ricorrenti">Errori Ricorrenti</Link>
             </Button>
-            <Button asChild variant="default">
+            <Button
+              asChild
+              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
+            >
               <Link to="/main/statistiche">Statistiche</Link>
             </Button>
           </div>

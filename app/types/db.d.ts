@@ -210,3 +210,11 @@ export interface CompleteQuizResult {
   /** Numero di risposte corrette */
   correct: number;
 }
+
+/** Risultato di getQuizBoostCounts */
+export interface GetQuizBoostCountsResult {
+  /** Numero di domande distinte sbagliate dall'utente */
+  errors_count: number;
+  /** Numero di domande marcate come skull dall'utente */
+  skull_count: number;
+}

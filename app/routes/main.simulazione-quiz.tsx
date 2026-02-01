@@ -1,14 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { Button } from '~/components/ui/button';
 import { Switch } from '~/components/ui/switch';
 import { Label } from '~/components/ui/label';
-import { generateQuiz } from '~/server/quiz';
+import { generateQuiz, getQuizBoostCounts } from '~/server/quiz';
 import { Quiz } from '~/components/quiz-component';
-import type { QuizType, GenerateQuizResult } from '~/types/db';
+import type { QuizType, GenerateQuizResult, GetQuizBoostCountsResult } from '~/types/db';
 
 /** Payload per generateQuiz */
 type GenerateQuizPayload = {
@@ -17,6 +17,11 @@ type GenerateQuizPayload = {
     boost_errors: boolean;
     boost_skull: boolean;
   };
+};
+
+/** Payload per getQuizBoostCounts (nessun parametro) */
+type GetQuizBoostCountsPayload = {
+  data: Record<string, never>;
 };
 
 export const Route = createFileRoute('/main/simulazione-quiz')({
@@ -33,6 +38,23 @@ function SimulazioneQuizPage(): React.JSX.Element {
   const [quizId, setQuizId] = useState<number | null>(null);
 
   const generateQuizFn = useServerFn(generateQuiz);
+  const getBoostCountsFn = useServerFn(getQuizBoostCounts);
+
+  // Query per ottenere i conteggi boost (errori e skull)
+  const boostCountsQuery = useQuery({
+    queryKey: ['quiz', 'boost-counts'],
+    queryFn: async () =>
+      (
+        getBoostCountsFn as unknown as (
+          opts: GetQuizBoostCountsPayload
+        ) => Promise<GetQuizBoostCountsResult>
+      )({ data: {} }),
+    staleTime: 2 * 60 * 1000, // 2 minuti
+  });
+
+  // Determina se i boost sono disponibili
+  const canBoostErrors = (boostCountsQuery.data?.errors_count ?? 0) > 0;
+  const canBoostSkull = (boostCountsQuery.data?.skull_count ?? 0) > 0;
 
   // Mutation per generare il quiz
   const generateMutation = useMutation({
@@ -137,8 +159,13 @@ function SimulazioneQuizPage(): React.JSX.Element {
             id="boost-errors"
             checked={boostErrors}
             onCheckedChange={setBoostErrors}
+            disabled={!canBoostErrors}
+            className="data-[state=checked]:bg-green-500"
           />
-          <Label htmlFor="boost-errors" className="cursor-pointer">
+          <Label
+            htmlFor="boost-errors"
+            className={canBoostErrors ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+          >
             Boost Errori
           </Label>
         </div>
@@ -149,8 +176,13 @@ function SimulazioneQuizPage(): React.JSX.Element {
             id="boost-skull"
             checked={boostSkull}
             onCheckedChange={setBoostSkull}
+            disabled={!canBoostSkull}
+            className="data-[state=checked]:bg-green-500"
           />
-          <Label htmlFor="boost-skull" className="cursor-pointer">
+          <Label
+            htmlFor="boost-skull"
+            className={canBoostSkull ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+          >
             Boost Skull
           </Label>
         </div>
