@@ -5,12 +5,7 @@ import type { TimerMode, TimerProps, TimerTickPayload } from '~/types/components
 /**
  * Ordine di ciclo delle modalità Timer
  */
-const MODE_CYCLE: TimerMode[] = [
-  'countdown',
-  'countdownWithSeconds',
-  'countup',
-  'countupWithSeconds',
-];
+const MODE_CYCLE: TimerMode[] = ['countdown', 'countup'];
 
 /**
  * Formatta i secondi in stringa HH:MM:SS con doppia cifra
@@ -32,7 +27,7 @@ function formatSecondsToHHMMSS(totalSeconds: number): string {
  * Determina se la modalità è di tipo countdown
  */
 function isCountdownMode(mode: TimerMode): boolean {
-  return mode === 'countdown' || mode === 'countdownWithSeconds';
+  return mode === 'countdown';
 }
 
 /**

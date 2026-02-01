@@ -102,6 +102,10 @@ function EsercitazionePage(): React.JSX.Element {
       // Altrimenti, calcola il prossimo offset
       return allPages.length * PAGE_LIMIT;
     },
+    // Evita il refetch al ritorno da stand-by (es. iPhone)
+    refetchOnWindowFocus: false,
+    // I dati restano "freschi" per 5 minuti
+    staleTime: 5 * 60 * 1000,
   });
 
   // Elenco domande appiattito da tutte le pagine

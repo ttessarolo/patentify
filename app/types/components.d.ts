@@ -7,11 +7,7 @@
 // ============================================================
 
 /** Modalità di visualizzazione del Timer */
-export type TimerMode =
-  | 'countdown'
-  | 'countdownWithSeconds'
-  | 'countup'
-  | 'countupWithSeconds';
+export type TimerMode = 'countdown' | 'countup';
 
 /** Payload passato alla callback onTick */
 export interface TimerTickPayload {

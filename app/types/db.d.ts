@@ -37,6 +37,9 @@ export interface Domanda {
 /** Status ammessi per quiz (CHECK constraint) */
 export type QuizStatus = 'in_progress' | 'completed' | 'abandoned';
 
+/** Tipo di quiz (CHECK constraint) */
+export type QuizType = 'standard' | 'difficile' | 'ambiguo';
+
 /** Tabella public.quiz */
 export interface Quiz {
   id: number;
@@ -45,6 +48,14 @@ export interface Quiz {
   created_at: string;
   completed_at: string | null;
   status: QuizStatus;
+  /** Tipo di quiz: standard, difficile, ambiguo */
+  quiz_type: QuizType;
+  /** Se true, preferisce domande già sbagliate dall'utente */
+  boost_errors: boolean;
+  /** Se true, preferisce domande marcate come skull */
+  boost_skull: boolean;
+  /** Esito del quiz: true = promosso, false = bocciato, null = non completato */
+  promosso: boolean | null;
 }
 
 /** Tabella public.user_domanda_attempt */
@@ -111,6 +122,10 @@ export interface CheckResponseResult {
 export interface TrackAttemptParams {
   domanda_id: number;
   answer_given: string;
+  /** Se forniti quiz_id e quiz_pos, fa UPDATE invece di INSERT */
+  quiz_id?: number;
+  /** Posizione della domanda nel quiz (1-40) */
+  quiz_pos?: number;
 }
 
 /** Risultato di trackAttempt */
@@ -140,4 +155,58 @@ export interface SkullParams {
 /** Risultato di addSkull/removeSkull */
 export interface SkullResult {
   success: boolean;
+}
+
+// ============================================================
+// Tipi per Server Functions Quiz (simulazione)
+// ============================================================
+
+/** Parametri per generateQuiz (user_id ottenuto server-side via Clerk auth()) */
+export interface GenerateQuizParams {
+  quiz_type: QuizType;
+  boost_errors: boolean;
+  boost_skull: boolean;
+}
+
+/** Risultato di generateQuiz */
+export interface GenerateQuizResult {
+  quiz_id: number;
+}
+
+/** Parametri per getQuizDomanda (user_id ottenuto server-side via Clerk auth()) */
+export interface GetQuizDomandaParams {
+  quiz_id: number;
+  quiz_pos: number;
+}
+
+/** Risultato di getQuizDomanda */
+export interface GetQuizDomandaResult {
+  domanda: Domanda;
+  domanda_id: number;
+}
+
+/** Parametri per abortQuiz (user_id ottenuto server-side via Clerk auth()) */
+export interface AbortQuizParams {
+  quiz_id: number;
+}
+
+/** Risultato di abortQuiz */
+export interface AbortQuizResult {
+  success: boolean;
+}
+
+/** Parametri per completeQuiz (user_id ottenuto server-side via Clerk auth()) */
+export interface CompleteQuizParams {
+  quiz_id: number;
+}
+
+/** Risultato di completeQuiz */
+export interface CompleteQuizResult {
+  success: boolean;
+  /** Esito del quiz: true = promosso, false = bocciato */
+  promosso: boolean;
+  /** Numero di errori commessi */
+  errors: number;
+  /** Numero di risposte corrette */
+  correct: number;
 }
