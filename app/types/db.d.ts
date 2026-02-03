@@ -257,3 +257,101 @@ export interface GetFullQuizResult {
   /** Array delle domande con risposte */
   domande: QuizDomandaWithAnswer[];
 }
+
+// ============================================================
+// Tipi per Errori Ricorrenti
+// ============================================================
+
+/** Periodo temporale per filtri errori ricorrenti */
+export type TimePeriod = 'oggi' | 'settimana' | 'mese' | 'tutti';
+
+/** Parametri per le server functions errori ricorrenti */
+export interface ErroriRicorrentiParams {
+  period: TimePeriod;
+  limit?: number;
+  offset?: number;
+}
+
+/** Risultato di getErroriStats */
+export interface ErroriStatsResult {
+  /** Percentuale domande uniche risposte / totale domande DB */
+  copertura: number;
+  /** Numero totale risposte date (non uniche) */
+  totale_risposte: number;
+  /** Numero risposte corrette (non uniche) */
+  risposte_corrette: number;
+  /** Numero risposte errate (non uniche) */
+  risposte_errate: number;
+  /** Numero domande uniche marcate skull */
+  skull_count: number;
+  /** Numero domande uniche a cui l'utente ha risposto */
+  domande_uniche_risposte: number;
+  /** Totale domande nel DB */
+  totale_domande_db: number;
+}
+
+/** Categoria con conteggio errori */
+export interface CategoriaErrori {
+  titolo_quesito: string;
+  errori_count: number;
+  /** Percentuale errori rispetto al totale risposte */
+  percentuale: number;
+}
+
+/** Domanda con conteggio errori e ultima risposta data */
+export interface DomandaConErrori extends Domanda {
+  /** Numero di volte che l'utente ha sbagliato questa domanda */
+  errori_count: number;
+  /** Ultima risposta data dall'utente */
+  ultima_risposta: string | null;
+  /** Flag skull */
+  skull: boolean;
+}
+
+/** Domanda con conteggio risposte corrette */
+export interface DomandaConEsatte extends Domanda {
+  /** Numero di volte che l'utente ha risposto correttamente */
+  esatte_count: number;
+  /** Ultima risposta data dall'utente */
+  ultima_risposta: string | null;
+  /** Flag skull */
+  skull: boolean;
+}
+
+/** Domanda skull con data inserimento */
+export interface DomandaSkull extends Domanda {
+  /** Data in cui è stata marcata come skull */
+  inserted_at: string;
+  /** Ultima risposta data dall'utente (se presente) */
+  ultima_risposta: string | null;
+  /** Flag skull (sempre true per questo tipo) */
+  skull: boolean;
+}
+
+/** Risultato di getTopCategorieErrori */
+export interface TopCategorieErroriResult {
+  categorie: CategoriaErrori[];
+}
+
+/** Risultato di getDomandeMaggioriErrori / getDomandeSbagliate */
+export interface DomandeErroriResult {
+  domande: DomandaConErrori[];
+  hasMore: boolean;
+}
+
+/** Risultato di getDomandeMaggioriEsatte */
+export interface DomandeEsatteResult {
+  domande: DomandaConEsatte[];
+  hasMore: boolean;
+}
+
+/** Risultato di getDomandeSkull */
+export interface DomandeSkullResult {
+  domande: DomandaSkull[];
+  hasMore: boolean;
+}
+
+/** Risultato di getAllCategorieErrori */
+export interface AllCategorieErroriResult {
+  categorie: CategoriaErrori[];
+}

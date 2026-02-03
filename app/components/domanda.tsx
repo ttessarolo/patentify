@@ -111,15 +111,18 @@ export function DomandaCard({
 }: DomandaCardProps): React.JSX.Element {
   // Calcola se iniziare in stato "già risposta" (per modalità readOnly con initialAnswer)
   const isPreAnswered = readOnly && initialAnswer != null;
-  const preComputedIsCorrect = isPreAnswered && domanda.risposta != null
-    ? initialAnswer === domanda.risposta
-    : null;
+  const preComputedIsCorrect =
+    isPreAnswered && domanda.risposta != null
+      ? initialAnswer === domanda.risposta
+      : null;
 
   const [answered, setAnswered] = useState(isPreAnswered);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(
     isPreAnswered ? initialAnswer : null
   );
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(preComputedIsCorrect);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(
+    preComputedIsCorrect
+  );
   const [isChecking, setIsChecking] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [showIreBox, setShowIreBox] = useState(false);
@@ -243,7 +246,14 @@ export function DomandaCard({
         }
       }
     },
-    [answered, readOnly, domanda.id, onAnswer, showAnswerAfterResponse, onCheckResponse]
+    [
+      answered,
+      readOnly,
+      domanda.id,
+      onAnswer,
+      showAnswerAfterResponse,
+      onCheckResponse,
+    ]
   );
 
   const handleImageError = useCallback((): void => {
@@ -265,8 +275,10 @@ export function DomandaCard({
 
   // Determina le classi di stile del bottone dopo la risposta
   const getButtonClasses = (buttonValue: string): string => {
-    // In modalità quiz (learning === false), non mostrare mai colori verde/rosso
-    if (!learning) {
+    // In modalità quiz (learning === false), non mostrare colori verde/rosso
+    // ECCEZIONE: se siamo in readOnly con initialAnswer, mostra sempre i colori
+    const isReviewMode = readOnly && initialAnswer != null;
+    if (!learning && !isReviewMode) {
       return '';
     }
     if (!answered || isCorrect === null) {
@@ -354,7 +366,10 @@ export function DomandaCard({
                       <OverallIcon className="h-5 w-5" />
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="min-w-[180px] p-3">
+                  <DropdownMenuContent
+                    align="end"
+                    className="min-w-[180px] p-3"
+                  >
                     {statsLoading && (
                       <p className="text-center text-sm text-muted-foreground">
                         Caricamento...
@@ -377,7 +392,9 @@ export function DomandaCard({
                             <div className="flex items-center gap-2">
                               <QuizIcon className="h-5 w-5 shrink-0 text-pink-500" />
                               <span className="text-sm">
-                                <span className="font-medium">{stats.total}</span>{' '}
+                                <span className="font-medium">
+                                  {stats.total}
+                                </span>{' '}
                                 hai risposto alla domanda
                               </span>
                             </div>
@@ -395,7 +412,9 @@ export function DomandaCard({
                             <div className="flex items-center gap-2">
                               <WrongIcon className="h-5 w-5 shrink-0 text-red-500" />
                               <span className="text-sm">
-                                <span className="font-medium">{stats.wrong}</span>{' '}
+                                <span className="font-medium">
+                                  {stats.wrong}
+                                </span>{' '}
                                 hai sbagliato
                               </span>
                             </div>
@@ -429,7 +448,9 @@ export function DomandaCard({
                 ✕
               </button>
             </div>
-            <p className={`text-lg font-medium ${getValueColorClass(domanda.ire)}`}>
+            <p
+              className={`text-lg font-medium ${getValueColorClass(domanda.ire)}`}
+            >
               {domanda.ire ?? '—'}
             </p>
           </div>

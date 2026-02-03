@@ -22,6 +22,14 @@ import { Route as MainSimulazioneQuizRouteImport } from './routes/main.simulazio
 import { Route as MainRivediQuizRouteImport } from './routes/main.rivedi-quiz'
 import { Route as MainEsercitazioneRouteImport } from './routes/main.esercitazione'
 import { Route as MainErroriRicorrentiRouteImport } from './routes/main.errori-ricorrenti'
+import { Route as MainErroriRicorrentiIndexRouteImport } from './routes/main.errori-ricorrenti/index'
+import { Route as MainErroriRicorrentiTutteCategorieRouteImport } from './routes/main.errori-ricorrenti/tutte-categorie'
+import { Route as MainErroriRicorrentiSkullSelezionateRouteImport } from './routes/main.errori-ricorrenti/skull-selezionate'
+import { Route as MainErroriRicorrentiMaggioriErroriRouteImport } from './routes/main.errori-ricorrenti/maggiori-errori'
+import { Route as MainErroriRicorrentiFocusSkullRouteImport } from './routes/main.errori-ricorrenti/focus-skull'
+import { Route as MainErroriRicorrentiDomandeSbagliateRouteImport } from './routes/main.errori-ricorrenti/domande-sbagliate'
+import { Route as MainErroriRicorrentiDomandeEsatteRouteImport } from './routes/main.errori-ricorrenti/domande-esatte'
+import { Route as MainErroriRicorrentiCategorieCriticheRouteImport } from './routes/main.errori-ricorrenti/categorie-critiche'
 import { Route as ApiWebhooksClerkRouteImport } from './routes/api/webhooks/clerk'
 
 const SignUpRoute = SignUpRouteImport.update({
@@ -90,6 +98,54 @@ const MainErroriRicorrentiRoute = MainErroriRicorrentiRouteImport.update({
   path: '/errori-ricorrenti',
   getParentRoute: () => MainRoute,
 } as any)
+const MainErroriRicorrentiIndexRoute =
+  MainErroriRicorrentiIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiTutteCategorieRoute =
+  MainErroriRicorrentiTutteCategorieRouteImport.update({
+    id: '/tutte-categorie',
+    path: '/tutte-categorie',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiSkullSelezionateRoute =
+  MainErroriRicorrentiSkullSelezionateRouteImport.update({
+    id: '/skull-selezionate',
+    path: '/skull-selezionate',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiMaggioriErroriRoute =
+  MainErroriRicorrentiMaggioriErroriRouteImport.update({
+    id: '/maggiori-errori',
+    path: '/maggiori-errori',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiFocusSkullRoute =
+  MainErroriRicorrentiFocusSkullRouteImport.update({
+    id: '/focus-skull',
+    path: '/focus-skull',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiDomandeSbagliateRoute =
+  MainErroriRicorrentiDomandeSbagliateRouteImport.update({
+    id: '/domande-sbagliate',
+    path: '/domande-sbagliate',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiDomandeEsatteRoute =
+  MainErroriRicorrentiDomandeEsatteRouteImport.update({
+    id: '/domande-esatte',
+    path: '/domande-esatte',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
+const MainErroriRicorrentiCategorieCriticheRoute =
+  MainErroriRicorrentiCategorieCriticheRouteImport.update({
+    id: '/categorie-critiche',
+    path: '/categorie-critiche',
+    getParentRoute: () => MainErroriRicorrentiRoute,
+  } as any)
 const ApiWebhooksClerkRoute = ApiWebhooksClerkRouteImport.update({
   id: '/api/webhooks/clerk',
   path: '/api/webhooks/clerk',
@@ -100,7 +156,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/main': typeof MainRouteWithChildren
   '/sign-up': typeof SignUpRouteWithChildren
-  '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
+  '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteWithChildren
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
@@ -111,10 +167,17 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
+  '/main/errori-ricorrenti/categorie-critiche': typeof MainErroriRicorrentiCategorieCriticheRoute
+  '/main/errori-ricorrenti/domande-esatte': typeof MainErroriRicorrentiDomandeEsatteRoute
+  '/main/errori-ricorrenti/domande-sbagliate': typeof MainErroriRicorrentiDomandeSbagliateRoute
+  '/main/errori-ricorrenti/focus-skull': typeof MainErroriRicorrentiFocusSkullRoute
+  '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
+  '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
+  '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
@@ -125,13 +188,21 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
+  '/main/errori-ricorrenti/categorie-critiche': typeof MainErroriRicorrentiCategorieCriticheRoute
+  '/main/errori-ricorrenti/domande-esatte': typeof MainErroriRicorrentiDomandeEsatteRoute
+  '/main/errori-ricorrenti/domande-sbagliate': typeof MainErroriRicorrentiDomandeSbagliateRoute
+  '/main/errori-ricorrenti/focus-skull': typeof MainErroriRicorrentiFocusSkullRoute
+  '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
+  '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
+  '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/errori-ricorrenti': typeof MainErroriRicorrentiIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/main': typeof MainRouteWithChildren
   '/sign-up': typeof SignUpRouteWithChildren
-  '/main/errori-ricorrenti': typeof MainErroriRicorrentiRoute
+  '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteWithChildren
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
@@ -142,6 +213,14 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
+  '/main/errori-ricorrenti/categorie-critiche': typeof MainErroriRicorrentiCategorieCriticheRoute
+  '/main/errori-ricorrenti/domande-esatte': typeof MainErroriRicorrentiDomandeEsatteRoute
+  '/main/errori-ricorrenti/domande-sbagliate': typeof MainErroriRicorrentiDomandeSbagliateRoute
+  '/main/errori-ricorrenti/focus-skull': typeof MainErroriRicorrentiFocusSkullRoute
+  '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
+  '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
+  '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,10 +239,17 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/webhooks/clerk'
+    | '/main/errori-ricorrenti/categorie-critiche'
+    | '/main/errori-ricorrenti/domande-esatte'
+    | '/main/errori-ricorrenti/domande-sbagliate'
+    | '/main/errori-ricorrenti/focus-skull'
+    | '/main/errori-ricorrenti/maggiori-errori'
+    | '/main/errori-ricorrenti/skull-selezionate'
+    | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/errori-ricorrenti/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/main/errori-ricorrenti'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
@@ -174,6 +260,14 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/webhooks/clerk'
+    | '/main/errori-ricorrenti/categorie-critiche'
+    | '/main/errori-ricorrenti/domande-esatte'
+    | '/main/errori-ricorrenti/domande-sbagliate'
+    | '/main/errori-ricorrenti/focus-skull'
+    | '/main/errori-ricorrenti/maggiori-errori'
+    | '/main/errori-ricorrenti/skull-selezionate'
+    | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/errori-ricorrenti'
   id:
     | '__root__'
     | '/'
@@ -190,6 +284,14 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/webhooks/clerk'
+    | '/main/errori-ricorrenti/categorie-critiche'
+    | '/main/errori-ricorrenti/domande-esatte'
+    | '/main/errori-ricorrenti/domande-sbagliate'
+    | '/main/errori-ricorrenti/focus-skull'
+    | '/main/errori-ricorrenti/maggiori-errori'
+    | '/main/errori-ricorrenti/skull-selezionate'
+    | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/errori-ricorrenti/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -294,6 +396,62 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainErroriRicorrentiRouteImport
       parentRoute: typeof MainRoute
     }
+    '/main/errori-ricorrenti/': {
+      id: '/main/errori-ricorrenti/'
+      path: '/'
+      fullPath: '/main/errori-ricorrenti/'
+      preLoaderRoute: typeof MainErroriRicorrentiIndexRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/tutte-categorie': {
+      id: '/main/errori-ricorrenti/tutte-categorie'
+      path: '/tutte-categorie'
+      fullPath: '/main/errori-ricorrenti/tutte-categorie'
+      preLoaderRoute: typeof MainErroriRicorrentiTutteCategorieRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/skull-selezionate': {
+      id: '/main/errori-ricorrenti/skull-selezionate'
+      path: '/skull-selezionate'
+      fullPath: '/main/errori-ricorrenti/skull-selezionate'
+      preLoaderRoute: typeof MainErroriRicorrentiSkullSelezionateRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/maggiori-errori': {
+      id: '/main/errori-ricorrenti/maggiori-errori'
+      path: '/maggiori-errori'
+      fullPath: '/main/errori-ricorrenti/maggiori-errori'
+      preLoaderRoute: typeof MainErroriRicorrentiMaggioriErroriRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/focus-skull': {
+      id: '/main/errori-ricorrenti/focus-skull'
+      path: '/focus-skull'
+      fullPath: '/main/errori-ricorrenti/focus-skull'
+      preLoaderRoute: typeof MainErroriRicorrentiFocusSkullRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/domande-sbagliate': {
+      id: '/main/errori-ricorrenti/domande-sbagliate'
+      path: '/domande-sbagliate'
+      fullPath: '/main/errori-ricorrenti/domande-sbagliate'
+      preLoaderRoute: typeof MainErroriRicorrentiDomandeSbagliateRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/domande-esatte': {
+      id: '/main/errori-ricorrenti/domande-esatte'
+      path: '/domande-esatte'
+      fullPath: '/main/errori-ricorrenti/domande-esatte'
+      preLoaderRoute: typeof MainErroriRicorrentiDomandeEsatteRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
+    '/main/errori-ricorrenti/categorie-critiche': {
+      id: '/main/errori-ricorrenti/categorie-critiche'
+      path: '/categorie-critiche'
+      fullPath: '/main/errori-ricorrenti/categorie-critiche'
+      preLoaderRoute: typeof MainErroriRicorrentiCategorieCriticheRouteImport
+      parentRoute: typeof MainErroriRicorrentiRoute
+    }
     '/api/webhooks/clerk': {
       id: '/api/webhooks/clerk'
       path: '/api/webhooks/clerk'
@@ -304,8 +462,39 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MainErroriRicorrentiRouteChildren {
+  MainErroriRicorrentiCategorieCriticheRoute: typeof MainErroriRicorrentiCategorieCriticheRoute
+  MainErroriRicorrentiDomandeEsatteRoute: typeof MainErroriRicorrentiDomandeEsatteRoute
+  MainErroriRicorrentiDomandeSbagliateRoute: typeof MainErroriRicorrentiDomandeSbagliateRoute
+  MainErroriRicorrentiFocusSkullRoute: typeof MainErroriRicorrentiFocusSkullRoute
+  MainErroriRicorrentiMaggioriErroriRoute: typeof MainErroriRicorrentiMaggioriErroriRoute
+  MainErroriRicorrentiSkullSelezionateRoute: typeof MainErroriRicorrentiSkullSelezionateRoute
+  MainErroriRicorrentiTutteCategorieRoute: typeof MainErroriRicorrentiTutteCategorieRoute
+  MainErroriRicorrentiIndexRoute: typeof MainErroriRicorrentiIndexRoute
+}
+
+const MainErroriRicorrentiRouteChildren: MainErroriRicorrentiRouteChildren = {
+  MainErroriRicorrentiCategorieCriticheRoute:
+    MainErroriRicorrentiCategorieCriticheRoute,
+  MainErroriRicorrentiDomandeEsatteRoute:
+    MainErroriRicorrentiDomandeEsatteRoute,
+  MainErroriRicorrentiDomandeSbagliateRoute:
+    MainErroriRicorrentiDomandeSbagliateRoute,
+  MainErroriRicorrentiFocusSkullRoute: MainErroriRicorrentiFocusSkullRoute,
+  MainErroriRicorrentiMaggioriErroriRoute:
+    MainErroriRicorrentiMaggioriErroriRoute,
+  MainErroriRicorrentiSkullSelezionateRoute:
+    MainErroriRicorrentiSkullSelezionateRoute,
+  MainErroriRicorrentiTutteCategorieRoute:
+    MainErroriRicorrentiTutteCategorieRoute,
+  MainErroriRicorrentiIndexRoute: MainErroriRicorrentiIndexRoute,
+}
+
+const MainErroriRicorrentiRouteWithChildren =
+  MainErroriRicorrentiRoute._addFileChildren(MainErroriRicorrentiRouteChildren)
+
 interface MainRouteChildren {
-  MainErroriRicorrentiRoute: typeof MainErroriRicorrentiRoute
+  MainErroriRicorrentiRoute: typeof MainErroriRicorrentiRouteWithChildren
   MainEsercitazioneRoute: typeof MainEsercitazioneRoute
   MainRivediQuizRoute: typeof MainRivediQuizRoute
   MainSimulazioneQuizRoute: typeof MainSimulazioneQuizRoute
@@ -314,7 +503,7 @@ interface MainRouteChildren {
 }
 
 const MainRouteChildren: MainRouteChildren = {
-  MainErroriRicorrentiRoute: MainErroriRicorrentiRoute,
+  MainErroriRicorrentiRoute: MainErroriRicorrentiRouteWithChildren,
   MainEsercitazioneRoute: MainEsercitazioneRoute,
   MainRivediQuizRoute: MainRivediQuizRoute,
   MainSimulazioneQuizRoute: MainSimulazioneQuizRoute,

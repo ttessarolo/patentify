@@ -14,3 +14,7 @@ export { default as StopIcon } from './stop.svg?react';
 export { default as TimelapseIcon } from './timelapse.svg?react';
 export { default as ShareIcon } from './share.svg?react';
 export { default as AvgTimeIcon } from './avg_time.svg?react';
+export { default as OggiIcon } from './oggi.svg?react';
+export { default as SettimanaIcon } from './settimana.svg?react';
+export { default as MeseIcon } from './mese.svg?react';
+export { default as AllIcon } from './all.svg?react';
