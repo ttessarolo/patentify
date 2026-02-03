@@ -28,12 +28,13 @@ function ErroriRicorrentiLayout(): React.JSX.Element {
   const currentPeriod = useTimePeriod();
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 px-2 pb-4 sm:space-y-6 sm:px-4">
-      {/* Toolbar sticky per selezione periodo */}
+    <div className="mx-auto max-w-4xl px-2 pb-4 sm:px-4">
+      {/* Toolbar sticky: attaccata alla navbar (nessuno spazio sopra) */}
       <TimePeriodToolbar currentPeriod={currentPeriod} />
-
-      {/* Contenuto delle sotto-rotte */}
-      <Outlet />
+      {/* Contenuto sotto-rotte: titolo sticky attaccato alla toolbar (space-y solo dopo) */}
+      <div className="space-y-4 sm:space-y-6">
+        <Outlet />
+      </div>
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import React, { useCallback, useRef, useEffect, useState } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
+import { z } from 'zod';
 import { FiltersReveal } from '~/components/esercitazione/FiltersReveal';
 import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
@@ -17,6 +18,11 @@ import type {
   CheckResponseResult,
   TrackAttemptResult,
 } from '~/types/db';
+
+// Schema per i search params (titolo_quesito opzionale)
+const searchSchema = z.object({
+  titolo_quesito: z.string().optional(),
+});
 
 /** Parametri per getDomandeEsercitazione (allineati al server) */
 type DomandeQueryParams = {
@@ -40,10 +46,14 @@ type TrackAttemptPayload = {
 };
 
 export const Route = createFileRoute('/main/esercitazione')({
+  validateSearch: searchSchema,
   component: EsercitazionePage,
 });
 
 function EsercitazionePage(): React.JSX.Element {
+  // Legge i search params dall'URL
+  const searchParams = Route.useSearch();
+
   const [search, setSearch] = useState('');
   const [irePlus, setIrePlus] = useState('all');
   const [ambiguita, setAmbiguita] = useState('all');
@@ -55,6 +65,13 @@ function EsercitazionePage(): React.JSX.Element {
 
   // Get userId from Clerk (for UI purposes only - server handles auth)
   const { userId } = useAuth();
+
+  // Sincronizza titoloQuesito dall'URL quando cambia
+  useEffect(() => {
+    if (searchParams.titolo_quesito !== undefined) {
+      setTitoloQuesito(searchParams.titolo_quesito);
+    }
+  }, [searchParams.titolo_quesito]);
 
   const getDomandeFn = useServerFn(getDomandeEsercitazione);
   const getAmbitiFn = useServerFn(getAmbitiDistinct);
@@ -227,7 +244,7 @@ function EsercitazionePage(): React.JSX.Element {
   }, []);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 px-2 pt-1 pb-4 -mt-2.5 sm:mt-0 sm:space-y-6 sm:px-4 sm:pt-4">
+    <div className="mx-auto max-w-4xl space-y-4 px-2 pt-2 pb-4 sm:space-y-6 sm:px-4 sm:pt-4">
       {/* Box sticky filtri - appare quando i filtri escono dalla viewport */}
       {!isFiltersSectionVisible && (
         <button
@@ -244,8 +261,32 @@ function EsercitazionePage(): React.JSX.Element {
 
       {/* Sezione filtri (osservata dall'Intersection Observer) */}
       <div ref={filtersSectionRef} className="space-y-4 sm:space-y-6">
-        {/* Titolo */}
-        <h1 className="text-2xl font-bold">Esercitazione Libera</h1>
+        {/* Titolo con link back a Errori Ricorrenti se titolo_quesito presente */}
+        <div className="flex items-center gap-2">
+          {searchParams.titolo_quesito && (
+            <Link
+              to="/main/errori-ricorrenti"
+              className="flex items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+              aria-label="Torna a Errori Ricorrenti"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 19l-7-7 7-7M18 19l-7-7 7-7"
+                />
+              </svg>
+            </Link>
+          )}
+          <h1 className="text-2xl font-bold">Esercitazione Libera</h1>
+        </div>
 
         {/* Filtri collapsible */}
         <FiltersReveal

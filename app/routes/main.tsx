@@ -71,13 +71,13 @@ function MainLayout(): React.JSX.Element {
         <div className="min-h-screen bg-background">
           <header
             ref={headerRef}
-            className="sticky top-0 z-10 border-b bg-card"
+            className="navbar-header sticky top-0 z-10 bg-card"
           >
             <div className="container mx-auto px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Link
                   to="/main"
-                  className="hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-ring rounded"
+                  className="hover:opacity-80 focus:outline-none focus-visible:outline-none"
                 >
                   <img
                     src="/patentify_logotype.png"

@@ -558,7 +558,7 @@ export function DomandaCard({
               className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md transition-colors ${
                 isSkull
                   ? 'bg-amber-500 text-black'
-                  : 'bg-transparent text-amber-600 hover:bg-amber-600/20'
+                  : 'bg-transparent text-gray-400 hover:text-amber-600 hover:bg-amber-600/20'
               } disabled:cursor-not-allowed disabled:opacity-50`}
               aria-label={isSkull ? 'Rimuovi skull' : 'Aggiungi skull'}
               aria-pressed={isSkull}

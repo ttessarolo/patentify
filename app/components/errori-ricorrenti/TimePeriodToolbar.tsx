@@ -39,7 +39,7 @@ export function TimePeriodToolbar({
   };
 
   return (
-    <div className="sticky top-(--header-height,3.5rem) z-10 -mx-4 bg-background/95 px-4 py-2 backdrop-blur-sm sm:mx-0 sm:px-0">
+    <div className="sticky top-[var(--header-height,3.5rem)] z-20 -mx-4 bg-background px-4 py-2 sm:mx-0 sm:px-0">
       <div className="flex items-center justify-center gap-2 sm:gap-2">
         {TIME_PERIOD_OPTIONS.map(({ value, label, Icon }) => {
           const isActive = currentPeriod === value;

@@ -94,3 +94,14 @@ body {
 .cl-userButtonPopoverActionButton {
   color: white !important;
 }
+
+/* NavBar header - estende visivamente il background per coprire il contenuto che scrolla sotto */
+.navbar-header::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--color-card);
+}

@@ -4,13 +4,12 @@ import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { Button } from '~/components/ui/button';
-import { Card, CardContent } from '~/components/ui/card';
+import { Pill } from '~/components/ui/pill';
 import { DomandaCard } from '~/components/domanda';
 import {
   useTimePeriod,
   StatsSection,
-  LazySection,
-  SectionSkeleton,
+  SectionReveal,
 } from '~/components/errori-ricorrenti';
 import {
   getErroriStats,
@@ -34,6 +33,33 @@ import type {
 export const Route = createFileRoute('/main/errori-ricorrenti/')({
   component: ErroriRicorrentiIndex,
 });
+
+// TODO: Scommentare quando avremo le immagini delle categorie
+// /** Slug per path immagine categoria: spazi → underscore */
+// function categoriaImageSlug(titolo: string): string {
+//   return titolo.replace(/\s+/g, '_');
+// }
+
+// /** Mostra l'immagine della categoria solo se esiste in public/images/categorie/[slug].png; nessun placeholder se manca. */
+// function CategoriaImage({
+//   titolo_quesito,
+// }: {
+//   titolo_quesito: string;
+// }): React.JSX.Element | null {
+//   const [failed, setFailed] = React.useState(false);
+//   const slug = categoriaImageSlug(titolo_quesito);
+//   const src = `/images/categorie/${slug}.png`;
+//   if (failed) return null;
+//   return (
+//     <img
+//       src={src}
+//       alt=""
+//       role="presentation"
+//       className="h-10 w-10 shrink-0 rounded-lg object-cover"
+//       onError={(): void => setFailed(true)}
+//     />
+//   );
+// }
 
 /** Payload types per server functions */
 type StatsPayload = { data: { period: TimePeriod } };
@@ -67,7 +93,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
     staleTime: 2 * 60 * 1000,
   });
 
-  // Query per top 5 categorie (Sezione D)
+  // Query per top 5 categorie (Sezione D) - Lazy loaded
   const categorieQuery = useQuery({
     queryKey: ['errori-ricorrenti', 'top-categorie', period],
     queryFn: async (): Promise<TopCategorieErroriResult> =>
@@ -79,6 +105,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
         data: { period, limit: 5 },
       }),
     staleTime: 2 * 60 * 1000,
+    enabled: false, // Lazy loaded
   });
 
   // Query per domande con maggiori errori (Sezione E)
@@ -128,205 +155,227 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
-      {/* Sezione B - Statistiche e Grafico */}
-      <StatsSection
-        stats={
-          statsQuery.data ?? {
-            copertura: 0,
-            totale_risposte: 0,
-            risposte_corrette: 0,
-            risposte_errate: 0,
-            skull_count: 0,
-            domande_uniche_risposte: 0,
-            totale_domande_db: 0,
+      {/* Statistiche + Bottoni: raggruppati per ridurre spazio verticale su mobile */}
+      <div className="space-y-2 sm:space-y-3">
+        {/* Sezione B - Statistiche e Grafico */}
+        <StatsSection
+          stats={
+            statsQuery.data ?? {
+              copertura: 0,
+              totale_risposte: 0,
+              risposte_corrette: 0,
+              risposte_errate: 0,
+              skull_count: 0,
+              domande_uniche_risposte: 0,
+              totale_domande_db: 0,
+            }
           }
-        }
-        isLoading={statsQuery.isLoading}
-      />
+          isLoading={statsQuery.isLoading}
+        />
 
-      {/* Sezione C - Bottoni Azione */}
-      <Card>
-        <CardContent className="flex flex-col gap-2 p-4 sm:gap-3">
+        {/* Sezione C - Bottoni Azione */}
+        <div className="flex flex-col gap-2 px-4 pb-2 sm:gap-3 sm:pb-0">
           <Link
             to="/main/errori-ricorrenti/domande-sbagliate"
             search={{ period }}
           >
-            <Button variant="outline" className="w-full justify-start">
-              Riproponi le domande che ho sbagliato
+            <Button
+              variant="outline"
+              className="w-full justify-center border-[#888888]! text-[#d8d8d8] hover:bg-[#888888]/10 hover:text-[#e8e8e8]"
+            >
+              Riproponi le Domande che ho Sbagliato
             </Button>
           </Link>
           <Link
             to="/main/errori-ricorrenti/categorie-critiche"
             search={{ period }}
           >
-            <Button variant="outline" className="w-full justify-start">
-              Esercizio sulle categorie Critiche
+            <Button
+              variant="outline"
+              className="w-full justify-center border-[#888888]! text-[#d8d8d8] hover:bg-[#888888]/10 hover:text-[#e8e8e8]"
+            >
+              Esercizio sulle Categorie Critiche
             </Button>
           </Link>
           <Link to="/main/errori-ricorrenti/focus-skull" search={{ period }}>
-            <Button variant="outline" className="w-full justify-start">
+            <Button
+              variant="outline"
+              className="w-full justify-center border-[#888888]! text-[#d8d8d8] hover:bg-[#888888]/10 hover:text-[#e8e8e8]"
+            >
               Focus Skull
             </Button>
           </Link>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Sezione D - Top 5 Categorie con Errori */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Categorie con Maggiori Errori</h2>
-        {categorieQuery.isLoading ? (
-          <SectionSkeleton />
-        ) : categorieQuery.data?.categorie &&
+      {/* Sezioni collapsibili - stessa spaziatura dei bottoni */}
+      <div className="flex flex-col gap-2 px-4 sm:gap-3">
+        {/* Sezione D - Top 5 Categorie con Errori (box blu collapsibile) */}
+        <SectionReveal
+          title="Categorie con Maggiori Errori"
+          color="blue"
+          isLoading={categorieQuery.isLoading || categorieQuery.isFetching}
+          onFirstOpen={(): void => {
+            void categorieQuery.refetch();
+          }}
+        >
+          {categorieQuery.data?.categorie &&
           categorieQuery.data.categorie.length > 0 ? (
-          <>
-            <div className="space-y-4 text-sm">
-              {categorieQuery.data.categorie.map((cat, idx) => (
-                <div key={cat.titolo_quesito}>
-                  <div className="font-medium">
-                    {idx + 1}) {cat.titolo_quesito}
-                  </div>
-                  <div className="ml-4 text-muted-foreground">
-                    {cat.errori_count} errori ({cat.percentuale}%)
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Link
-              to="/main/errori-ricorrenti/tutte-categorie"
-              search={{ period }}
-            >
-              <Button variant="outline" className="w-full">
-                Vedi Tutte
-              </Button>
-            </Link>
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Nessun errore registrato nel periodo selezionato
-          </p>
-        )}
-      </section>
+            <>
+              <div className="space-y-3">
+                {categorieQuery.data.categorie.map((cat) => (
+                  <Link
+                    key={cat.titolo_quesito}
+                    to="/main/esercitazione"
+                    search={{ titolo_quesito: cat.titolo_quesito }}
+                    className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2">
+                      {/* TODO: Scommentare quando avremo le immagini delle categorie */}
+                      {/* <CategoriaImage titolo_quesito={cat.titolo_quesito} /> */}
+                      <span className="min-w-0 flex-1 font-medium">
+                        {cat.titolo_quesito}
+                      </span>
+                    </div>
+                    <div className="flex justify-end">
+                      <Pill className="bg-destructive/15 text-destructive">
+                        {cat.errori_count} errori ({cat.percentuale}%)
+                      </Pill>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              <Link
+                to="/main/errori-ricorrenti/tutte-categorie"
+                search={{ period }}
+              >
+                <Button variant="outline" className="w-full">
+                  Vedi Tutte
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Nessun errore registrato nel periodo selezionato
+            </p>
+          )}
+        </SectionReveal>
 
-      {/* Sezione E - Domande con Maggiori Errori (Lazy) */}
-      <LazySection
-        onVisible={(): void => {
-          void maggioriErroriQuery.refetch();
-        }}
-      >
-        <DomandeSection
+        {/* Sezione E - Domande con Maggiori Errori (box rosso collapsibile) */}
+        <SectionReveal
           title="Risposte con maggiori errori"
-          domande={maggioriErroriQuery.data?.domande ?? []}
+          color="red"
           isLoading={
             maggioriErroriQuery.isLoading || maggioriErroriQuery.isFetching
           }
-          linkTo="/main/errori-ricorrenti/maggiori-errori"
-          linkText="Vedi Tutte"
-          period={period}
-          userId={userId}
-        />
-      </LazySection>
+          onFirstOpen={(): void => {
+            void maggioriErroriQuery.refetch();
+          }}
+        >
+          <DomandeContent
+            domande={maggioriErroriQuery.data?.domande ?? []}
+            linkTo="/main/errori-ricorrenti/maggiori-errori"
+            linkText="Vedi Tutte"
+            period={period}
+            userId={userId}
+          />
+        </SectionReveal>
 
-      {/* Sezione F - Domande Skull (Lazy) */}
-      <LazySection
-        onVisible={(): void => {
-          void skullQuery.refetch();
-        }}
-      >
-        <DomandeSection
+        {/* Sezione F - Domande Skull (box arancione collapsibile) */}
+        <SectionReveal
           title="Risposte Skull"
-          domande={skullQuery.data?.domande ?? []}
+          color="orange"
           isLoading={skullQuery.isLoading || skullQuery.isFetching}
-          linkTo="/main/errori-ricorrenti/skull-selezionate"
-          linkText="Vedi Tutte"
-          period={period}
-          userId={userId}
-        />
-      </LazySection>
+          onFirstOpen={(): void => {
+            void skullQuery.refetch();
+          }}
+        >
+          <DomandeContent
+            domande={skullQuery.data?.domande ?? []}
+            linkTo="/main/errori-ricorrenti/skull-selezionate"
+            linkText="Vedi Tutte"
+            period={period}
+            userId={userId}
+          />
+        </SectionReveal>
 
-      {/* Sezione G - Domande con Maggiori Risposte Esatte (Lazy) */}
-      <LazySection
-        onVisible={(): void => {
-          void maggioriEsatteQuery.refetch();
-        }}
-      >
-        <DomandeSection
+        {/* Sezione G - Domande con Maggiori Risposte Esatte (box verde collapsibile) */}
+        <SectionReveal
           title="Risposte Esatte"
-          domande={maggioriEsatteQuery.data?.domande ?? []}
+          color="green"
           isLoading={
             maggioriEsatteQuery.isLoading || maggioriEsatteQuery.isFetching
           }
-          linkTo="/main/errori-ricorrenti/domande-esatte"
-          linkText="Vedi Tutte"
-          period={period}
-          userId={userId}
-        />
-      </LazySection>
+          onFirstOpen={(): void => {
+            void maggioriEsatteQuery.refetch();
+          }}
+        >
+          <DomandeContent
+            domande={maggioriEsatteQuery.data?.domande ?? []}
+            linkTo="/main/errori-ricorrenti/domande-esatte"
+            linkText="Vedi Tutte"
+            period={period}
+            userId={userId}
+          />
+        </SectionReveal>
+      </div>
     </div>
   );
 }
 
 // ============================================================
-// Componente helper per le sezioni domande
+// Componente helper per il contenuto delle sezioni domande
 // ============================================================
 
-interface DomandeSectionProps {
-  title: string;
+interface DomandeContentProps {
   domande: (DomandaConErrori | DomandaConEsatte | DomandaSkull)[];
-  isLoading: boolean;
   linkTo: string;
   linkText: string;
   period: TimePeriod;
   userId: string | null | undefined;
 }
 
-function DomandeSection({
-  title,
+function DomandeContent({
   domande,
-  isLoading,
   linkTo,
   linkText,
   period,
   userId,
-}: DomandeSectionProps): React.JSX.Element {
+}: DomandeContentProps): React.JSX.Element {
   // Handler vuoto per readOnly mode
   const handleAnswer = (): void => {
     // readOnly mode, no-op
   };
 
+  if (domande.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Nessuna domanda nel periodo selezionato
+      </p>
+    );
+  }
+
   return (
-    <section className="space-y-3">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {isLoading ? (
-        <SectionSkeleton />
-      ) : domande.length > 0 ? (
-        <>
-          <div className="space-y-3">
-            {domande.map((d) => (
-              <DomandaCard
-                key={d.id}
-                domanda={{ ...d, skull: 'skull' in d ? d.skull : false }}
-                onAnswer={handleAnswer}
-                learning={false}
-                readOnly={true}
-                initialAnswer={d.ultima_risposta ?? undefined}
-                userId={userId}
-              />
-            ))}
-          </div>
-          <p className="text-center text-xs text-muted-foreground">
-            ... (elenco 5 domande)
-          </p>
-          <Link to={linkTo} search={{ period }}>
-            <Button variant="outline" className="w-full">
-              {linkText}
-            </Button>
-          </Link>
-        </>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          Nessuna domanda nel periodo selezionato
-        </p>
-      )}
-    </section>
+    <>
+      <div className="space-y-3">
+        {domande.map((d) => (
+          <DomandaCard
+            key={d.id}
+            domanda={{ ...d, skull: 'skull' in d ? d.skull : false }}
+            onAnswer={handleAnswer}
+            learning={false}
+            readOnly={true}
+            initialAnswer={d.ultima_risposta ?? undefined}
+            userId={userId}
+          />
+        ))}
+      </div>
+
+      <Link to={linkTo} search={{ period }}>
+        <Button variant="outline" className="w-full">
+          {linkText}
+        </Button>
+      </Link>
+    </>
   );
 }
