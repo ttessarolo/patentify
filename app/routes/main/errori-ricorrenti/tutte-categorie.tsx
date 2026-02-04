@@ -70,8 +70,6 @@ function TutteCategoriePage(): React.JSX.Element {
               className="flex flex-col gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm shadow-sm transition-colors hover:bg-muted/50"
             >
               <div className="flex min-w-0 flex-1 flex-wrap items-start gap-2">
-                {/* TODO: Scommentare quando avremo le immagini delle categorie */}
-                {/* <CategoriaImage titolo_quesito={cat.titolo_quesito} /> */}
                 <span className="min-w-0 flex-1 font-medium">
                   {cat.titolo_quesito}
                 </span>

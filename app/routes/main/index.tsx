@@ -49,6 +49,12 @@ function MainIndex(): React.JSX.Element {
             >
               <Link to="/main/statistiche">Statistiche</Link>
             </Button>
+            <Button
+              asChild
+              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
+            >
+              <Link to="/main/consigli-e-trucchi">Consigli e Trucchi</Link>
+            </Button>
           </div>
         </CardContent>
       </Card>

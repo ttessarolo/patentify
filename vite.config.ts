@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import netlify from '@netlify/vite-plugin-tanstack-start';
 import react from '@vitejs/plugin-react';
+import { devtools } from '@tanstack/devtools-vite';
 import svgr from 'vite-plugin-svgr';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
@@ -19,16 +20,21 @@ export default defineConfig({
       // Più specifico prima: with-selector resta dal pacchetto reale (pre-bundled)
       'use-sync-external-store/shim/with-selector.js': path.resolve(
         __dirname,
-        'node_modules/use-sync-external-store/shim/with-selector.js',
+        'node_modules/use-sync-external-store/shim/with-selector.js'
       ),
       // SWR e altri importano .../shim/index.js; React 19 ha useSyncExternalStore
-      'use-sync-external-store/shim/index.js':
-        path.resolve(__dirname, './app/lib/use-sync-external-store-shim.ts'),
-      'use-sync-external-store/shim':
-        path.resolve(__dirname, './app/lib/use-sync-external-store-shim.ts'),
+      'use-sync-external-store/shim/index.js': path.resolve(
+        __dirname,
+        './app/lib/use-sync-external-store-shim.ts'
+      ),
+      'use-sync-external-store/shim': path.resolve(
+        __dirname,
+        './app/lib/use-sync-external-store-shim.ts'
+      ),
     },
   },
   plugins: [
+    devtools(),
     tanstackStart({
       srcDirectory: './app',
     }),

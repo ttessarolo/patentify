@@ -8,8 +8,9 @@ import {
   Scripts,
 } from '@tanstack/react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
+import { TanStackDevtools } from '@tanstack/react-devtools';
 import { ClerkProvider } from '@clerk/tanstack-react-start';
 import { itIT } from '@clerk/localizations';
 import { useStoreRehydration } from '~/store/hooks/useHydration';
@@ -116,14 +117,28 @@ function Providers({
         {children}
         {import.meta.env.DEV && (
           <>
-            <ReactQueryDevtools
+            <TanStackDevtools
+              plugins={[
+                {
+                  name: 'TanStack Query',
+                  render: <ReactQueryDevtoolsPanel />,
+                  defaultOpen: true,
+                },
+                {
+                  name: 'TanStack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                  defaultOpen: false,
+                },
+              ]}
+            />
+            {/* <ReactQueryDevtools
               initialIsOpen={false}
               buttonPosition="bottom-right"
             />
             <TanStackRouterDevtools
               initialIsOpen={false}
               position="bottom-left"
-            />
+            /> */}
           </>
         )}
       </QueryClientProvider>
