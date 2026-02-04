@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { FiltersReveal } from '~/components/esercitazione/FiltersReveal';
 import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
+import { RandomIcon } from '~/icons';
 import { useAppStore } from '~/store';
 import {
   getDomandeEsercitazione,
@@ -34,6 +35,7 @@ type DomandeQueryParams = {
   titolo_quesito?: string;
   limit?: number;
   offset?: number;
+  ordinamento_casuale?: boolean;
 };
 
 /** Payload per checkResponse */
@@ -63,7 +65,16 @@ function EsercitazionePage(): React.JSX.Element {
   const [isFiltersSectionVisible, setIsFiltersSectionVisible] = useState(true);
 
   // Deriva i valori dallo store
-  const { search, irePlus, ambiguita, difficolta, titoloQuesito: localTitoloQuesito } = filters;
+  const {
+    search,
+    irePlus,
+    ambiguita,
+    difficolta,
+    titoloQuesito: localTitoloQuesito,
+    ordinamentoCasuale: ordinamentoCasualeStore,
+  } = filters;
+  // Default true per retrocompatibilità con stato persistito senza la chiave
+  const ordinamentoCasuale = ordinamentoCasualeStore ?? true;
 
   // Deriva titoloQuesito dall'URL quando presente, altrimenti usa lo state dallo store (evita setState in effect)
   const titoloQuesito =
@@ -94,11 +105,13 @@ function EsercitazionePage(): React.JSX.Element {
       ambiguita,
       difficolta,
       titoloQuesito,
+      ordinamentoCasuale,
     ],
     queryFn: async ({ pageParam }) => {
       const params: DomandeQueryParams = {
         limit: PAGE_LIMIT,
         offset: pageParam,
+        ordinamento_casuale: ordinamentoCasuale,
       };
 
       if (search) params.search = search;
@@ -117,7 +130,8 @@ function EsercitazionePage(): React.JSX.Element {
     getNextPageParam: (lastPage, allPages) => {
       // Se l'ultima pagina ha meno elementi del limite, non ci sono altre pagine
       if (lastPage.length < PAGE_LIMIT) return undefined;
-      // Altrimenti, calcola il prossimo offset
+      // Calcola il prossimo offset. In modalità Random il server ignora l'offset
+      // e restituisce ogni volta un nuovo batch casuale (possibili duplicate, accettabile)
       return allPages.length * PAGE_LIMIT;
     },
     // Evita il refetch al ritorno da stand-by (es. iPhone)
@@ -199,6 +213,13 @@ function EsercitazionePage(): React.JSX.Element {
     [setFilter]
   );
 
+  const handleOrdinamentoCasualeChange = useCallback(
+    (value: boolean): void => {
+      setFilter('ordinamentoCasuale', value);
+    },
+    [setFilter]
+  );
+
   // Handler quando l'utente risponde - traccia il tentativo (user_id handled server-side)
   const handleAnswer = useCallback(
     async (domandaId: number, value: string): Promise<void> => {
@@ -268,12 +289,15 @@ function EsercitazionePage(): React.JSX.Element {
         <button
           type="button"
           onClick={handleScrollToFilters}
-          className="fixed left-1/2 top-[calc(var(--header-height,3.5rem)+2px)] z-9 -translate-x-1/2 cursor-pointer rounded-full bg-orange-500/65 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-orange-600 flex items-center gap-2"
+          className="fixed left-1/2 top-[calc(var(--header-height,3.5rem)+2px)] z-9 -translate-x-1/2 flex cursor-pointer items-center gap-2 rounded-full bg-orange-500/65 px-4 py-2 text-sm font-medium text-white shadow-lg transition-colors hover:bg-orange-600"
         >
           Filtri
           <span className="inline-flex items-center justify-center rounded-full bg-white/90 px-2 py-0.5 text-xs font-semibold text-orange-600">
             {activeFiltersCount}
           </span>
+          {ordinamentoCasuale && (
+            <RandomIcon className="ml-0.5 h-4 w-4 shrink-0 text-white" aria-hidden />
+          )}
         </button>
       )}
 
@@ -320,6 +344,8 @@ function EsercitazionePage(): React.JSX.Element {
           onDifficoltaChange={handleDifficoltaChange}
           onTitoloQuesitoChange={handleTitoloQuesitoChange}
           activeFiltersCount={activeFiltersCount}
+          ordinamentoCasuale={ordinamentoCasuale}
+          onOrdinamentoCasualeChange={handleOrdinamentoCasualeChange}
         />
       </div>
 

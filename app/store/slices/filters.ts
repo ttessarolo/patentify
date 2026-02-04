@@ -16,6 +16,7 @@ export const esercitazioneDefaults: EsercitazioneFilters = {
   ambiguita: 'all',
   difficolta: 'all',
   titoloQuesito: 'all',
+  ordinamentoCasuale: true,
 };
 
 /**

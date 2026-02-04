@@ -27,6 +27,8 @@ export const getDomandeEsercitazione = createServerFn({
     titolo_quesito?: string;
     limit?: number;
     offset?: number;
+    /** Se true, ordina con ORDER BY RANDOM(); se false, ordine naturale DB (d.id) */
+    ordinamento_casuale?: boolean;
   };
 
   const {
@@ -37,6 +39,7 @@ export const getDomandeEsercitazione = createServerFn({
     titolo_quesito,
     limit = 10,
     offset = 0,
+    ordinamento_casuale = true,
   } = params;
 
   // Verifica se ci sono filtri significativi
@@ -44,7 +47,7 @@ export const getDomandeEsercitazione = createServerFn({
     search || ire_plus || ambiguita || difficolta || titolo_quesito;
 
   if (!hasFilters) {
-    // Nessun filtro: restituisce domande random (ignora offset)
+    // Nessun filtro: ordinamento in base a ordinamento_casuale (se random, ignora offset)
     const result = await sql`
       SELECT 
         d.*,
@@ -52,14 +55,14 @@ export const getDomandeEsercitazione = createServerFn({
       FROM domande d
       LEFT JOIN user_domanda_skull uds 
         ON d.id = uds.domanda_id AND uds.user_id = ${userIdForQuery}
-      ORDER BY RANDOM()
+      ${ordinamento_casuale ? sql`ORDER BY RANDOM()` : sql`ORDER BY d.id`}
       LIMIT ${limit}
+      ${ordinamento_casuale ? sql`` : sql`OFFSET ${offset}`}
     `;
     return result as DomandaWithSkull[];
   }
 
   // Per query con filtri dinamici, costruiamo le condizioni
-  // Ordinamento deterministico (ORDER BY id) per supportare paginazione
   const searchPattern = search ? `%${search}%` : null;
 
   const result = await sql`
@@ -75,9 +78,9 @@ export const getDomandeEsercitazione = createServerFn({
       ${ambiguita !== undefined ? sql`AND d.ambiguita = ${ambiguita}` : sql``}
       ${difficolta !== undefined ? sql`AND d.difficolta = ${difficolta}` : sql``}
       ${titolo_quesito ? sql`AND d.titolo_quesito = ${titolo_quesito}` : sql``}
-    ORDER BY d.id
+    ${ordinamento_casuale ? sql`ORDER BY RANDOM()` : sql`ORDER BY d.id`}
     LIMIT ${limit}
-    OFFSET ${offset}
+    ${ordinamento_casuale ? sql`` : sql`OFFSET ${offset}`}
   `;
 
   return result as DomandaWithSkull[];

@@ -35,6 +35,8 @@ export interface EsercitazioneFilters {
   ambiguita: string;
   difficolta: string;
   titoloQuesito: string;
+  /** Se true, risultati con ORDER BY RANDOM(); se false, ordine naturale DB (d.id) */
+  ordinamentoCasuale: boolean;
 }
 
 /**

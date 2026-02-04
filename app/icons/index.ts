@@ -18,3 +18,4 @@ export { default as OggiIcon } from './oggi.svg?react';
 export { default as SettimanaIcon } from './settimana.svg?react';
 export { default as MeseIcon } from './mese.svg?react';
 export { default as AllIcon } from './all.svg?react';
+export { default as RandomIcon } from './random.svg?react';
