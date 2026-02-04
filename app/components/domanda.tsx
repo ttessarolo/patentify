@@ -267,6 +267,7 @@ export function DomandaCard({
 
   // Determina il variant del bottone in base alla risposta
   const getButtonVariant = (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parametro richiesto dalla firma, valore non usato
     _buttonValue: string
   ): 'default' | 'destructive' | 'outline' => {
     // Sempre outline - il colore viene gestito dalle classi CSS

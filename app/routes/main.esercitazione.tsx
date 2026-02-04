@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { FiltersReveal } from '~/components/esercitazione/FiltersReveal';
 import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
+import { useAppStore } from '~/store';
 import {
   getDomandeEsercitazione,
   getAmbitiDistinct,
@@ -54,24 +55,26 @@ function EsercitazionePage(): React.JSX.Element {
   // Legge i search params dall'URL
   const searchParams = Route.useSearch();
 
-  const [search, setSearch] = useState('');
-  const [irePlus, setIrePlus] = useState('all');
-  const [ambiguita, setAmbiguita] = useState('all');
-  const [difficolta, setDifficolta] = useState('all');
-  const [titoloQuesito, setTitoloQuesito] = useState('all');
+  // Filtri persistenti dallo store Zustand
+  const filters = useAppStore((s) => s.esercitazione);
+  const setFilter = useAppStore((s) => s.setEsercitazioneFilter);
+
+  // Stato locale per visibility (non necessario persistere)
   const [isFiltersSectionVisible, setIsFiltersSectionVisible] = useState(true);
+
+  // Deriva i valori dallo store
+  const { search, irePlus, ambiguita, difficolta, titoloQuesito: localTitoloQuesito } = filters;
+
+  // Deriva titoloQuesito dall'URL quando presente, altrimenti usa lo state dallo store (evita setState in effect)
+  const titoloQuesito =
+    searchParams.titolo_quesito !== undefined
+      ? searchParams.titolo_quesito
+      : localTitoloQuesito;
 
   const filtersSectionRef = useRef<HTMLDivElement>(null);
 
   // Get userId from Clerk (for UI purposes only - server handles auth)
   const { userId } = useAuth();
-
-  // Sincronizza titoloQuesito dall'URL quando cambia
-  useEffect(() => {
-    if (searchParams.titolo_quesito !== undefined) {
-      setTitoloQuesito(searchParams.titolo_quesito);
-    }
-  }, [searchParams.titolo_quesito]);
 
   const getDomandeFn = useServerFn(getDomandeEsercitazione);
   const getAmbitiFn = useServerFn(getAmbitiDistinct);
@@ -160,26 +163,41 @@ function EsercitazionePage(): React.JSX.Element {
     },
   });
 
-  // Handler per i filtri
-  const handleSearchChange = useCallback((value: string): void => {
-    setSearch(value);
-  }, []);
+  // Handler per i filtri (usano lo store Zustand)
+  const handleSearchChange = useCallback(
+    (value: string): void => {
+      setFilter('search', value);
+    },
+    [setFilter]
+  );
 
-  const handleIrePlusChange = useCallback((value: string): void => {
-    setIrePlus(value);
-  }, []);
+  const handleIrePlusChange = useCallback(
+    (value: string): void => {
+      setFilter('irePlus', value);
+    },
+    [setFilter]
+  );
 
-  const handleAmbiguitaChange = useCallback((value: string): void => {
-    setAmbiguita(value);
-  }, []);
+  const handleAmbiguitaChange = useCallback(
+    (value: string): void => {
+      setFilter('ambiguita', value);
+    },
+    [setFilter]
+  );
 
-  const handleDifficoltaChange = useCallback((value: string): void => {
-    setDifficolta(value);
-  }, []);
+  const handleDifficoltaChange = useCallback(
+    (value: string): void => {
+      setFilter('difficolta', value);
+    },
+    [setFilter]
+  );
 
-  const handleTitoloQuesitoChange = useCallback((value: string): void => {
-    setTitoloQuesito(value);
-  }, []);
+  const handleTitoloQuesitoChange = useCallback(
+    (value: string): void => {
+      setFilter('titoloQuesito', value);
+    },
+    [setFilter]
+  );
 
   // Handler quando l'utente risponde - traccia il tentativo (user_id handled server-side)
   const handleAnswer = useCallback(

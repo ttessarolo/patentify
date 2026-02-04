@@ -25,6 +25,8 @@ export interface TimerTickPayload {
 export interface TimerProps {
   /** Durata totale in secondi */
   seconds: number;
+  /** Secondi già trascorsi (per ripresa sessione, default: 0) */
+  initialElapsed?: number;
   /** Intervallo in secondi per chiamare onTick (default: 1) */
   tickInterval?: number;
   /** Callback chiamata ogni tickInterval secondi */

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
@@ -17,6 +17,7 @@ import {
 } from '~/components/ui/alert-dialog';
 import { useNavigate } from '@tanstack/react-router';
 import { StopIcon, QuizIcon, CorrectIcon, WrongIcon, TimelapseIcon, AvgTimeIcon } from '~/icons';
+import { useAppStore } from '~/store';
 import { getQuizDomanda, abortQuiz, completeQuiz } from '~/server/quiz';
 import { trackAttempt } from '~/server/track_attempt';
 import type {
@@ -74,29 +75,51 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
   const { userId } = useAuth();
   const navigate = useNavigate();
 
-  // Stato
-  const [currentPos, setCurrentPos] = useState(1);
+  // Store Zustand per stato persistente
+  const activeQuiz = useAppStore((s) => s.activeQuiz);
+  const updateQuizProgress = useAppStore((s) => s.updateQuizProgress);
+
+  // Calcola tempo iniziale trascorso (per ripresa sessione)
+  // Se activeQuiz.quizId === quizId, calcola il tempo trascorso da startedAt
+  const initialElapsed = useMemo((): number => {
+    if (activeQuiz && activeQuiz.quizId === quizId) {
+      const elapsedMs = Date.now() - activeQuiz.startedAt;
+      const elapsedSeconds = Math.floor(elapsedMs / 1000);
+      // Non superare la durata massima del quiz
+      return Math.min(elapsedSeconds, QUIZ_DURATION_SECONDS);
+    }
+    return 0;
+  }, [activeQuiz, quizId]);
+
+  // Stato iniziale: riprende dallo store se disponibile
+  const [currentPos, setCurrentPos] = useState(
+    activeQuiz?.quizId === quizId ? activeQuiz.currentPos : 1
+  );
   const [status, setStatus] = useState<QuizStatus>('playing');
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false);
   
-  // Stato per tracciare i risultati
-  const [correctCount, setCorrectCount] = useState(0);
-  const [wrongCount, setWrongCount] = useState(0);
+  // Stato per tracciare i risultati (riprende dallo store se disponibile)
+  const [correctCount, setCorrectCount] = useState(
+    activeQuiz?.quizId === quizId ? activeQuiz.correctCount : 0
+  );
+  const [wrongCount, setWrongCount] = useState(
+    activeQuiz?.quizId === quizId ? activeQuiz.wrongCount : 0
+  );
 
   // Stato per tracciare il tempo finale (secondi trascorsi quando il quiz termina)
   const [finalTotalSeconds, setFinalTotalSeconds] = useState<number | null>(null);
 
-  // Stato per accumulare le domande sbagliate
+  // Stato per accumulare le domande sbagliate (riprende dallo store se disponibile)
   const [wrongAnswers, setWrongAnswers] = useState<
     Array<{ domanda: Domanda; answerGiven: string }>
-  >([]);
+  >(activeQuiz?.quizId === quizId ? activeQuiz.wrongAnswers : []);
 
   // Ref per tracciare se il quiz è stato abortito (per evitare chiamate doppie)
   const abortedRef = useRef(false);
   const quizIdRef = useRef(quizId);
 
   // Ref per tracciare il tempo trascorso (aggiornato da onTick del Timer)
-  const lastElapsedRef = useRef(0);
+  const lastElapsedRef = useRef(initialElapsed);
 
   // Server functions
   const getQuizDomandaFn = useServerFn(getQuizDomanda);
@@ -161,6 +184,10 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
     async (domandaId: number, answerGiven: string): Promise<void> => {
       if (status !== 'playing') return;
 
+      let newCorrectCount = correctCount;
+      let newWrongCount = wrongCount;
+      let wrongAnswer: { domanda: Domanda; answerGiven: string } | undefined;
+
       try {
         // Traccia la risposta e attende il risultato
         const result = await trackMutation.mutateAsync({
@@ -172,15 +199,15 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
 
         // Aggiorna i contatori
         if (result.is_correct) {
-          setCorrectCount((prev) => prev + 1);
+          newCorrectCount = correctCount + 1;
+          setCorrectCount(newCorrectCount);
         } else {
-          setWrongCount((prev) => prev + 1);
+          newWrongCount = wrongCount + 1;
+          setWrongCount(newWrongCount);
           // Salva la domanda sbagliata per mostrarla nella schermata finale
           if (domandaQuery.data) {
-            setWrongAnswers((prev) => [
-              ...prev,
-              { domanda: domandaQuery.data.domanda, answerGiven },
-            ]);
+            wrongAnswer = { domanda: domandaQuery.data.domanda, answerGiven };
+            setWrongAnswers((prev) => [...prev, wrongAnswer!]);
           }
         }
       } catch (error) {
@@ -189,7 +216,10 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
 
       // Passa alla domanda successiva
       if (currentPos < QUIZ_SIZE) {
-        setCurrentPos((prev) => prev + 1);
+        const newPos = currentPos + 1;
+        setCurrentPos(newPos);
+        // Aggiorna lo store per persistenza
+        updateQuizProgress(newPos, newCorrectCount, newWrongCount, wrongAnswer);
       } else {
         // Quiz completato - salva il tempo prima di cambiare stato
         setFinalTotalSeconds(lastElapsedRef.current);
@@ -197,7 +227,7 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
         completeMutation.mutate();
       }
     },
-    [status, quizId, currentPos, trackMutation, completeMutation, domandaQuery.data]
+    [status, quizId, currentPos, correctCount, wrongCount, trackMutation, completeMutation, domandaQuery.data, updateQuizProgress]
   );
 
   // Handler per scadenza timer
@@ -513,6 +543,7 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
         {/* Destra: Timer */}
         <Timer
           seconds={QUIZ_DURATION_SECONDS}
+          initialElapsed={initialElapsed}
           startMode="countdown"
           cycleMode={false}
           onTick={handleTimerTick}

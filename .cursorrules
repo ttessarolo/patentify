@@ -4,6 +4,7 @@
 
 - **Framework**: TanStack Start (v0 - RC) con TanStack Router e TanStack Query
 - **UI**: React, Tailwind CSS, shadcn/ui
+- **State Management**: Zustand con Immer middleware e Persist middleware
 - **Font**: Noto Sans (Google Font)
 - **Icone**: Google Icons (SVG locali in `/app/icons`)
 - **Database**: Neon DB (progetto "patentify" - ID: dawn-paper-76642524)
@@ -79,6 +80,18 @@
 - **Route files**: Creare file route in `app/` directory
 - **Navigation**: Usare `useNavigate` da `@tanstack/react-router`
 
+### State Management
+
+- **Zustand**: Usare Zustand per lo stato globale persistente
+- **Store location**: Lo store è in `app/store/` con pattern slices
+- **Import**: `import { useAppStore } from '~/store'`
+- **Immer middleware**: Usato per updates immutabili (mutare direttamente lo stato in `set()`)
+- **Persist middleware**: Usato per salvare lo stato in localStorage
+- **SSR/Hydration**: Lo store usa `skipHydration: true`, rehydration gestita in `__root.tsx`
+- **Slices**: Organizzazione modulare in `app/store/slices/`
+- **Quando usare Zustand**: Stato che deve persistere tra sessioni (filtri, preferenze, sezioni aperte)
+- **Quando usare useState**: Stato locale temporaneo (modali, loading, form non persistenti)
+
 ### Versioning
 
 - **Conventional Commits**: Usare Conventional Commits per i messaggi di commit
@@ -103,6 +116,7 @@
 - `app/` - Codice sorgente principale
 - `app/components/` - Componenti React
 - `app/lib/` - Utilities e helpers
+- `app/store/` - Store Zustand (slices, hooks, tipi)
 - `app/icons/` - Icone SVG locali
 - `app/styles/` - Stili globali
 - `tests/` - Test files

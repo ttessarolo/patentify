@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { Card, CardContent } from '~/components/ui/card';
+import { useAppStore } from '~/store';
 import { SectionSkeleton } from './LazySection';
 
 /** Colori disponibili per le sezioni */
@@ -30,6 +31,8 @@ const chevronColorClasses: Record<SectionColor, string> = {
 };
 
 export interface SectionRevealProps {
+  /** Chiave univoca per identificare la sezione nello store (es. 'errori-categorie') */
+  sectionKey: string;
   /** Titolo della sezione */
   title: string;
   /** Colore del bordo e del titolo */
@@ -50,6 +53,7 @@ export interface SectionRevealProps {
  * Mantiene i colori distintivi anche quando chiuso.
  */
 export function SectionReveal({
+  sectionKey,
   title,
   color,
   children,
@@ -57,19 +61,23 @@ export function SectionReveal({
   onFirstOpen,
   className = '',
 }: SectionRevealProps): React.JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
+  // Stato persistente dallo store Zustand
+  const isOpen = useAppStore((s) => s.collapsedSections[sectionKey] ?? false);
+  const toggleSection = useAppStore((s) => s.toggleSection);
+
+  // Stato locale per lazy loading (non necessario persistere)
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
 
   const handleToggle = useCallback((): void => {
     const willOpen = !isOpen;
-    setIsOpen(willOpen);
+    toggleSection(sectionKey);
 
     // Trigger lazy load solo alla prima apertura
     if (willOpen && !hasBeenOpened) {
       setHasBeenOpened(true);
       onFirstOpen?.();
     }
-  }, [isOpen, hasBeenOpened, onFirstOpen]);
+  }, [isOpen, hasBeenOpened, onFirstOpen, toggleSection, sectionKey]);
 
   return (
     <Card

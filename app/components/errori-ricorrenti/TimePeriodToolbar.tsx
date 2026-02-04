@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useSearch, useLocation } from '@tanstack/react-router';
 import { OggiIcon, SettimanaIcon, MeseIcon, AllIcon } from '~/icons';
+import { useAppStore } from '~/store';
 import type { TimePeriod } from '~/types/db';
 
 interface TimePeriodOption {
@@ -30,8 +31,11 @@ export function TimePeriodToolbar({
 }: TimePeriodToolbarProps): React.JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
+  const setStorePeriod = useAppStore((s) => s.setErroriRicorrentiPeriod);
 
   const handlePeriodChange = (period: TimePeriod): void => {
+    // Aggiorna sia lo store (persistenza) che l'URL (condivisibilità)
+    setStorePeriod(period);
     void navigate({
       to: location.pathname,
       search: { period },
@@ -85,22 +89,26 @@ export function TimePeriodToolbar({
 }
 
 /**
- * Hook per ottenere il periodo corrente dai search params.
- * Default: 'tutti'
+ * Hook per ottenere il periodo corrente.
+ * Priorità:
+ * 1. Se URL ha period esplicito → usa quello (permette link condivisi)
+ * 2. Altrimenti → usa lo store (persistenza utente tra sessioni)
  */
 export function useTimePeriod(): TimePeriod {
   const search = useSearch({ strict: false }) as { period?: TimePeriod };
-  const period = search?.period;
+  const storePeriod = useAppStore((s) => s.erroriRicorrenti.period);
+  const urlPeriod = search?.period;
 
-  // Valida che sia un periodo valido
+  // Se URL ha period valido, usa quello
   if (
-    period === 'oggi' ||
-    period === 'settimana' ||
-    period === 'mese' ||
-    period === 'tutti'
+    urlPeriod === 'oggi' ||
+    urlPeriod === 'settimana' ||
+    urlPeriod === 'mese' ||
+    urlPeriod === 'tutti'
   ) {
-    return period;
+    return urlPeriod;
   }
 
-  return 'tutti';
+  // Altrimenti usa lo store (che ha default 'tutti')
+  return storePeriod;
 }

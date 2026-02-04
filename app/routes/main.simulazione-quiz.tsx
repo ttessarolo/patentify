@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -6,6 +6,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { Button } from '~/components/ui/button';
 import { Switch } from '~/components/ui/switch';
 import { Label } from '~/components/ui/label';
+import { useAppStore } from '~/store';
 import { generateQuiz, getQuizBoostCounts } from '~/server/quiz';
 import { Quiz } from '~/components/quiz-component';
 import type { QuizType, GenerateQuizResult, GetQuizBoostCountsResult } from '~/types/db';
@@ -29,13 +30,17 @@ export const Route = createFileRoute('/main/simulazione-quiz')({
 });
 
 function SimulazioneQuizPage(): React.JSX.Element {
-  // Stato form
-  const [quizType, setQuizType] = useState<QuizType>('standard');
-  const [boostErrors, setBoostErrors] = useState(false);
-  const [boostSkull, setBoostSkull] = useState(false);
+  // Preferenze persistenti dallo store Zustand
+  const preferences = useAppStore((s) => s.preferences);
+  const setPreference = useAppStore((s) => s.setQuizPreference);
 
-  // Stato quiz attivo
-  const [quizId, setQuizId] = useState<number | null>(null);
+  // Stato quiz attivo dallo store (per ripresa sessione)
+  const activeQuiz = useAppStore((s) => s.activeQuiz);
+  const startQuizStore = useAppStore((s) => s.startQuiz);
+  const endQuizStore = useAppStore((s) => s.endQuiz);
+
+  // Deriva i valori dalle preferenze
+  const { quizType, boostErrors, boostSkull } = preferences;
 
   const generateQuizFn = useServerFn(generateQuiz);
   const getBoostCountsFn = useServerFn(getQuizBoostCounts);
@@ -69,7 +74,8 @@ function SimulazioneQuizPage(): React.JSX.Element {
         ) => Promise<GenerateQuizResult>
       )({ data: params }),
     onSuccess: (result) => {
-      setQuizId(result.quiz_id);
+      // Salva il quiz attivo nello store (con timestamp per calcolo tempo)
+      startQuizStore(result.quiz_id);
     },
     onError: (error) => {
       console.error('Errore generazione quiz:', error);
@@ -87,12 +93,12 @@ function SimulazioneQuizPage(): React.JSX.Element {
 
   // Handler per tornare al form (quando il quiz è finito)
   const handleQuizEnd = useCallback((): void => {
-    setQuizId(null);
-  }, []);
+    endQuizStore();
+  }, [endQuizStore]);
 
-  // Se il quiz è attivo, mostra la componente Quiz
-  if (quizId !== null) {
-    return <Quiz quizId={quizId} onEnd={handleQuizEnd} />;
+  // Se il quiz è attivo (anche da sessione precedente), mostra la componente Quiz
+  if (activeQuiz !== null) {
+    return <Quiz quizId={activeQuiz.quizId} onEnd={handleQuizEnd} />;
   }
 
   // Altrimenti mostra il form di configurazione
@@ -106,7 +112,7 @@ function SimulazioneQuizPage(): React.JSX.Element {
         {/* Quiz Standard - centrato in alto */}
         <button
           type="button"
-          onClick={(): void => setQuizType('standard')}
+          onClick={(): void => setPreference('quizType', 'standard')}
           className={`w-full max-w-xs cursor-pointer rounded-xl px-6 py-4 text-center transition-all ${
             quizType === 'standard'
               ? 'bg-card text-card-foreground ring-2 ring-primary'
@@ -121,7 +127,7 @@ function SimulazioneQuizPage(): React.JSX.Element {
         <div className="flex w-full gap-4">
           <button
             type="button"
-            onClick={(): void => setQuizType('difficile')}
+            onClick={(): void => setPreference('quizType', 'difficile')}
             className={`flex-1 cursor-pointer rounded-xl px-4 py-4 text-center transition-all ${
               quizType === 'difficile'
                 ? 'bg-card text-card-foreground ring-2 ring-primary'
@@ -136,7 +142,7 @@ function SimulazioneQuizPage(): React.JSX.Element {
 
           <button
             type="button"
-            onClick={(): void => setQuizType('ambiguo')}
+            onClick={(): void => setPreference('quizType', 'ambiguo')}
             className={`flex-1 cursor-pointer rounded-xl px-4 py-4 text-center transition-all ${
               quizType === 'ambiguo'
                 ? 'bg-card text-card-foreground ring-2 ring-primary'
@@ -158,7 +164,7 @@ function SimulazioneQuizPage(): React.JSX.Element {
           <Switch
             id="boost-errors"
             checked={boostErrors}
-            onCheckedChange={setBoostErrors}
+            onCheckedChange={(checked): void => setPreference('boostErrors', checked)}
             disabled={!canBoostErrors}
             className="data-[state=checked]:bg-green-500"
           />
@@ -175,7 +181,7 @@ function SimulazioneQuizPage(): React.JSX.Element {
           <Switch
             id="boost-skull"
             checked={boostSkull}
-            onCheckedChange={setBoostSkull}
+            onCheckedChange={(checked): void => setPreference('boostSkull', checked)}
             disabled={!canBoostSkull}
             className="data-[state=checked]:bg-green-500"
           />

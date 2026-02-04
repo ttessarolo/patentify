@@ -47,6 +47,7 @@ vi.mock('@tanstack/react-router', () => ({
       {children}
     </a>
   ),
+  Outlet: () => mockSignUp(),
   useNavigate: vi.fn(() => vi.fn()),
 }));
 
@@ -71,19 +72,12 @@ describe('Auth Components', () => {
     expect(mockSignUp).toHaveBeenCalled();
   });
 
-  it('should have Clerk components defined', () => {
-    const { SignIn, SignUp, SignedIn, SignedOut, UserButton } =
-      require('@clerk/tanstack-react-start') as {
-        SignIn: typeof mockSignIn;
-        SignUp: typeof mockSignUp;
-        SignedIn: React.ComponentType;
-        SignedOut: React.ComponentType;
-        UserButton: React.ComponentType;
-      };
-    expect(SignIn).toBeDefined();
-    expect(SignUp).toBeDefined();
-    expect(SignedIn).toBeDefined();
-    expect(SignedOut).toBeDefined();
-    expect(UserButton).toBeDefined();
+  it('should have Clerk components defined', async () => {
+    const Clerk = await import('@clerk/tanstack-react-start');
+    expect(Clerk.SignIn).toBeDefined();
+    expect(Clerk.SignUp).toBeDefined();
+    expect(Clerk.SignedIn).toBeDefined();
+    expect(Clerk.SignedOut).toBeDefined();
+    expect(Clerk.UserButton).toBeDefined();
   });
 });

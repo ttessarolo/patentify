@@ -12,6 +12,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import { ClerkProvider } from '@clerk/tanstack-react-start';
 import { itIT } from '@clerk/localizations';
+import { useStoreRehydration } from '~/store/hooks/useHydration';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient();
@@ -80,6 +81,9 @@ function RootComponent(): React.JSX.Element {
 function Providers({
   children,
 }: Readonly<{ children: ReactNode }>): React.JSX.Element {
+  // Trigger hydration dello store Zustand dal localStorage
+  useStoreRehydration();
+
   return (
     <ClerkProvider
       publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}

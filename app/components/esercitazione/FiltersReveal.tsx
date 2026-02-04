@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent } from '~/components/ui/card';
 import { Pill } from '~/components/ui/pill';
+import { useAppStore } from '~/store';
 import { SearchField } from './SearchField';
 import { FiltersBox } from './FiltersBox';
+
+/** Chiave per identificare la sezione nello store */
+const SECTION_KEY = 'esercitazione-filters';
 
 export interface FiltersRevealProps {
   /** Valore corrente della ricerca */
@@ -49,10 +53,12 @@ export function FiltersReveal({
   onTitoloQuesitoChange,
   activeFiltersCount,
 }: FiltersRevealProps): React.JSX.Element {
-  const [isOpen, setIsOpen] = useState(false);
+  // Stato persistente dallo store Zustand
+  const isOpen = useAppStore((s) => s.collapsedSections[SECTION_KEY] ?? false);
+  const toggleSection = useAppStore((s) => s.toggleSection);
 
   const handleToggle = (): void => {
-    setIsOpen((prev) => !prev);
+    toggleSection(SECTION_KEY);
   };
 
   return (

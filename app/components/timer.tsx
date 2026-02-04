@@ -38,6 +38,7 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
   (
     {
       seconds,
+      initialElapsed = 0,
       tickInterval = 1,
       onTick,
       onEnd,
@@ -48,20 +49,26 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
     },
     ref
   ) => {
-    const [elapsed, setElapsed] = React.useState<number>(0);
+    const [elapsed, setElapsed] = React.useState<number>(initialElapsed);
     const [mode, setMode] = React.useState<TimerMode>(startMode);
-    const [ended, setEnded] = React.useState<boolean>(false);
+    const [ended, setEnded] = React.useState<boolean>(initialElapsed >= seconds);
 
     // Ref per evitare chiamate multiple di onEnd
-    const onEndCalledRef = React.useRef<boolean>(false);
+    const onEndCalledRef = React.useRef<boolean>(initialElapsed >= seconds);
 
-    // Reset quando seconds o startMode cambiano
+    // Reset quando seconds o startMode cambiano (ma non initialElapsed per evitare loop)
     React.useEffect(() => {
-      setElapsed(0);
-      setEnded(false);
-      onEndCalledRef.current = false;
+      setElapsed(initialElapsed);
+      const isAlreadyEnded = initialElapsed >= seconds;
+      setEnded(isAlreadyEnded);
+      onEndCalledRef.current = isAlreadyEnded;
       setMode(startMode);
-    }, [seconds, startMode]);
+      
+      // Se già scaduto al mount, chiama onEnd
+      if (isAlreadyEnded && isCountdownMode(startMode) && onEnd) {
+        onEnd();
+      }
+    }, [seconds, startMode, initialElapsed, onEnd]);
 
     // Timer tick effect
     React.useEffect(() => {

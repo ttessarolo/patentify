@@ -1,0 +1,154 @@
+---
+description: Linee guida per la gestione dello stato globale con Zustand
+globs: ["app/**/*.tsx", "app/**/*.ts"]
+---
+
+# State Management con Zustand
+
+Questa regola definisce quando e come usare lo stato globale persistente con Zustand.
+
+## Quando usare Zustand
+
+### Usare Zustand per:
+
+1. **Sezioni collapsible/accordion** - Lo stato aperto/chiuso deve persistere tra sessioni
+   ```tsx
+   const isOpen = useAppStore((s) => s.collapsedSections[SECTION_KEY] ?? false);
+   const toggleSection = useAppStore((s) => s.toggleSection);
+   ```
+
+2. **Filtri utente** - I valori dei filtri devono essere ricordati
+   ```tsx
+   const filters = useAppStore((s) => s.esercitazione);
+   const setFilter = useAppStore((s) => s.setEsercitazioneFilter);
+   ```
+
+3. **Preferenze utente** - Scelte che devono persistere (tipo quiz, boost, periodo temporale)
+   ```tsx
+   const preferences = useAppStore((s) => s.preferences);
+   const setPreference = useAppStore((s) => s.setQuizPreference);
+   ```
+
+4. **Stato sessione quiz** - Per permettere ripresa dopo interruzione
+   ```tsx
+   const activeQuiz = useAppStore((s) => s.activeQuiz);
+   const startQuiz = useAppStore((s) => s.startQuiz);
+   ```
+
+### NON usare Zustand per:
+
+- Stati temporanei (loading, modali, tooltips)
+- Stati derivati da props
+- Stati già gestiti da TanStack Query (dati server)
+- Stati già persistiti su DB (es. skull flag)
+- Form state (usare React Hook Form)
+
+## Pattern implementativi
+
+### 1. Sezioni collapsible
+
+Ogni sezione collapsible deve avere una chiave univoca:
+
+```tsx
+// Definisci una chiave costante
+const SECTION_KEY = 'esercitazione-filters';
+
+// Nel componente
+const isOpen = useAppStore((s) => s.collapsedSections[SECTION_KEY] ?? false);
+const toggleSection = useAppStore((s) => s.toggleSection);
+
+const handleToggle = (): void => {
+  toggleSection(SECTION_KEY);
+};
+```
+
+Convenzione naming per le chiavi:
+- `esercitazione-filters` - Filtri esercitazione
+- `errori-categorie` - Sezione categorie errori
+- `errori-maggiori` - Sezione domande con più errori
+- `errori-skull` - Sezione domande skull
+- `errori-esatte` - Sezione domande esatte
+
+### 2. Sincronizzazione Store ↔ URL
+
+Per stato che deve essere sia persistente che condivisibile via URL:
+
+```tsx
+// Leggi da store e URL
+const storePeriod = useAppStore((s) => s.erroriRicorrenti.period);
+const urlPeriod = search?.period;
+
+// URL ha priorità (permette link condivisi)
+const effectivePeriod = urlPeriod ?? storePeriod;
+
+// Quando utente cambia, aggiorna entrambi
+const handleChange = (period: TimePeriod): void => {
+  setStorePeriod(period);
+  navigate({ search: { period } });
+};
+```
+
+### 3. Quiz con timer persistente
+
+Per riprendere un quiz interrotto:
+
+```tsx
+// Calcola tempo trascorso da startedAt
+const initialElapsed = useMemo((): number => {
+  if (activeQuiz && activeQuiz.quizId === quizId) {
+    const elapsedMs = Date.now() - activeQuiz.startedAt;
+    return Math.min(Math.floor(elapsedMs / 1000), QUIZ_DURATION_SECONDS);
+  }
+  return 0;
+}, [activeQuiz, quizId]);
+
+// Passa al Timer
+<Timer seconds={DURATION} initialElapsed={initialElapsed} ... />
+```
+
+## Struttura Store
+
+```
+app/store/
+├── index.ts              # Store principale con combine slices
+├── types.d.ts            # Tipi TypeScript
+├── slices/
+│   ├── ui.ts             # Stato UI (sezioni collapsible)
+│   ├── filters.ts        # Filtri utente
+│   └── quiz.ts           # Stato quiz e preferenze
+└── hooks/
+    └── useHydration.ts   # Hook per SSR
+```
+
+## SSR/Hydration
+
+Lo store usa `skipHydration: true` per evitare mismatch SSR.
+La rehydration è gestita automaticamente in `__root.tsx` via `useStoreRehydration()`.
+
+Se serve sapere se lo store è idratato:
+
+```tsx
+import { useHydration } from '~/store/hooks/useHydration';
+
+const hydrated = useHydration();
+if (!hydrated) return <Skeleton />;
+```
+
+## Convenzioni Naming
+
+### Actions
+- `setXxx` - Setter singolo valore
+- `toggleXxx` - Toggle booleano
+- `resetXxx` - Reset a default
+- `startXxx` / `endXxx` - Inizio/fine operazione
+
+### Selectors
+- Usare arrow functions inline: `(s) => s.property`
+- Per selectors complessi, creare funzioni dedicate
+
+## Aggiungere nuovo stato
+
+1. Aggiornare `app/store/types.d.ts` con nuovi tipi
+2. Creare/aggiornare lo slice appropriato in `app/store/slices/`
+3. Aggiornare `partialize` in `app/store/index.ts` se serve persistenza
+4. Documentare in questa regola se è un pattern riutilizzabile

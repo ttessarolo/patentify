@@ -212,6 +212,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
       <div className="flex flex-col gap-2 px-4 sm:gap-3">
         {/* Sezione D - Top 5 Categorie con Errori (box blu collapsibile) */}
         <SectionReveal
+          sectionKey="errori-categorie"
           title="Categorie con Maggiori Errori"
           color="blue"
           isLoading={categorieQuery.isLoading || categorieQuery.isFetching}
@@ -263,6 +264,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
 
         {/* Sezione E - Domande con Maggiori Errori (box rosso collapsibile) */}
         <SectionReveal
+          sectionKey="errori-maggiori"
           title="Risposte con maggiori errori"
           color="red"
           isLoading={
@@ -283,6 +285,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
 
         {/* Sezione F - Domande Skull (box arancione collapsibile) */}
         <SectionReveal
+          sectionKey="errori-skull"
           title="Risposte Skull"
           color="orange"
           isLoading={skullQuery.isLoading || skullQuery.isFetching}
@@ -301,6 +304,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
 
         {/* Sezione G - Domande con Maggiori Risposte Esatte (box verde collapsibile) */}
         <SectionReveal
+          sectionKey="errori-esatte"
           title="Risposte Esatte"
           color="green"
           isLoading={
