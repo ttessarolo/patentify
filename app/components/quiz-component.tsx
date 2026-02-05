@@ -258,41 +258,21 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
     onEnd();
   }, [onEnd]);
 
-  // Anti-cheating: aborta il quiz se l'utente lascia la pagina
+  // Mostra avviso di conferma se l'utente tenta di chiudere la pagina durante il quiz
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent): void => {
       if (status === 'playing' && !abortedRef.current) {
         // Mostra messaggio di conferma
         e.preventDefault();
-        // Tenta di abortire il quiz con sendBeacon
-        const url = '/api/abort-quiz'; // Fallback, ma usiamo la mutation
-        navigator.sendBeacon?.(
-          url,
-          JSON.stringify({ quiz_id: quizIdRef.current })
-        );
-      }
-    };
-
-    const handleVisibilityChange = (): void => {
-      if (
-        document.visibilityState === 'hidden' &&
-        status === 'playing' &&
-        !abortedRef.current
-      ) {
-        // L'utente ha lasciato la pagina/tab
-        abortedRef.current = true;
-        abortMutation.mutate();
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return (): void => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [status, abortMutation]);
+  }, [status]);
 
   // Aggiorna ref quando quizId cambia
   useEffect(() => {
