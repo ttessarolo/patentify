@@ -26,6 +26,9 @@ function Index(): React.JSX.Element {
             alt="Patentify - Scopri i trucchi per superare l'esame"
             className="w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl object-contain"
           />
+          <span className="text-xs text-muted-foreground -mt-4">
+            v{import.meta.env.VITE_APP_VERSION}
+          </span>
 
           <SignedIn>
             <p className="text-muted-foreground">Reindirizzamento...</p>

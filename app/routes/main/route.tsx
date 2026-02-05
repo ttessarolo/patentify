@@ -74,7 +74,7 @@ function MainLayout(): React.JSX.Element {
             className="navbar-header sticky top-0 z-10 bg-card"
           >
             <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-end gap-2">
                 <Link
                   to="/main"
                   className="hover:opacity-80 focus:outline-none focus-visible:outline-none"
@@ -85,6 +85,9 @@ function MainLayout(): React.JSX.Element {
                     className="h-7 sm:h-8 md:h-9 w-auto"
                   />
                 </Link>
+                <span className="text-xs text-muted-foreground leading-none mb-0.5">
+                  v{import.meta.env.VITE_APP_VERSION}
+                </span>
               </div>
               <div className="flex items-center">
                 <UserButton

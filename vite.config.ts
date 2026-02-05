@@ -6,8 +6,18 @@ import { devtools } from '@tanstack/devtools-vite';
 import svgr from 'vite-plugin-svgr';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
+import { readFileSync } from 'fs';
+
+// Leggi la versione da package.json
+const packageJson = JSON.parse(
+  readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')
+);
+const appVersion = packageJson.version;
 
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+  },
   server: {
     port: 5173,
     // Allow ngrok hosts for Clerk webhook development
