@@ -43,6 +43,9 @@ export const createVersionSlice: StateCreator<
       // Se la versione del server è diversa da quella salvata, c'è un aggiornamento
       if (state.currentVersion !== serverVersion) {
         state.updateAvailable = true;
+        // IMPORTANTE: Aggiorna currentVersion alla nuova versione così che dopo
+        // il reload non venga rilevato nuovamente un aggiornamento
+        state.currentVersion = serverVersion;
       }
     });
   },
