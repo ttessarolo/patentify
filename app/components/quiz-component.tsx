@@ -564,8 +564,19 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
       )}
 
       {domandaQuery.isError && (
-        <div className="py-8 text-center text-red-600">
-          Errore nel caricamento della domanda
+        <div className="flex flex-col items-center gap-4 py-8">
+          <p className="text-center text-red-600">
+            Errore nel caricamento della domanda
+          </p>
+          <Button
+            variant="outline"
+            onClick={(): void => {
+              void domandaQuery.refetch();
+            }}
+            disabled={domandaQuery.isFetching}
+          >
+            {domandaQuery.isFetching ? 'Caricamento...' : 'Ricarica Domanda'}
+          </Button>
         </div>
       )}
 
