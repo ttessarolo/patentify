@@ -41,7 +41,7 @@ const topCategorieSchema = z.object({
 /**
  * Genera la condizione SQL per filtrare per periodo temporale.
  * @param period - Il periodo selezionato
- * @param column - Nome della colonna da filtrare (default: 'answered_at')
+ * @param column - Nome della colonna da filtrare (default: 'uda.answered_at')
  */
 function getPeriodFilter(
   period: TimePeriod,
@@ -111,11 +111,13 @@ export const getErroriStats = createServerFn({ method: 'GET' }).handler(
       10
     );
 
-    // Query per skull count (sempre sul totale, non filtrato per periodo)
+    // Query per skull count filtrato per periodo
+    const skullPeriodFilter = getPeriodFilter(period, 'inserted_at');
     const skullResult = await sql`
       SELECT COUNT(*) as count
       FROM user_domanda_skull
       WHERE user_id = ${userId}
+        ${skullPeriodFilter}
     `;
     const skull_count = parseInt(
       (skullResult[0] as { count: string }).count,
@@ -432,9 +434,9 @@ export const getDomandeSkull = createServerFn({ method: 'GET' }).handler(
       throw new Error('Parametri non validi');
     }
 
-    const { limit, offset } = parsed.data;
-    // Nota: per skull non applichiamo filtro periodo sulla data skull
-    // ma solo sulla inserted_at per ordinamento
+    const { period, limit, offset } = parsed.data;
+    // Filtro per periodo sulla data di inserimento skull
+    const skullPeriodFilter = getPeriodFilter(period, 'uds.inserted_at');
 
     // Query per domande skull
     const domandeResult = await sql`
@@ -454,6 +456,7 @@ export const getDomandeSkull = createServerFn({ method: 'GET' }).handler(
       FROM user_domanda_skull uds
       JOIN domande d ON d.id = uds.domanda_id
       WHERE uds.user_id = ${userId}
+        ${skullPeriodFilter}
       ORDER BY uds.inserted_at DESC
       LIMIT ${limit + 1}
       OFFSET ${offset}
