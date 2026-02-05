@@ -20,6 +20,7 @@ import {
   statisticheDefaults,
 } from './slices/filters';
 import { createQuizSlice } from './slices/quiz';
+import { createVersionSlice, versionDefaults } from './slices/version';
 
 /**
  * Store globale dell'applicazione.
@@ -42,6 +43,8 @@ export const useAppStore = create<AppState>()(
       ...createFiltersSlice(...args),
       // Quiz Slice
       ...createQuizSlice(...args),
+      // Version Slice
+      ...createVersionSlice(...args),
     })),
     {
       name: 'patentify-store',
@@ -55,6 +58,8 @@ export const useAppStore = create<AppState>()(
         statistiche: state.statistiche,
         activeQuiz: state.activeQuiz,
         preferences: state.preferences,
+        // Version state
+        currentVersion: state.currentVersion,
       }),
       // Merge personalizzato per gestire correttamente i nested objects
       // Il default di Zustand fa shallow merge che può sovrascrivere
@@ -84,6 +89,10 @@ export const useAppStore = create<AppState>()(
           // Deep merge per gli oggetti che hanno nested values
           erroriRicorrenti: mergedErroriRicorrenti,
           statistiche: mergedStatistiche,
+          // Version state
+          currentVersion: persisted.currentVersion ?? versionDefaults.currentVersion,
+          // Non persistiamo updateAvailable - viene sempre ricalcolato
+          updateAvailable: versionDefaults.updateAvailable,
         };
       },
     }
@@ -96,6 +105,7 @@ export type {
   UISlice,
   FiltersSlice,
   QuizSlice,
+  VersionSlice,
   ActiveQuizState,
   QuizPreferences,
   QuizStatus,

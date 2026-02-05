@@ -165,6 +165,27 @@ export interface QuizSlice {
 }
 
 // ============================================================
+// Version Slice - Gestione versione app e aggiornamenti
+// ============================================================
+
+/**
+ * Slice per la gestione della versione dell'applicazione.
+ * Usato per rilevare aggiornamenti disponibili.
+ */
+export interface VersionSlice {
+  /** Versione corrente salvata al primo caricamento (null se non ancora caricata) */
+  currentVersion: string | null;
+  /** Flag che indica se è disponibile un aggiornamento */
+  updateAvailable: boolean;
+  /** Imposta la versione corrente */
+  setCurrentVersion: (version: string) => void;
+  /** Verifica se è disponibile un aggiornamento confrontando con la versione del server */
+  checkForUpdate: (serverVersion: string) => void;
+  /** Resetta il flag updateAvailable (usato dopo il reload) */
+  resetUpdateAvailable: () => void;
+}
+
+// ============================================================
 // App State - Combinazione di tutti gli slices
 // ============================================================
 
@@ -172,7 +193,7 @@ export interface QuizSlice {
  * Stato globale dell'applicazione.
  * Combinazione di tutti gli slices.
  */
-export type AppState = UISlice & FiltersSlice & QuizSlice;
+export type AppState = UISlice & FiltersSlice & QuizSlice & VersionSlice;
 
 /**
  * Valori di default per lo stato iniziale.
@@ -189,5 +210,9 @@ export interface AppStateDefaults {
   quiz: {
     activeQuiz: ActiveQuizState | null;
     preferences: QuizPreferences;
+  };
+  version: {
+    currentVersion: string | null;
+    updateAvailable: boolean;
   };
 }

@@ -14,7 +14,9 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { ClerkProvider } from '@clerk/tanstack-react-start';
 import { itIT } from '@clerk/localizations';
 import { useStoreRehydration } from '~/store/hooks/useHydration';
+import { useVersionCheck } from '~/store/hooks/useVersionCheck';
 import { PWAInstallPrompt } from '~/components/pwa-install-prompt';
+import { UpdateDialog } from '~/components/update-dialog';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient();
@@ -114,6 +116,9 @@ function Providers({
   // Trigger hydration dello store Zustand dal localStorage
   useStoreRehydration();
 
+  // Avvia il version check per rilevare aggiornamenti disponibili
+  useVersionCheck();
+
   return (
     <ClerkProvider
       publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
@@ -145,6 +150,7 @@ function Providers({
       <QueryClientProvider client={queryClient}>
         {children}
         <PWAInstallPrompt />
+        <UpdateDialog />
         {import.meta.env.DEV && (
           <>
             <TanStackDevtools
