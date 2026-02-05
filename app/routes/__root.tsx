@@ -14,6 +14,7 @@ import { TanStackDevtools } from '@tanstack/react-devtools';
 import { ClerkProvider } from '@clerk/tanstack-react-start';
 import { itIT } from '@clerk/localizations';
 import { useStoreRehydration } from '~/store/hooks/useHydration';
+import { PWAInstallPrompt } from '~/components/pwa-install-prompt';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient();
@@ -49,6 +50,10 @@ export const Route = createRootRoute({
       {
         title: 'Patentify',
       },
+      {
+        name: 'apple-mobile-web-app-title',
+        content: 'Patentify',
+      },
     ],
     links: [
       {
@@ -63,6 +68,30 @@ export const Route = createRootRoute({
       {
         rel: 'stylesheet',
         href: 'https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap',
+      },
+      {
+        rel: 'icon',
+        type: 'image/png',
+        href: '/favicon-96x96.png',
+        sizes: '96x96',
+      },
+      {
+        rel: 'icon',
+        type: 'image/svg+xml',
+        href: '/favicon.svg',
+      },
+      {
+        rel: 'shortcut icon',
+        href: '/favicon.ico',
+      },
+      {
+        rel: 'apple-touch-icon',
+        sizes: '180x180',
+        href: '/apple-touch-icon.png',
+      },
+      {
+        rel: 'manifest',
+        href: '/site.webmanifest',
       },
     ],
   }),
@@ -115,6 +144,7 @@ function Providers({
     >
       <QueryClientProvider client={queryClient}>
         {children}
+        <PWAInstallPrompt />
         {import.meta.env.DEV && (
           <>
             <TanStackDevtools

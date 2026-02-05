@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as SignUpRouteRouteImport } from './routes/sign-up/route'
 import { Route as MainRouteRouteImport } from './routes/main/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -21,8 +23,10 @@ import { Route as MainStatisticheRouteImport } from './routes/main/statistiche'
 import { Route as MainSimulazioneQuizRouteImport } from './routes/main/simulazione-quiz'
 import { Route as MainRivediQuizRouteImport } from './routes/main/rivedi-quiz'
 import { Route as MainEsercitazioneRouteImport } from './routes/main/esercitazione'
+import { Route as MainHelpRouteRouteImport } from './routes/main/help/route'
 import { Route as MainErroriRicorrentiRouteRouteImport } from './routes/main/errori-ricorrenti/route'
 import { Route as MainConsigliETrucchiRouteRouteImport } from './routes/main/consigli-e-trucchi/route'
+import { Route as MainHelpIndexRouteImport } from './routes/main/help/index'
 import { Route as MainErroriRicorrentiIndexRouteImport } from './routes/main/errori-ricorrenti/index'
 import { Route as MainConsigliETrucchiIndexRouteImport } from './routes/main/consigli-e-trucchi/index'
 import { Route as MainErroriRicorrentiTutteCategorieRouteImport } from './routes/main/errori-ricorrenti/tutte-categorie'
@@ -34,6 +38,16 @@ import { Route as MainErroriRicorrentiDomandeEsatteRouteImport } from './routes/
 import { Route as MainErroriRicorrentiCategorieCriticheRouteImport } from './routes/main/errori-ricorrenti/categorie-critiche'
 import { Route as ApiWebhooksClerkRouteImport } from './routes/api/webhooks/clerk'
 
+const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
+  id: '/terms-of-service',
+  path: '/terms-of-service',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignUpRouteRoute = SignUpRouteRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
@@ -95,6 +109,11 @@ const MainEsercitazioneRoute = MainEsercitazioneRouteImport.update({
   path: '/esercitazione',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainHelpRouteRoute = MainHelpRouteRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainErroriRicorrentiRouteRoute =
   MainErroriRicorrentiRouteRouteImport.update({
     id: '/errori-ricorrenti',
@@ -107,6 +126,11 @@ const MainConsigliETrucchiRouteRoute =
     path: '/consigli-e-trucchi',
     getParentRoute: () => MainRouteRoute,
   } as any)
+const MainHelpIndexRoute = MainHelpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MainHelpRouteRoute,
+} as any)
 const MainErroriRicorrentiIndexRoute =
   MainErroriRicorrentiIndexRouteImport.update({
     id: '/',
@@ -171,8 +195,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/main': typeof MainRouteRouteWithChildren
   '/sign-up': typeof SignUpRouteRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
+  '/main/help': typeof MainHelpRouteRouteWithChildren
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
@@ -192,9 +219,12 @@ export interface FileRoutesByFullPath {
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
+  '/main/help/': typeof MainHelpIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
@@ -214,14 +244,18 @@ export interface FileRoutesByTo {
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiIndexRoute
+  '/main/help': typeof MainHelpIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/main': typeof MainRouteRouteWithChildren
   '/sign-up': typeof SignUpRouteRouteWithChildren
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
+  '/main/help': typeof MainHelpRouteRouteWithChildren
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
@@ -241,6 +275,7 @@ export interface FileRoutesById {
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
+  '/main/help/': typeof MainHelpIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -248,8 +283,11 @@ export interface FileRouteTypes {
     | '/'
     | '/main'
     | '/sign-up'
+    | '/privacy-policy'
+    | '/terms-of-service'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
+    | '/main/help'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
@@ -269,9 +307,12 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/tutte-categorie'
     | '/main/consigli-e-trucchi/'
     | '/main/errori-ricorrenti/'
+    | '/main/help/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/privacy-policy'
+    | '/terms-of-service'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
@@ -291,13 +332,17 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/tutte-categorie'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
+    | '/main/help'
   id:
     | '__root__'
     | '/'
     | '/main'
     | '/sign-up'
+    | '/privacy-policy'
+    | '/terms-of-service'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
+    | '/main/help'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
     | '/main/simulazione-quiz'
@@ -317,12 +362,15 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/tutte-categorie'
     | '/main/consigli-e-trucchi/'
     | '/main/errori-ricorrenti/'
+    | '/main/help/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   MainRouteRoute: typeof MainRouteRouteWithChildren
   SignUpRouteRoute: typeof SignUpRouteRouteWithChildren
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  TermsOfServiceRoute: typeof TermsOfServiceRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignInIndexRoute: typeof SignInIndexRoute
   ApiWebhooksClerkRoute: typeof ApiWebhooksClerkRoute
@@ -330,6 +378,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms-of-service': {
+      id: '/terms-of-service'
+      path: '/terms-of-service'
+      fullPath: '/terms-of-service'
+      preLoaderRoute: typeof TermsOfServiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sign-up': {
       id: '/sign-up'
       path: '/sign-up'
@@ -414,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainEsercitazioneRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/main/help': {
+      id: '/main/help'
+      path: '/help'
+      fullPath: '/main/help'
+      preLoaderRoute: typeof MainHelpRouteRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/main/errori-ricorrenti': {
       id: '/main/errori-ricorrenti'
       path: '/errori-ricorrenti'
@@ -427,6 +496,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/main/consigli-e-trucchi'
       preLoaderRoute: typeof MainConsigliETrucchiRouteRouteImport
       parentRoute: typeof MainRouteRoute
+    }
+    '/main/help/': {
+      id: '/main/help/'
+      path: '/'
+      fullPath: '/main/help/'
+      preLoaderRoute: typeof MainHelpIndexRouteImport
+      parentRoute: typeof MainHelpRouteRoute
     }
     '/main/errori-ricorrenti/': {
       id: '/main/errori-ricorrenti/'
@@ -549,9 +625,22 @@ const MainErroriRicorrentiRouteRouteWithChildren =
     MainErroriRicorrentiRouteRouteChildren,
   )
 
+interface MainHelpRouteRouteChildren {
+  MainHelpIndexRoute: typeof MainHelpIndexRoute
+}
+
+const MainHelpRouteRouteChildren: MainHelpRouteRouteChildren = {
+  MainHelpIndexRoute: MainHelpIndexRoute,
+}
+
+const MainHelpRouteRouteWithChildren = MainHelpRouteRoute._addFileChildren(
+  MainHelpRouteRouteChildren,
+)
+
 interface MainRouteRouteChildren {
   MainConsigliETrucchiRouteRoute: typeof MainConsigliETrucchiRouteRouteWithChildren
   MainErroriRicorrentiRouteRoute: typeof MainErroriRicorrentiRouteRouteWithChildren
+  MainHelpRouteRoute: typeof MainHelpRouteRouteWithChildren
   MainEsercitazioneRoute: typeof MainEsercitazioneRoute
   MainRivediQuizRoute: typeof MainRivediQuizRoute
   MainSimulazioneQuizRoute: typeof MainSimulazioneQuizRoute
@@ -562,6 +651,7 @@ interface MainRouteRouteChildren {
 const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainConsigliETrucchiRouteRoute: MainConsigliETrucchiRouteRouteWithChildren,
   MainErroriRicorrentiRouteRoute: MainErroriRicorrentiRouteRouteWithChildren,
+  MainHelpRouteRoute: MainHelpRouteRouteWithChildren,
   MainEsercitazioneRoute: MainEsercitazioneRoute,
   MainRivediQuizRoute: MainRivediQuizRoute,
   MainSimulazioneQuizRoute: MainSimulazioneQuizRoute,
@@ -591,6 +681,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   MainRouteRoute: MainRouteRouteWithChildren,
   SignUpRouteRoute: SignUpRouteRouteWithChildren,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  TermsOfServiceRoute: TermsOfServiceRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignInIndexRoute: SignInIndexRoute,
   ApiWebhooksClerkRoute: ApiWebhooksClerkRoute,
