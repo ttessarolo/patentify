@@ -7,11 +7,9 @@ import {
 } from '~/components/errori-ricorrenti';
 
 // Schema per i search params
+// NON usare .default() qui, altrimenti sovrascrive sempre il valore dello store
 const searchSchema = z.object({
-  period: z
-    .enum(['oggi', 'settimana', 'mese', 'tutti'])
-    .optional()
-    .default('tutti'),
+  period: z.enum(['oggi', 'settimana', 'mese', 'tutti']).optional(),
 });
 
 export const Route = createFileRoute('/main/errori-ricorrenti')({

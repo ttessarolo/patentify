@@ -47,7 +47,7 @@ function MainIndex(): React.JSX.Element {
               asChild
               className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
             >
-              <Link to="/main/statistiche">Statistiche</Link>
+              <Link to="/main/statistiche">Statistiche Quiz</Link>
             </Button>
             <Button
               asChild

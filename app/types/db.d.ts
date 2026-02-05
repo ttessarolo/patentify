@@ -355,3 +355,84 @@ export interface DomandeSkullResult {
 export interface AllCategorieErroriResult {
   categorie: CategoriaErrori[];
 }
+
+/** Granularità temporale per timeline */
+export type TimeGranularity = 'hour' | 'day' | 'week' | 'month';
+
+/** Singolo punto dati timeline */
+export interface TimelineDataPoint {
+  /** Label per asse X (es. "14:00", "Lun", "Sett 1") */
+  label: string;
+  /** ISO string per ordinamento */
+  timestamp: string;
+  /** Numero totale risposte */
+  totale: number;
+  /** Numero risposte corrette */
+  corrette: number;
+  /** Numero risposte errate */
+  errate: number;
+}
+
+/** Risultato di getTimelineStats */
+export interface TimelineStatsResult {
+  /** Granularità dei dati */
+  granularity: TimeGranularity;
+  /** Punti dati della timeline */
+  data: TimelineDataPoint[];
+}
+
+// ============================================================
+// Tipi per Statistiche Quiz
+// ============================================================
+
+/** Risultato di getQuizStats */
+export interface QuizStatsResult {
+  /** Numero totale di quiz completati nel periodo */
+  quiz_svolti: number;
+  /** Numero di quiz con esito positivo (promosso) */
+  quiz_promossi: number;
+  /** Numero di quiz con esito negativo (bocciato) */
+  quiz_bocciati: number;
+}
+
+/** Singola riga per tabella quiz */
+export interface QuizTableRow {
+  /** ID del quiz */
+  quiz_id: number;
+  /** Data/ora di completamento */
+  completed_at: string;
+  /** Numero di errori commessi nel quiz */
+  errori: number;
+  /** Esito del quiz: true = promosso, false = bocciato */
+  promosso: boolean;
+}
+
+/** Risultato di getQuizList */
+export interface QuizListResult {
+  /** Lista dei quiz */
+  quiz: QuizTableRow[];
+  /** Se ci sono altri quiz da caricare */
+  hasMore: boolean;
+}
+
+/** Singolo punto dati timeline per quiz */
+export interface QuizTimelineDataPoint {
+  /** Label per asse X (es. "14:00", "Lun", "Sett 1") */
+  label: string;
+  /** ISO string per ordinamento */
+  timestamp: string;
+  /** Numero totale quiz completati */
+  totale: number;
+  /** Numero quiz promossi */
+  promossi: number;
+  /** Numero quiz bocciati */
+  bocciati: number;
+}
+
+/** Risultato di getQuizTimeline */
+export interface QuizTimelineStatsResult {
+  /** Granularità dei dati */
+  granularity: TimeGranularity;
+  /** Punti dati della timeline */
+  data: QuizTimelineDataPoint[];
+}

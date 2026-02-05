@@ -130,7 +130,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
     <div className="space-y-6">
       {/* Statistiche + Bottoni: raggruppati per ridurre spazio verticale su mobile */}
       <div className="space-y-2 sm:space-y-3">
-        {/* Sezione B - Statistiche e Grafico */}
+        {/* Sezione B - Statistiche e Grafico (click per toggle Pie/Bar) */}
         <StatsSection
           stats={
             statsQuery.data ?? {
@@ -144,6 +144,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
             }
           }
           isLoading={statsQuery.isLoading}
+          period={period}
         />
 
         {/* Sezione C - Bottoni Azione */}

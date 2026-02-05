@@ -12,9 +12,13 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-import type { AppState } from './types';
+import type { AppState, ErroriRicorrentiFilters, StatisticheFilters } from './types';
 import { createUISlice } from './slices/ui';
-import { createFiltersSlice } from './slices/filters';
+import {
+  createFiltersSlice,
+  erroriRicorrentiDefaults,
+  statisticheDefaults,
+} from './slices/filters';
 import { createQuizSlice } from './slices/quiz';
 
 /**
@@ -48,9 +52,40 @@ export const useAppStore = create<AppState>()(
         collapsedSections: state.collapsedSections,
         esercitazione: state.esercitazione,
         erroriRicorrenti: state.erroriRicorrenti,
+        statistiche: state.statistiche,
         activeQuiz: state.activeQuiz,
         preferences: state.preferences,
       }),
+      // Merge personalizzato per gestire correttamente i nested objects
+      // Il default di Zustand fa shallow merge che può sovrascrivere
+      // i campi nested con i default
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<AppState>;
+
+        // Deep merge per erroriRicorrenti
+        const mergedErroriRicorrenti: ErroriRicorrentiFilters = {
+          ...erroriRicorrentiDefaults,
+          ...(persisted.erroriRicorrenti ?? {}),
+        };
+
+        // Deep merge per statistiche
+        const mergedStatistiche: StatisticheFilters = {
+          ...statisticheDefaults,
+          ...(persisted.statistiche ?? {}),
+        };
+
+        return {
+          ...currentState,
+          // Sovrascriviamo con i valori persistiti (shallow per i campi top-level)
+          collapsedSections: persisted.collapsedSections ?? currentState.collapsedSections,
+          esercitazione: persisted.esercitazione ?? currentState.esercitazione,
+          activeQuiz: persisted.activeQuiz ?? currentState.activeQuiz,
+          preferences: persisted.preferences ?? currentState.preferences,
+          // Deep merge per gli oggetti che hanno nested values
+          erroriRicorrenti: mergedErroriRicorrenti,
+          statistiche: mergedStatistiche,
+        };
+      },
     }
   )
 );
@@ -66,4 +101,6 @@ export type {
   QuizStatus,
   EsercitazioneFilters,
   ErroriRicorrentiFilters,
+  StatisticheFilters,
+  ErroriRicorrentiChartType,
 } from './types';

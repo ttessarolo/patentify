@@ -12,24 +12,18 @@ import { Doughnut, Bar } from 'react-chartjs-2';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { Pill } from '~/components/ui/pill';
-import {
-  OverallIcon,
-  QuizIcon,
-  CorrectIcon,
-  WrongIcon,
-  SkullIcon,
-} from '~/icons';
+import { QuizIcon, CorrectIcon, WrongIcon } from '~/icons';
 import { useAppStore } from '~/store';
-import { getTimelineStats } from '~/server/errori-ricorrenti';
+import { getQuizTimeline } from '~/server/statistiche';
 import type {
-  ErroriStatsResult,
+  QuizStatsResult,
   TimePeriod,
-  TimelineStatsResult,
+  QuizTimelineStatsResult,
 } from '~/types/db';
 
 /** Plugin: riempie il centro del doughnut con i segmenti del dataset più interno (cerchio solido, no buco). */
 const doughnutFillCenterPlugin = {
-  id: 'doughnutFillCenter',
+  id: 'doughnutFillCenterQuiz',
   afterDraw(chart: {
     config?: { type?: string };
     ctx: CanvasRenderingContext2D;
@@ -78,8 +72,8 @@ ChartJS.register(
 );
 ChartJS.register(doughnutFillCenterPlugin);
 
-interface StatsSectionProps {
-  stats: ErroriStatsResult;
+interface QuizStatsSectionProps {
+  stats: QuizStatsResult;
   isLoading?: boolean;
   /** Periodo corrente per la query timeline */
   period: TimePeriod;
@@ -96,8 +90,6 @@ function StatsSkeleton(): React.JSX.Element {
           <div className="h-4 w-32 rounded bg-muted" />
           <div className="h-6 w-24 rounded bg-muted" />
           <div className="h-4 w-28 rounded bg-muted" />
-          <div className="h-4 w-36 rounded bg-muted" />
-          <div className="h-4 w-20 rounded bg-muted" />
         </div>
         <div className="mx-auto h-32 w-32 animate-pulse rounded-full bg-muted sm:mx-0 sm:h-40 sm:w-40" />
       </div>
@@ -106,30 +98,30 @@ function StatsSkeleton(): React.JSX.Element {
 }
 
 /**
- * Componente per visualizzare le statistiche con grafico multi-series doughnut
+ * Componente per visualizzare le statistiche dei quiz con grafico multi-series doughnut
  * o grafico a barre timeline. Click sul grafico per toggle tra i due tipi.
  * Mobile-first: layout verticale su mobile, orizzontale su desktop.
  */
-export function StatsSection({
+export function QuizStatsSection({
   stats,
   isLoading = false,
   period,
-}: StatsSectionProps): React.JSX.Element {
-  // Stato persistente per toggle tra Pie e Bar (dallo store Zustand)
-  const chartType = useAppStore((s) => s.erroriRicorrenti.chartType);
-  const toggleChartType = useAppStore((s) => s.toggleErroriRicorrentiChartType);
+}: QuizStatsSectionProps): React.JSX.Element {
+  // Stato persistente per toggle tra Pie e Bar (dallo store Zustand - sezione statistiche)
+  const chartType = useAppStore((s) => s.statistiche.chartType);
+  const toggleChartType = useAppStore((s) => s.toggleStatisticheChartType);
 
   // Server function per timeline
-  const getTimelineStatsFn = useServerFn(getTimelineStats);
+  const getQuizTimelineFn = useServerFn(getQuizTimeline);
 
   // Query per timeline (lazy, attivata solo quando chartType === 'bar')
   const timelineQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'timeline', period],
-    queryFn: async (): Promise<TimelineStatsResult> =>
+    queryKey: ['statistiche', 'quiz-timeline', period],
+    queryFn: async (): Promise<QuizTimelineStatsResult> =>
       (
-        getTimelineStatsFn as unknown as (opts: {
+        getQuizTimelineFn as unknown as (opts: {
           data: { period: TimePeriod };
-        }) => Promise<TimelineStatsResult>
+        }) => Promise<QuizTimelineStatsResult>
       )({
         data: { period },
       }),
@@ -146,70 +138,45 @@ export function StatsSection({
     return <StatsSkeleton />;
   }
 
-  const {
-    copertura,
-    totale_risposte,
-    risposte_corrette,
-    risposte_errate,
-    skull_count,
-    domande_uniche_risposte,
-    totale_domande_db,
-  } = stats;
+  const { quiz_svolti, quiz_promossi, quiz_bocciati } = stats;
 
   // Calcola percentuali
-  const percentualeCorrette =
-    totale_risposte > 0
-      ? Math.round((risposte_corrette / totale_risposte) * 100)
-      : 0;
-  const percentualeErrate =
-    totale_risposte > 0
-      ? Math.round((risposte_errate / totale_risposte) * 100)
-      : 0;
-  const percentualeSkull =
-    domande_uniche_risposte > 0
-      ? Math.round((skull_count / domande_uniche_risposte) * 100)
-      : 0;
+  const percentualePromossi =
+    quiz_svolti > 0 ? Math.round((quiz_promossi / quiz_svolti) * 100) : 0;
+  const percentualeBocciati =
+    quiz_svolti > 0 ? Math.round((quiz_bocciati / quiz_svolti) * 100) : 0;
 
   // Dati per il grafico multi-series doughnut
   // In Chart.js il primo dataset è il più ESTERNO, quindi invertiamo l'ordine
   // Ordine visivo desiderato (interno -> esterno):
-  // 1) Copertura (azzurro) - interno (più piccolo)
-  // 2) Errate (rosso)
-  // 3) Corrette (verde)
-  // 4) Skull (arancione) - esterno (più grande)
+  // 1) Quiz svolti (azzurro) - interno (sempre 100%)
+  // 2) Promossi (verde)
+  // 3) Bocciati (rosso) - esterno
   const chartData = {
     labels: [
-      'Skull',
-      'Non skull',
-      'Corrette',
-      'Resto corrette',
-      'Errate',
-      'Resto errate',
-      'Copertura',
-      'Non coperto',
+      'Bocciati',
+      'Resto bocciati',
+      'Promossi',
+      'Resto promossi',
+      'Quiz svolti',
+      'Resto svolti',
     ],
     datasets: [
-      // Dataset 1 (esterno) - Skull (arancione)
+      // Dataset 1 (esterno) - Bocciati (rosso)
       {
-        data: [percentualeSkull, 100 - percentualeSkull],
-        backgroundColor: ['#f97316', '#1e293b'],
-        borderWidth: 0,
-      },
-      // Dataset 2 - Risposte corrette (verde)
-      {
-        data: [percentualeCorrette, 100 - percentualeCorrette],
-        backgroundColor: ['#22c55e', '#1e293b'],
-        borderWidth: 0,
-      },
-      // Dataset 3 - Risposte errate (rosso)
-      {
-        data: [percentualeErrate, 100 - percentualeErrate],
+        data: [percentualeBocciati, 100 - percentualeBocciati],
         backgroundColor: ['#ef4444', '#1e293b'],
         borderWidth: 0,
       },
-      // Dataset 4 (interno) - Copertura (azzurro)
+      // Dataset 2 - Promossi (verde)
       {
-        data: [copertura, 100 - copertura],
+        data: [percentualePromossi, 100 - percentualePromossi],
+        backgroundColor: ['#22c55e', '#1e293b'],
+        borderWidth: 0,
+      },
+      // Dataset 3 (interno) - Quiz svolti (azzurro) - sempre 100%
+      {
+        data: [100, 0],
         backgroundColor: ['#22d3ee', '#1e293b'],
         borderWidth: 0,
       },
@@ -220,7 +187,7 @@ export function StatsSection({
     responsive: true,
     maintainAspectRatio: true,
     // Cutout più piccolo = buco centrale più piccolo = anelli più spessi
-    cutout: '22%',
+    cutout: '30%',
     plugins: {
       legend: {
         display: false,
@@ -233,9 +200,13 @@ export function StatsSection({
             dataIndex: number;
             raw: unknown;
           }): string => {
-            // Ordine dataset: Skull (0), Corrette (1), Errate (2), Copertura (3)
-            const labels = ['Skull', 'Corrette', 'Errate', 'Copertura'];
+            // Ordine dataset: Bocciati (0), Promossi (1), Quiz svolti (2)
+            const labels = ['Bocciati', 'Promossi', 'Quiz svolti'];
             if (context.dataIndex === 0) {
+              if (context.datasetIndex === 2) {
+                // Quiz svolti mostra il numero totale
+                return `${labels[context.datasetIndex]}: ${quiz_svolti}`;
+              }
               return `${labels[context.datasetIndex]}: ${context.raw}%`;
             }
             return '';
@@ -251,56 +222,34 @@ export function StatsSection({
         {/* Statistiche testuali - mobile: sotto il grafico, desktop: sinistra */}
         <div className="order-2 space-y-2 text-sm sm:order-1 sm:space-y-3 sm:text-base">
           {/* Griglia 3 colonne: icona | testo | pills (allineati) */}
-          {/* Copertura */}
+          {/* Quiz svolti */}
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-cyan-400">
-            <OverallIcon className="h-5 w-5 shrink-0" />
-            <span>
-              Copertura <span className="font-bold">{copertura}%</span>
-            </span>
-            <Pill className="bg-muted text-muted-foreground">
-              {domande_uniche_risposte}/{totale_domande_db}
-            </Pill>
-          </div>
-
-          {/* Risposte totali */}
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-pink-500">
             <QuizIcon className="h-5 w-5 shrink-0" />
             <span>
-              <span className="font-bold">{totale_risposte}</span> Risposte
+              <span className="font-bold">{quiz_svolti}</span> Quiz Svolti
             </span>
             <span />
           </div>
 
-          {/* Giuste */}
+          {/* Promossi */}
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-green-500">
             <CorrectIcon className="h-5 w-5 shrink-0" />
             <span>
-              <span className="font-bold">{risposte_corrette}</span> Giuste
+              <span className="font-bold">{quiz_promossi}</span> Promossi
             </span>
             <Pill className="bg-muted text-muted-foreground">
-              {percentualeCorrette}%
+              {percentualePromossi}%
             </Pill>
           </div>
 
-          {/* Sbagliate */}
+          {/* Bocciati */}
           <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-red-500">
             <WrongIcon className="h-5 w-5 shrink-0" />
             <span>
-              <span className="font-bold">{risposte_errate}</span> Sbagliate
+              <span className="font-bold">{quiz_bocciati}</span> Bocciati
             </span>
             <Pill className="bg-muted text-muted-foreground">
-              {percentualeErrate}%
-            </Pill>
-          </div>
-
-          {/* Skull */}
-          <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 text-orange-500">
-            <SkullIcon className="h-5 w-5 shrink-0" />
-            <span>
-              <span className="font-bold">{skull_count}</span> Skull
-            </span>
-            <Pill className="bg-muted text-muted-foreground">
-              {percentualeSkull}%
+              {percentualeBocciati}%
             </Pill>
           </div>
         </div>
@@ -326,7 +275,7 @@ export function StatsSection({
               <Doughnut data={chartData} options={chartOptions} />
             </div>
           ) : (
-            <TimelineBarChart
+            <QuizTimelineBarChart
               data={timelineQuery.data}
               isLoading={timelineQuery.isLoading || timelineQuery.isFetching}
             />
@@ -338,23 +287,22 @@ export function StatsSection({
 }
 
 // ============================================================
-// TimelineBarChart - Grafico a barre per timeline
+// QuizTimelineBarChart - Grafico a barre per timeline quiz
 // ============================================================
 
-interface TimelineBarChartProps {
-  data: TimelineStatsResult | undefined;
+interface QuizTimelineBarChartProps {
+  data: QuizTimelineStatsResult | undefined;
   isLoading: boolean;
 }
 
 /**
  * Grafico a barre timeline con bordi full-rounded.
- * Mostra totale, corrette e errate per ogni intervallo temporale.
- * Riferimento: https://www.chartjs.org/docs/latest/samples/bar/border-radius.html
+ * Mostra totale, promossi e bocciati per ogni intervallo temporale.
  */
-function TimelineBarChart({
+function QuizTimelineBarChart({
   data,
   isLoading,
-}: TimelineBarChartProps): React.JSX.Element {
+}: QuizTimelineBarChartProps): React.JSX.Element {
   if (isLoading || !data) {
     return (
       <div className="flex h-32 w-full items-center justify-center sm:h-48 sm:w-[520px]">
@@ -372,7 +320,7 @@ function TimelineBarChart({
     );
   }
 
-  // Ordine dataset: Totale > Giuste > Errori (scaletta decrescente)
+  // Ordine dataset: Totale > Promossi > Bocciati (scaletta decrescente)
   const barChartData = {
     labels: data.data.map((point) => point.label),
     datasets: [
@@ -386,8 +334,8 @@ function TimelineBarChart({
         borderSkipped: false,
       },
       {
-        label: 'Giuste',
-        data: data.data.map((point) => point.corrette),
+        label: 'Promossi',
+        data: data.data.map((point) => point.promossi),
         borderColor: '#22c55e',
         backgroundColor: 'rgba(34, 197, 94, 0.5)',
         borderWidth: 2,
@@ -395,8 +343,8 @@ function TimelineBarChart({
         borderSkipped: false,
       },
       {
-        label: 'Errate',
-        data: data.data.map((point) => point.errate),
+        label: 'Bocciati',
+        data: data.data.map((point) => point.bocciati),
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.5)',
         borderWidth: 2,

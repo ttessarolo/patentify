@@ -4,6 +4,11 @@ import { OggiIcon, SettimanaIcon, MeseIcon, AllIcon } from '~/icons';
 import { useAppStore } from '~/store';
 import type { TimePeriod } from '~/types/db';
 
+/**
+ * Tipo per identificare la sezione dello store da usare.
+ */
+export type PeriodSection = 'erroriRicorrenti' | 'statistiche';
+
 interface TimePeriodOption {
   value: TimePeriod;
   label: string;
@@ -20,18 +25,28 @@ const TIME_PERIOD_OPTIONS: TimePeriodOption[] = [
 interface TimePeriodToolbarProps {
   /** Periodo corrente selezionato */
   currentPeriod: TimePeriod;
+  /** Sezione dello store da usare (default: 'erroriRicorrenti') */
+  section?: PeriodSection;
 }
 
 /**
  * Toolbar sticky per la selezione del periodo temporale.
  * Mobile-first: icone più piccole su mobile, più grandi su desktop.
+ * Supporta sia erroriRicorrenti che statistiche tramite la prop section.
  */
 export function TimePeriodToolbar({
   currentPeriod,
+  section = 'erroriRicorrenti',
 }: TimePeriodToolbarProps): React.JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
-  const setStorePeriod = useAppStore((s) => s.setErroriRicorrentiPeriod);
+
+  // Seleziona la funzione setter corretta in base alla sezione
+  const setStorePeriod = useAppStore((s) =>
+    section === 'statistiche'
+      ? s.setStatistichePeriod
+      : s.setErroriRicorrentiPeriod
+  );
 
   const handlePeriodChange = (period: TimePeriod): void => {
     // Aggiorna sia lo store (persistenza) che l'URL (condivisibilità)
@@ -89,17 +104,24 @@ export function TimePeriodToolbar({
 }
 
 /**
- * Hook per ottenere il periodo corrente.
+ * Hook generico per ottenere il periodo corrente per una sezione specifica.
  * Priorità:
  * 1. Se URL ha period esplicito → usa quello (permette link condivisi)
  * 2. Altrimenti → usa lo store (persistenza utente tra sessioni)
+ *
+ * Zustand gestisce automaticamente il re-render dopo l'idratazione,
+ * quindi non serve un fallback hardcoded.
  */
-export function useTimePeriod(): TimePeriod {
+export function useTimePeriodFor(section: PeriodSection): TimePeriod {
   const search = useSearch({ strict: false }) as { period?: TimePeriod };
-  const storePeriod = useAppStore((s) => s.erroriRicorrenti.period);
+  const storePeriod = useAppStore((s) =>
+    section === 'statistiche'
+      ? s.statistiche.period
+      : s.erroriRicorrenti.period
+  );
   const urlPeriod = search?.period;
 
-  // Se URL ha period valido, usa quello
+  // Se URL ha period valido, usa quello (sempre)
   if (
     urlPeriod === 'oggi' ||
     urlPeriod === 'settimana' ||
@@ -109,6 +131,15 @@ export function useTimePeriod(): TimePeriod {
     return urlPeriod;
   }
 
-  // Altrimenti usa lo store (che ha default 'tutti')
+  // Ritorna storePeriod - Zustand gestisce automaticamente il re-render
+  // dopo l'idratazione (valore default → valore persistito)
   return storePeriod;
+}
+
+/**
+ * Hook per ottenere il periodo corrente per erroriRicorrenti.
+ * Wrapper per retrocompatibilità.
+ */
+export function useTimePeriod(): TimePeriod {
+  return useTimePeriodFor('erroriRicorrenti');
 }

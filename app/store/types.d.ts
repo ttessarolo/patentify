@@ -39,11 +39,25 @@ export interface EsercitazioneFilters {
   ordinamentoCasuale: boolean;
 }
 
+/** Tipo di grafico per la sezione Errori Ricorrenti */
+export type ErroriRicorrentiChartType = 'pie' | 'bar';
+
 /**
  * Stato filtri per la sezione Errori Ricorrenti.
  */
 export interface ErroriRicorrentiFilters {
   period: TimePeriod;
+  /** Tipo di grafico selezionato (default: 'pie') */
+  chartType: ErroriRicorrentiChartType;
+}
+
+/**
+ * Stato filtri per la sezione Statistiche Quiz.
+ */
+export interface StatisticheFilters {
+  period: TimePeriod;
+  /** Tipo di grafico selezionato (default: 'pie') */
+  chartType: ErroriRicorrentiChartType;
 }
 
 /**
@@ -54,6 +68,8 @@ export interface FiltersSlice {
   esercitazione: EsercitazioneFilters;
   /** Filtri errori ricorrenti */
   erroriRicorrenti: ErroriRicorrentiFilters;
+  /** Filtri statistiche quiz */
+  statistiche: StatisticheFilters;
   /** Aggiorna un filtro esercitazione */
   setEsercitazioneFilter: <K extends keyof EsercitazioneFilters>(
     key: K,
@@ -63,6 +79,16 @@ export interface FiltersSlice {
   resetEsercitazioneFilters: () => void;
   /** Aggiorna il periodo errori ricorrenti */
   setErroriRicorrentiPeriod: (period: TimePeriod) => void;
+  /** Aggiorna il tipo di grafico errori ricorrenti */
+  setErroriRicorrentiChartType: (chartType: ErroriRicorrentiChartType) => void;
+  /** Toggle del tipo di grafico errori ricorrenti */
+  toggleErroriRicorrentiChartType: () => void;
+  /** Aggiorna il periodo statistiche */
+  setStatistichePeriod: (period: TimePeriod) => void;
+  /** Aggiorna il tipo di grafico statistiche */
+  setStatisticheChartType: (chartType: ErroriRicorrentiChartType) => void;
+  /** Toggle del tipo di grafico statistiche */
+  toggleStatisticheChartType: () => void;
 }
 
 // ============================================================
@@ -158,6 +184,7 @@ export interface AppStateDefaults {
   filters: {
     esercitazione: EsercitazioneFilters;
     erroriRicorrenti: ErroriRicorrentiFilters;
+    statistiche: StatisticheFilters;
   };
   quiz: {
     activeQuiz: ActiveQuizState | null;

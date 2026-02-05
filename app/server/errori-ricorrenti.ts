@@ -15,6 +15,9 @@ import type {
   DomandaConEsatte,
   DomandaSkull,
   Domanda,
+  TimeGranularity,
+  TimelineDataPoint,
+  TimelineStatsResult,
 } from '~/types/db';
 
 // ============================================================
@@ -629,3 +632,150 @@ export const getDomandeCategorieCritiche = createServerFn({
 
   return { domande, hasMore };
 });
+
+// ============================================================
+// getTimelineStats - Statistiche aggregate per timeline
+// ============================================================
+
+/** Giorni della settimana in italiano */
+const GIORNI_SETTIMANA = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+
+/** Mesi in italiano (abbreviati) */
+const MESI = [
+  'Gen',
+  'Feb',
+  'Mar',
+  'Apr',
+  'Mag',
+  'Giu',
+  'Lug',
+  'Ago',
+  'Set',
+  'Ott',
+  'Nov',
+  'Dic',
+];
+
+/**
+ * Determina la granularità temporale in base al periodo selezionato.
+ */
+function getGranularityForPeriod(period: TimePeriod): TimeGranularity {
+  switch (period) {
+    case 'oggi':
+      return 'hour';
+    case 'settimana':
+      return 'day';
+    case 'mese':
+      return 'week';
+    case 'tutti':
+    default:
+      return 'month';
+  }
+}
+
+/**
+ * Genera la label appropriata per un punto dati in base alla granularità.
+ */
+function formatTimelineLabel(
+  timestamp: string,
+  granularity: TimeGranularity
+): string {
+  const date = new Date(timestamp);
+
+  switch (granularity) {
+    case 'hour':
+      return `${date.getHours().toString().padStart(2, '0')}:00`;
+    case 'day':
+      return GIORNI_SETTIMANA[date.getDay()];
+    case 'week': {
+      // Calcola numero settimana del mese
+      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const weekNum =
+        Math.ceil((date.getDate() + firstDayOfMonth.getDay()) / 7);
+      return `Sett ${weekNum}`;
+    }
+    case 'month':
+      return `${MESI[date.getMonth()]} ${date.getFullYear().toString().slice(-2)}`;
+    default:
+      return timestamp;
+  }
+}
+
+/**
+ * Server function per ottenere le statistiche aggregate per timeline.
+ * Raggruppa i dati in base al periodo selezionato:
+ * - oggi: per ora
+ * - settimana: per giorno
+ * - mese: per settimana
+ * - tutti: per mese
+ */
+export const getTimelineStats = createServerFn({ method: 'GET' }).handler(
+  async ({ data }): Promise<TimelineStatsResult> => {
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error('Autenticazione richiesta');
+    }
+
+    const parsed = z.object({ period: periodSchema }).safeParse(data);
+    if (!parsed.success) {
+      throw new Error('Parametro period richiesto');
+    }
+
+    const { period } = parsed.data;
+    const granularity = getGranularityForPeriod(period);
+    const periodFilter = getPeriodFilter(period);
+
+    // Determina il DATE_TRUNC appropriato
+    let dateTrunc: string;
+    switch (granularity) {
+      case 'hour':
+        dateTrunc = 'hour';
+        break;
+      case 'day':
+        dateTrunc = 'day';
+        break;
+      case 'week':
+        dateTrunc = 'week';
+        break;
+      case 'month':
+      default:
+        dateTrunc = 'month';
+        break;
+    }
+
+    // Query per aggregare i dati per intervallo temporale
+    const timelineResult = await sql`
+      SELECT 
+        DATE_TRUNC(${dateTrunc}, uda.answered_at) as time_bucket,
+        COUNT(*) as totale,
+        COUNT(*) FILTER (WHERE uda.is_correct = true) as corrette,
+        COUNT(*) FILTER (WHERE uda.is_correct = false) as errate
+      FROM user_domanda_attempt uda
+      WHERE uda.user_id = ${userId}
+        AND uda.answered_at IS NOT NULL
+        ${periodFilter}
+      GROUP BY time_bucket
+      ORDER BY time_bucket ASC
+    `;
+
+    const rows = timelineResult as {
+      time_bucket: string;
+      totale: string;
+      corrette: string;
+      errate: string;
+    }[];
+
+    const dataPoints: TimelineDataPoint[] = rows.map((row) => ({
+      label: formatTimelineLabel(row.time_bucket, granularity),
+      timestamp: row.time_bucket,
+      totale: parseInt(row.totale, 10) || 0,
+      corrette: parseInt(row.corrette, 10) || 0,
+      errate: parseInt(row.errate, 10) || 0,
+    }));
+
+    return {
+      granularity,
+      data: dataPoints,
+    };
+  }
+);

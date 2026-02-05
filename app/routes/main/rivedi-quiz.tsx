@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
@@ -20,6 +20,7 @@ import type {
 // Schema per i search params
 const searchSchema = z.object({
   quizId: z.coerce.number().int().positive(),
+  back: z.enum(['quiz_stats']).optional(),
 });
 
 /** Payload per getFullQuiz */
@@ -50,7 +51,7 @@ export const Route = createFileRoute('/main/rivedi-quiz')({
 });
 
 function RivediQuizPage(): React.JSX.Element {
-  const { quizId } = Route.useSearch();
+  const { quizId, back } = Route.useSearch();
   const { userId } = useAuth();
 
   // Stato per la modalità di visualizzazione
@@ -151,7 +152,17 @@ function RivediQuizPage(): React.JSX.Element {
   if (viewMode === 'choosing') {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-2 md:py-16 text-center">
-        <h1 className="text-2xl font-bold">Rivedi Quiz</h1>
+        <div className="flex items-baseline gap-2">
+          {back === 'quiz_stats' && (
+            <Link
+              to="/main/statistiche"
+              className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
+            >
+              «
+            </Link>
+          )}
+          <h1 className="text-2xl font-bold">Rivedi Quiz</h1>
+        </div>
         <p className="text-muted-foreground">
           Vuoi vedere anche le risposte già date?
         </p>
@@ -178,7 +189,17 @@ function RivediQuizPage(): React.JSX.Element {
   if (viewMode === 'view_answers') {
     return (
       <div className="mx-auto max-w-2xl px-4 py-2 md:py-8">
-        <h1 className="mb-6 text-2xl font-bold">Quiz Completo</h1>
+        <div className="mb-6 flex items-baseline gap-2">
+          {back === 'quiz_stats' && (
+            <Link
+              to="/main/statistiche"
+              className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
+            >
+              «
+            </Link>
+          )}
+          <h1 className="text-2xl font-bold">Quiz Completo</h1>
+        </div>
 
         <div className="flex flex-col gap-4">
           {quizData.domande.map((item) => (
@@ -206,7 +227,17 @@ function RivediQuizPage(): React.JSX.Element {
   if (viewMode === 'answer_questions') {
     return (
       <div className="mx-auto max-w-2xl px-4 py-2 md:py-8">
-        <h1 className="mb-6 text-2xl font-bold">Rispondi alle Domande</h1>
+        <div className="mb-6 flex items-baseline gap-2">
+          {back === 'quiz_stats' && (
+            <Link
+              to="/main/statistiche"
+              className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
+            >
+              «
+            </Link>
+          )}
+          <h1 className="text-2xl font-bold">Rispondi alle Domande</h1>
+        </div>
         <p className="mb-6 text-sm text-muted-foreground">
           Le tue risposte verranno registrate come esercitazione libera.
         </p>

@@ -1,11 +1,16 @@
 /**
  * Filters Slice - Gestione filtri utente persistenti.
- * Esercitazione, Errori Ricorrenti, etc.
+ * Esercitazione, Errori Ricorrenti, Statistiche, etc.
  */
 
 import type { StateCreator } from 'zustand';
 import type { TimePeriod } from '~/types/db';
-import type { AppState, FiltersSlice, EsercitazioneFilters } from '../types';
+import type {
+  AppState,
+  FiltersSlice,
+  EsercitazioneFilters,
+  ErroriRicorrentiChartType,
+} from '../types';
 
 /**
  * Valori default per i filtri esercitazione.
@@ -24,6 +29,15 @@ export const esercitazioneDefaults: EsercitazioneFilters = {
  */
 export const erroriRicorrentiDefaults = {
   period: 'tutti' as TimePeriod,
+  chartType: 'pie' as ErroriRicorrentiChartType,
+};
+
+/**
+ * Valori default per i filtri statistiche quiz.
+ */
+export const statisticheDefaults = {
+  period: 'tutti' as TimePeriod,
+  chartType: 'pie' as ErroriRicorrentiChartType,
 };
 
 /**
@@ -37,6 +51,7 @@ export const createFiltersSlice: StateCreator<
 > = (set) => ({
   esercitazione: { ...esercitazioneDefaults },
   erroriRicorrenti: { ...erroriRicorrentiDefaults },
+  statistiche: { ...statisticheDefaults },
 
   setEsercitazioneFilter: <K extends keyof EsercitazioneFilters>(
     key: K,
@@ -56,6 +71,38 @@ export const createFiltersSlice: StateCreator<
   setErroriRicorrentiPeriod: (period: TimePeriod): void => {
     set((state) => {
       state.erroriRicorrenti.period = period;
+    });
+  },
+
+  setErroriRicorrentiChartType: (chartType: ErroriRicorrentiChartType): void => {
+    set((state) => {
+      state.erroriRicorrenti.chartType = chartType;
+    });
+  },
+
+  toggleErroriRicorrentiChartType: (): void => {
+    set((state) => {
+      state.erroriRicorrenti.chartType =
+        state.erroriRicorrenti.chartType === 'pie' ? 'bar' : 'pie';
+    });
+  },
+
+  setStatistichePeriod: (period: TimePeriod): void => {
+    set((state) => {
+      state.statistiche.period = period;
+    });
+  },
+
+  setStatisticheChartType: (chartType: ErroriRicorrentiChartType): void => {
+    set((state) => {
+      state.statistiche.chartType = chartType;
+    });
+  },
+
+  toggleStatisticheChartType: (): void => {
+    set((state) => {
+      state.statistiche.chartType =
+        state.statistiche.chartType === 'pie' ? 'bar' : 'pie';
     });
   },
 });
