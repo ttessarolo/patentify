@@ -5,7 +5,7 @@
 
 import type { StateCreator } from 'zustand';
 import type { Domanda } from '~/types/db';
-import type { AppState, QuizSlice, QuizPreferences } from '../types';
+import type { AppState, QuizSlice, QuizPreferences, QuizStatus } from '../types';
 
 /**
  * Valori default per le preferenze quiz.
@@ -37,6 +37,7 @@ export const createQuizSlice: StateCreator<
         correctCount: 0,
         wrongCount: 0,
         wrongAnswers: [],
+        status: 'playing',
       };
     });
   },
@@ -55,6 +56,22 @@ export const createQuizSlice: StateCreator<
         if (wrongAnswer) {
           state.activeQuiz.wrongAnswers.push(wrongAnswer);
         }
+      }
+    });
+  },
+
+  setQuizStatus: (status: QuizStatus): void => {
+    set((state) => {
+      if (state.activeQuiz) {
+        state.activeQuiz.status = status;
+      }
+    });
+  },
+
+  setQuizFinalTime: (seconds: number): void => {
+    set((state) => {
+      if (state.activeQuiz) {
+        state.activeQuiz.finalTotalSeconds = seconds;
       }
     });
   },

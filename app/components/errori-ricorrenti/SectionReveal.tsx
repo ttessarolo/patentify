@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '~/components/ui/card';
 import { useAppStore } from '~/store';
 import { SectionSkeleton } from './LazySection';
@@ -67,6 +67,14 @@ export function SectionReveal({
 
   // Stato locale per lazy loading (non necessario persistere)
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
+
+  // Se la sezione è già aperta al mount (stato persistito dopo refresh), carica i dati
+  useEffect(() => {
+    if (isOpen && !hasBeenOpened) {
+      setHasBeenOpened(true);
+      onFirstOpen?.();
+    }
+  }, [isOpen, hasBeenOpened, onFirstOpen]);
 
   const handleToggle = useCallback((): void => {
     const willOpen = !isOpen;

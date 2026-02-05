@@ -17,7 +17,7 @@ import {
 } from '~/components/ui/alert-dialog';
 import { useNavigate } from '@tanstack/react-router';
 import { StopIcon, QuizIcon, CorrectIcon, WrongIcon, TimelapseIcon, AvgTimeIcon } from '~/icons';
-import { useAppStore } from '~/store';
+import { useAppStore, type QuizStatus } from '~/store';
 import { getQuizDomanda, abortQuiz, completeQuiz } from '~/server/quiz';
 import { trackAttempt } from '~/server/track_attempt';
 import type {
@@ -37,8 +37,6 @@ export interface QuizProps {
   quizId: number;
   onEnd: () => void;
 }
-
-type QuizStatus = 'playing' | 'finished' | 'abandoned' | 'time_expired';
 
 /** Payload per getQuizDomanda */
 type GetQuizDomandaPayload = {
@@ -78,6 +76,8 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
   // Store Zustand per stato persistente
   const activeQuiz = useAppStore((s) => s.activeQuiz);
   const updateQuizProgress = useAppStore((s) => s.updateQuizProgress);
+  const setQuizStatus = useAppStore((s) => s.setQuizStatus);
+  const setQuizFinalTime = useAppStore((s) => s.setQuizFinalTime);
 
   // Calcola tempo iniziale trascorso (per ripresa sessione)
   // Se activeQuiz.quizId === quizId, calcola il tempo trascorso da startedAt
@@ -91,11 +91,13 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
     return 0;
   }, [activeQuiz, quizId]);
 
+  // Lo status viene ora dallo store (persistito) per sopravvivere ai refresh
+  const status: QuizStatus = activeQuiz?.quizId === quizId ? activeQuiz.status : 'playing';
+
   // Stato iniziale: riprende dallo store se disponibile
   const [currentPos, setCurrentPos] = useState(
     activeQuiz?.quizId === quizId ? activeQuiz.currentPos : 1
   );
-  const [status, setStatus] = useState<QuizStatus>('playing');
   const [abandonDialogOpen, setAbandonDialogOpen] = useState(false);
   
   // Stato per tracciare i risultati (riprende dallo store se disponibile)
@@ -106,8 +108,10 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
     activeQuiz?.quizId === quizId ? activeQuiz.wrongCount : 0
   );
 
-  // Stato per tracciare il tempo finale (secondi trascorsi quando il quiz termina)
-  const [finalTotalSeconds, setFinalTotalSeconds] = useState<number | null>(null);
+  // Il tempo finale viene ora dallo store (persistito) per sopravvivere ai refresh
+  const finalTotalSeconds: number | null = activeQuiz?.quizId === quizId
+    ? activeQuiz.finalTotalSeconds ?? null
+    : null;
 
   // Stato per accumulare le domande sbagliate (riprende dallo store se disponibile)
   const [wrongAnswers, setWrongAnswers] = useState<
@@ -221,33 +225,33 @@ export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
         // Aggiorna lo store per persistenza
         updateQuizProgress(newPos, newCorrectCount, newWrongCount, wrongAnswer);
       } else {
-        // Quiz completato - salva il tempo prima di cambiare stato
-        setFinalTotalSeconds(lastElapsedRef.current);
-        setStatus('finished');
+        // Quiz completato - salva il tempo e lo status nello store (persistiti)
+        setQuizFinalTime(lastElapsedRef.current);
+        setQuizStatus('finished');
         completeMutation.mutate();
       }
     },
-    [status, quizId, currentPos, correctCount, wrongCount, trackMutation, completeMutation, domandaQuery.data, updateQuizProgress]
+    [status, quizId, currentPos, correctCount, wrongCount, trackMutation, completeMutation, domandaQuery.data, updateQuizProgress, setQuizStatus, setQuizFinalTime]
   );
 
   // Handler per scadenza timer
   const handleTimerEnd = useCallback((): void => {
     if (status !== 'playing' || abortedRef.current) return;
     abortedRef.current = true;
-    // Salva il tempo prima di cambiare stato
-    setFinalTotalSeconds(lastElapsedRef.current);
-    setStatus('time_expired');
+    // Salva il tempo e lo status nello store (persistiti)
+    setQuizFinalTime(lastElapsedRef.current);
+    setQuizStatus('time_expired');
     abortMutation.mutate();
-  }, [status, abortMutation]);
+  }, [status, abortMutation, setQuizStatus, setQuizFinalTime]);
 
   // Handler per conferma abbandono
   const handleConfirmAbandon = useCallback((): void => {
     if (abortedRef.current) return;
     abortedRef.current = true;
     setAbandonDialogOpen(false);
-    setStatus('abandoned');
+    setQuizStatus('abandoned');
     abortMutation.mutate();
-  }, [abortMutation]);
+  }, [abortMutation, setQuizStatus]);
 
   // Handler per tornare alla pagina principale
   const handleBackToSimulazione = useCallback((): void => {

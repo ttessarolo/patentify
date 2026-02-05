@@ -70,6 +70,11 @@ export interface FiltersSlice {
 // ============================================================
 
 /**
+ * Stato del quiz (playing, finished, abandoned, time_expired).
+ */
+export type QuizStatus = 'playing' | 'finished' | 'abandoned' | 'time_expired';
+
+/**
  * Stato del quiz attivo (persistito per ripresa sessione).
  */
 export interface ActiveQuizState {
@@ -88,6 +93,10 @@ export interface ActiveQuizState {
     domanda: Domanda;
     answerGiven: string;
   }>;
+  /** Stato corrente del quiz (persistito per ripresa dopo refresh) */
+  status: QuizStatus;
+  /** Tempo totale trascorso in secondi al completamento */
+  finalTotalSeconds?: number;
 }
 
 /**
@@ -116,7 +125,11 @@ export interface QuizSlice {
     wrongCount: number,
     wrongAnswer?: { domanda: Domanda; answerGiven: string }
   ) => void;
-  /** Termina il quiz (completato, abbandonato, tempo scaduto) */
+  /** Aggiorna lo stato del quiz (finished, abandoned, time_expired) */
+  setQuizStatus: (status: QuizStatus) => void;
+  /** Salva il tempo totale trascorso al completamento */
+  setQuizFinalTime: (seconds: number) => void;
+  /** Termina il quiz e resetta lo stato (quando utente torna al form) */
   endQuiz: () => void;
   /** Aggiorna una preferenza quiz */
   setQuizPreference: <K extends keyof QuizPreferences>(

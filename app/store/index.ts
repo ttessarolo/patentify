@@ -63,6 +63,7 @@ export type {
   QuizSlice,
   ActiveQuizState,
   QuizPreferences,
+  QuizStatus,
   EsercitazioneFilters,
   ErroriRicorrentiFilters,
 } from './types';
