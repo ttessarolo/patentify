@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import type { JSX } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
@@ -69,7 +70,7 @@ import { QUIZ_SIZE, QUIZ_DURATION_SECONDS, MAX_ERRORS } from '~/commons';
 // Componente Quiz
 // ============================================================
 
-export function Quiz({ quizId, onEnd }: QuizProps): React.JSX.Element {
+export function Quiz({ quizId, onEnd }: QuizProps): JSX.Element {
   const { userId } = useAuth();
   const navigate = useNavigate();
 

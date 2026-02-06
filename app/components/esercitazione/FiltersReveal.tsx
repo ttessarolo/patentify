@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { Card, CardContent } from '~/components/ui/card';
 import { Switch } from '~/components/ui/switch';
 import { Pill } from '~/components/ui/pill';
@@ -60,7 +60,7 @@ export function FiltersReveal({
   activeFiltersCount,
   ordinamentoCasuale,
   onOrdinamentoCasualeChange,
-}: FiltersRevealProps): React.JSX.Element {
+}: FiltersRevealProps): JSX.Element {
   // Stato persistente dallo store Zustand
   const isOpen = useAppStore((s) => s.collapsedSections[SECTION_KEY] ?? false);
   const toggleSection = useAppStore((s) => s.toggleSection);

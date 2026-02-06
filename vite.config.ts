@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
+import { sentryTanstackStart } from '@sentry/tanstackstart-react';
 import netlify from '@netlify/vite-plugin-tanstack-start';
 import react from '@vitejs/plugin-react';
 import { devtools } from '@tanstack/devtools-vite';
@@ -56,6 +57,12 @@ export default defineConfig({
       svgrOptions: {
         icon: true,
       },
+    }),
+    // Sentry plugin deve essere l'ultimo
+    sentryTanstackStart({
+      org: 'radiozero',
+      project: 'patentify',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
     }),
   ],
 });

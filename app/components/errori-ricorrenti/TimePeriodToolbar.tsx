@@ -1,4 +1,4 @@
-import React from 'react';
+import type { ComponentType, JSX } from 'react';
 import { useNavigate, useSearch, useLocation } from '@tanstack/react-router';
 import { OggiIcon, SettimanaIcon, MeseIcon, AllIcon } from '~/icons';
 import { useAppStore } from '~/store';
@@ -12,7 +12,7 @@ export type PeriodSection = 'erroriRicorrenti' | 'statistiche';
 interface TimePeriodOption {
   value: TimePeriod;
   label: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: ComponentType<{ className?: string }>;
 }
 
 const TIME_PERIOD_OPTIONS: TimePeriodOption[] = [
@@ -37,7 +37,7 @@ interface TimePeriodToolbarProps {
 export function TimePeriodToolbar({
   currentPeriod,
   section = 'erroriRicorrenti',
-}: TimePeriodToolbarProps): React.JSX.Element {
+}: TimePeriodToolbarProps): JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
 

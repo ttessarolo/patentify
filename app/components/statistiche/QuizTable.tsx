@@ -1,4 +1,5 @@
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import type { JSX } from 'react';
+import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -134,7 +135,7 @@ const PAGE_SIZE = 20;
  * Utilizza TanStack Table per la gestione delle colonne
  * e TanStack Query con useInfiniteQuery per la paginazione.
  */
-export function QuizTable({ period }: QuizTableProps): React.JSX.Element {
+export function QuizTable({ period }: QuizTableProps): JSX.Element {
   const navigate = useNavigate();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 

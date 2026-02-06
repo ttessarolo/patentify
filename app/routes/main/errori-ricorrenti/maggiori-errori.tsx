@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -25,7 +25,7 @@ type DomandePayload = {
   data: { period: TimePeriod; limit: number; offset: number };
 };
 
-function MaggioriErroriPage(): React.JSX.Element {
+function MaggioriErroriPage(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 

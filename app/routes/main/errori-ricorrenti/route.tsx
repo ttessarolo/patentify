@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 import { z } from 'zod';
 import {
@@ -22,7 +22,7 @@ export const Route = createFileRoute('/main/errori-ricorrenti')({
  * Contiene la toolbar sticky per la selezione del periodo
  * e l'Outlet per le sotto-rotte.
  */
-function ErroriRicorrentiLayout(): React.JSX.Element {
+function ErroriRicorrentiLayout(): JSX.Element {
   const currentPeriod = useTimePeriod();
 
   return (

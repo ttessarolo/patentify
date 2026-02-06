@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -88,7 +88,7 @@ interface StatsSectionProps {
 /**
  * Skeleton per la sezione statistiche durante il caricamento.
  */
-function StatsSkeleton(): React.JSX.Element {
+function StatsSkeleton(): JSX.Element {
   return (
     <div className="p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -114,7 +114,7 @@ export function StatsSection({
   stats,
   isLoading = false,
   period,
-}: StatsSectionProps): React.JSX.Element {
+}: StatsSectionProps): JSX.Element {
   // Stato persistente per toggle tra Pie e Bar (dallo store Zustand)
   const chartType = useAppStore((s) => s.erroriRicorrenti.chartType);
   const toggleChartType = useAppStore((s) => s.toggleErroriRicorrentiChartType);
@@ -354,7 +354,7 @@ interface TimelineBarChartProps {
 function TimelineBarChart({
   data,
   isLoading,
-}: TimelineBarChartProps): React.JSX.Element {
+}: TimelineBarChartProps): JSX.Element {
   if (isLoading || !data) {
     return (
       <div className="flex h-32 w-full items-center justify-center sm:h-48 sm:w-[520px]">

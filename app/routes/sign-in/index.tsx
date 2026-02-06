@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { SignIn } from '@clerk/tanstack-react-start';
 
@@ -6,7 +6,7 @@ export const Route = createFileRoute('/sign-in/')({
   component: SignInPage,
 });
 
-function SignInPage(): React.JSX.Element {
+function SignInPage(): JSX.Element {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <SignIn

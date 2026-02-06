@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import type { JSX, ReactNode } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '~/components/ui/card';
 import { useAppStore } from '~/store';
 import { SectionSkeleton } from './LazySection';
@@ -38,13 +39,15 @@ export interface SectionRevealProps {
   /** Colore del bordo e del titolo */
   color: SectionColor;
   /** Contenuto della sezione (renderizzato solo quando aperto) */
-  children: React.ReactNode;
+  children: ReactNode;
   /** Stato di caricamento del contenuto */
   isLoading?: boolean;
   /** Callback chiamato alla prima apertura (per lazy loading) */
   onFirstOpen?: () => void;
   /** Classe CSS aggiuntiva per il container */
   className?: string;
+  /** Chiave per forzare il reload dei dati (es. quando cambia il periodo) */
+  reloadKey?: string | number;
 }
 
 /**
@@ -60,13 +63,22 @@ export function SectionReveal({
   isLoading = false,
   onFirstOpen,
   className = '',
-}: SectionRevealProps): React.JSX.Element {
+  reloadKey,
+}: SectionRevealProps): JSX.Element {
   // Stato persistente dallo store Zustand
   const isOpen = useAppStore((s) => s.collapsedSections[sectionKey] ?? false);
   const toggleSection = useAppStore((s) => s.toggleSection);
 
   // Stato locale per lazy loading (non necessario persistere)
   const [hasBeenOpened, setHasBeenOpened] = useState(false);
+
+  // Resetta hasBeenOpened quando reloadKey cambia (es. cambio periodo)
+  // Questo forza il ri-fetch dei dati alla prossima apertura o se già aperto
+  useEffect(() => {
+    if (reloadKey !== undefined) {
+      setHasBeenOpened(false);
+    }
+  }, [reloadKey]);
 
   // Se la sezione è già aperta al mount (stato persistito dopo refresh), carica i dati
   useEffect(() => {

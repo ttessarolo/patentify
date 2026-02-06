@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import type { JSX } from 'react';
+import { useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -29,7 +30,7 @@ export const Route = createFileRoute('/main/simulazione-quiz')({
   component: SimulazioneQuizPage,
 });
 
-function SimulazioneQuizPage(): React.JSX.Element {
+function SimulazioneQuizPage(): JSX.Element {
   // Preferenze persistenti dallo store Zustand
   const preferences = useAppStore((s) => s.preferences);
   const setPreference = useAppStore((s) => s.setQuizPreference);

@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import type { JSX } from 'react';
+import { useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
@@ -35,7 +36,7 @@ type TrackAttemptPayload = {
   data: { domanda_id: number; answer_given: string };
 };
 
-function CategorieCritichePage(): React.JSX.Element {
+function CategorieCritichePage(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 

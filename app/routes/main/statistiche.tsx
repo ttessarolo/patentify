@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
@@ -26,7 +26,7 @@ export const Route = createFileRoute('/main/statistiche')({
   component: StatistichePage,
 });
 
-function StatistichePage(): React.JSX.Element {
+function StatistichePage(): JSX.Element {
   const period = useStatistichePeriod();
 
   // Server function

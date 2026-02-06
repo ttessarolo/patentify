@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import type { ChangeEvent, JSX } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Input } from '~/components/ui/input';
 import { Label } from '~/components/ui/label';
 
@@ -18,7 +19,7 @@ export function SearchField({
   onChange,
   placeholder = 'Cerca nella domanda...',
   debounceMs = 300,
-}: SearchFieldProps): React.JSX.Element {
+}: SearchFieldProps): JSX.Element {
   const [localValue, setLocalValue] = useState(value);
 
   // Sincronizza il valore locale quando cambia dall'esterno
@@ -40,7 +41,7 @@ export function SearchField({
   }, [localValue, debounceMs, onChange, value]);
 
   const handleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>): void => {
+    (e: ChangeEvent<HTMLInputElement>): void => {
       setLocalValue(e.target.value);
     },
     []

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import {
   Card,
@@ -13,7 +13,7 @@ export const Route = createFileRoute('/main/')({
   component: MainIndex,
 });
 
-function MainIndex(): React.JSX.Element {
+function MainIndex(): JSX.Element {
   return (
     <div className="space-y-6">
       <Card className="border-0">

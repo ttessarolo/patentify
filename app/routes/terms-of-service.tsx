@@ -1,11 +1,11 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/terms-of-service')({
   component: TermsOfService,
 });
 
-function TermsOfService(): React.JSX.Element {
+function TermsOfService(): JSX.Element {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-3xl px-4 py-8">

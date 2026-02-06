@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import type { JSX } from 'react';
+import { useCallback, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
 import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent } from '~/components/ui/card';
@@ -108,12 +109,13 @@ export function DomandaCard({
   learning = true,
   readOnly = false,
   initialAnswer,
-}: DomandaCardProps): React.JSX.Element {
+}: DomandaCardProps): JSX.Element {
   // Calcola se iniziare in stato "già risposta" (per modalità readOnly con initialAnswer)
   const isPreAnswered = readOnly && initialAnswer != null;
   const preComputedIsCorrect =
     isPreAnswered && domanda.risposta != null
-      ? initialAnswer === domanda.risposta
+      ? initialAnswer.trim().toLowerCase() ===
+        domanda.risposta.trim().toLowerCase()
       : null;
 
   const [answered, setAnswered] = useState(isPreAnswered);

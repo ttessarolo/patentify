@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import type { JSX } from 'react';
+import { useEffect } from 'react';
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { SignedIn, SignedOut, useAuth } from '@clerk/tanstack-react-start';
 import { Button } from '~/components/ui/button';
@@ -7,7 +8,7 @@ export const Route = createFileRoute('/')({
   component: Index,
 });
 
-function Index(): React.JSX.Element {
+function Index(): JSX.Element {
   const navigate = useNavigate();
   const { isSignedIn, isLoaded } = useAuth();
 

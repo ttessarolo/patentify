@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import type { JSX } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '~/components/ui/button';
 import { ShareIcon } from '~/icons';
 
@@ -16,7 +17,7 @@ export interface ShareQuizButtonProps {
 export function ShareQuizButton({
   quizId,
   className = '',
-}: ShareQuizButtonProps): React.JSX.Element {
+}: ShareQuizButtonProps): JSX.Element {
   const [copied, setCopied] = useState(false);
 
   const handleShare = useCallback(async (): Promise<void> => {

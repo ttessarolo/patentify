@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { Card, CardContent } from '~/components/ui/card';
 import { Label } from '~/components/ui/label';
 import {
@@ -37,7 +37,7 @@ export function FiltersBox({
   onAmbiguitaChange,
   onDifficoltaChange,
   onTitoloQuesitoChange,
-}: FiltersBoxProps): React.JSX.Element {
+}: FiltersBoxProps): JSX.Element {
   return (
     <Card className="w-full">
       <CardContent className="pt-4">

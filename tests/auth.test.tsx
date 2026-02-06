@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import React from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 // Mock Clerk components
 const mockSignIn = vi.fn(() => <div data-testid="clerk-sign-in">Sign In</div>);
@@ -13,14 +13,14 @@ vi.mock('@clerk/tanstack-react-start', () => ({
   SignIn: mockSignIn,
   SignUp: mockSignUp,
   UserProfile: mockUserProfile,
-  SignedIn: ({ children }: { children: React.ReactNode }) => (
+  SignedIn: ({ children }: { children: ReactNode }) => (
     <div data-testid="signed-in">{children}</div>
   ),
-  SignedOut: ({ children }: { children: React.ReactNode }) => (
+  SignedOut: ({ children }: { children: ReactNode }) => (
     <div data-testid="signed-out">{children}</div>
   ),
   UserButton: () => <button data-testid="user-button">User Button</button>,
-  ClerkProvider: ({ children }: { children: React.ReactNode }) => (
+  ClerkProvider: ({ children }: { children: ReactNode }) => (
     <div data-testid="clerk-provider">{children}</div>
   ),
   useAuth: vi.fn(() => ({
@@ -33,7 +33,7 @@ vi.mock('@clerk/tanstack-react-start', () => ({
 // Mock TanStack Router
 vi.mock('@tanstack/react-router', () => ({
   createFileRoute: vi.fn((path: string) => {
-    return (config: { component: React.ComponentType }) => {
+    return (config: { component: ComponentType }) => {
       const Component = config.component;
       return {
         component: Component,
@@ -42,7 +42,7 @@ vi.mock('@tanstack/react-router', () => ({
       };
     };
   }),
-  Link: ({ children, to }: { children: React.ReactNode; to: string }) => (
+  Link: ({ children, to }: { children: ReactNode; to: string }) => (
     <a href={to} data-testid="link">
       {children}
     </a>

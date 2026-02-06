@@ -1,4 +1,5 @@
-import React, { useCallback, useRef, useEffect, useState } from 'react';
+import type { JSX } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
@@ -53,7 +54,7 @@ export const Route = createFileRoute('/main/esercitazione')({
   component: EsercitazionePage,
 });
 
-function EsercitazionePage(): React.JSX.Element {
+function EsercitazionePage(): JSX.Element {
   // Legge i search params dall'URL
   const searchParams = Route.useSearch();
 

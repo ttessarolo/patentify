@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
@@ -41,7 +41,7 @@ type DomandePayload = {
   data: { period: TimePeriod; limit: number; offset: number };
 };
 
-function ErroriRicorrentiIndex(): React.JSX.Element {
+function ErroriRicorrentiIndex(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 
@@ -193,6 +193,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
           onFirstOpen={(): void => {
             void categorieQuery.refetch();
           }}
+          reloadKey={period}
         >
           {categorieQuery.data?.categorie &&
           categorieQuery.data.categorie.length > 0 ? (
@@ -245,6 +246,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
           onFirstOpen={(): void => {
             void maggioriErroriQuery.refetch();
           }}
+          reloadKey={period}
         >
           <DomandeContent
             domande={maggioriErroriQuery.data?.domande ?? []}
@@ -264,6 +266,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
           onFirstOpen={(): void => {
             void skullQuery.refetch();
           }}
+          reloadKey={period}
         >
           <DomandeContent
             domande={skullQuery.data?.domande ?? []}
@@ -285,6 +288,7 @@ function ErroriRicorrentiIndex(): React.JSX.Element {
           onFirstOpen={(): void => {
             void maggioriEsatteQuery.refetch();
           }}
+          reloadKey={period}
         >
           <DomandeContent
             domande={maggioriEsatteQuery.data?.domande ?? []}
@@ -317,7 +321,7 @@ function DomandeContent({
   linkText,
   period,
   userId,
-}: DomandeContentProps): React.JSX.Element {
+}: DomandeContentProps): JSX.Element {
   // Handler vuoto per readOnly mode
   const handleAnswer = (): void => {
     // readOnly mode, no-op

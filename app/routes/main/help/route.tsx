@@ -1,10 +1,10 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Outlet } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/main/help')({
   component: HelpLayout,
 });
 
-function HelpLayout(): React.JSX.Element {
+function HelpLayout(): JSX.Element {
   return <Outlet />;
 }

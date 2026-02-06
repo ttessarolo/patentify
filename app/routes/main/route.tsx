@@ -1,4 +1,5 @@
-import React, { useRef, useEffect } from 'react';
+import type { JSX } from 'react';
+import { useRef, useEffect } from 'react';
 import {
   createFileRoute,
   Link,
@@ -16,7 +17,7 @@ export const Route = createFileRoute('/main')({
   component: MainLayout,
 });
 
-function MainLayout(): React.JSX.Element {
+function MainLayout(): JSX.Element {
   const headerRef = useRef<HTMLElement>(null);
   const navigate = useNavigate();
   const { isLoaded, isSignedIn } = useAuth();

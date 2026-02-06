@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import type { JSX } from 'react';
+import { useState, useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
@@ -50,7 +51,7 @@ export const Route = createFileRoute('/main/rivedi-quiz')({
   component: RivediQuizPage,
 });
 
-function RivediQuizPage(): React.JSX.Element {
+function RivediQuizPage(): JSX.Element {
   const { quizId, back } = Route.useSearch();
   const { userId } = useAuth();
 

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import type { JSX, ReactNode, RefObject } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 interface LazySectionProps {
   /** Children da renderizzare quando la sezione è visibile */
-  children: React.ReactNode;
+  children: ReactNode;
   /** Placeholder da mostrare prima che la sezione sia visibile */
-  placeholder?: React.ReactNode;
+  placeholder?: ReactNode;
   /** Margin per l'IntersectionObserver (default: '100px') */
   rootMargin?: string;
   /** Threshold per l'IntersectionObserver (default: 0) */
@@ -18,7 +19,7 @@ interface LazySectionProps {
 /**
  * Placeholder skeleton per le sezioni lazy.
  */
-export function SectionSkeleton(): React.JSX.Element {
+export function SectionSkeleton(): JSX.Element {
   return (
     <div className="animate-pulse space-y-3">
       <div className="h-6 w-1/3 rounded bg-muted" />
@@ -42,7 +43,7 @@ export function LazySection({
   threshold = 0,
   onVisible,
   className = '',
-}: LazySectionProps): React.JSX.Element {
+}: LazySectionProps): JSX.Element {
   const [isVisible, setIsVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -89,7 +90,7 @@ export function useLazyLoad(
     threshold?: number;
   } = {}
 ): {
-  ref: React.RefObject<HTMLDivElement | null>;
+  ref: RefObject<HTMLDivElement | null>;
   isVisible: boolean;
 } {
   const { rootMargin = '100px', threshold = 0 } = options;

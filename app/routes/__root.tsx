@@ -1,13 +1,18 @@
 /// <reference types="vite/client" />
-import React from 'react';
-import type { ReactNode } from 'react';
+import type { JSX, ReactNode } from 'react';
 import {
   Outlet,
   createRootRoute,
   HeadContent,
   Scripts,
 } from '@tanstack/react-router';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  QueryClient,
+  QueryClientProvider,
+  QueryCache,
+  MutationCache,
+} from '@tanstack/react-query';
+import * as Sentry from '@sentry/tanstackstart-react';
 import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools';
 import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools';
 import { TanStackDevtools } from '@tanstack/react-devtools';
@@ -19,9 +24,31 @@ import { PWAInstallPrompt } from '~/components/pwa-install-prompt';
 import { UpdateDialog } from '~/components/update-dialog';
 import '~/styles/globals.css';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      throwOnError: false,
+    },
+  },
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      Sentry.captureException(error, {
+        tags: { type: 'query' },
+        extra: { queryKey: query.queryKey },
+      });
+    },
+  }),
+  mutationCache: new MutationCache({
+    onError: (error, _variables, _context, mutation) => {
+      Sentry.captureException(error, {
+        tags: { type: 'mutation' },
+        extra: { mutationKey: mutation.options.mutationKey },
+      });
+    },
+  }),
+});
 
-function NotFoundComponent(): React.JSX.Element {
+function NotFoundComponent(): JSX.Element {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
       <h1 className="text-2xl font-semibold">Pagina non trovata</h1>
@@ -100,7 +127,7 @@ export const Route = createRootRoute({
   component: RootComponent,
 });
 
-function RootComponent(): React.JSX.Element {
+function RootComponent(): JSX.Element {
   return (
     <RootDocument>
       <Providers>
@@ -112,7 +139,7 @@ function RootComponent(): React.JSX.Element {
 
 function Providers({
   children,
-}: Readonly<{ children: ReactNode }>): React.JSX.Element {
+}: Readonly<{ children: ReactNode }>): JSX.Element {
   // Trigger hydration dello store Zustand dal localStorage
   useStoreRehydration();
 
@@ -184,7 +211,7 @@ function Providers({
 
 function RootDocument({
   children,
-}: Readonly<{ children: ReactNode }>): React.JSX.Element {
+}: Readonly<{ children: ReactNode }>): JSX.Element {
   return (
     <html lang="it" suppressHydrationWarning>
       <head>

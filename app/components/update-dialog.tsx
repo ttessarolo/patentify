@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import type { JSX } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import { useAppStore } from '~/store';
  * Dialog che notifica l'utente della disponibilità di una nuova versione.
  * L'aggiornamento è obbligatorio - non c'è modo di chiudere il dialog senza aggiornare.
  */
-export function UpdateDialog(): React.JSX.Element {
+export function UpdateDialog(): JSX.Element {
   const updateAvailable = useAppStore((s) => s.updateAvailable);
 
   /**

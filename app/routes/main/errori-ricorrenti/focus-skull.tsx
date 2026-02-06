@@ -1,4 +1,5 @@
-import React, { useCallback } from 'react';
+import type { JSX } from 'react';
+import { useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
@@ -33,7 +34,7 @@ type TrackAttemptPayload = {
   data: { domanda_id: number; answer_given: string };
 };
 
-function FocusSkullPage(): React.JSX.Element {
+function FocusSkullPage(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 

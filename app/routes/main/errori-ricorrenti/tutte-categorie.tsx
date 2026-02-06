@@ -1,4 +1,4 @@
-import React from 'react';
+import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
 import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +15,7 @@ export const Route = createFileRoute('/main/errori-ricorrenti/tutte-categorie')(
 
 type CategoriePayload = { data: { period: TimePeriod } };
 
-function TutteCategoriePage(): React.JSX.Element {
+function TutteCategoriePage(): JSX.Element {
   const period = useTimePeriod();
 
   const getAllCategorieFn = useServerFn(getAllCategorieErrori);

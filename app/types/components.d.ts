@@ -1,6 +1,7 @@
 /**
  * Tipi per i componenti UI React.
  */
+import type { CSSProperties } from 'react';
 
 // ============================================================
 // Timer
@@ -40,5 +41,5 @@ export interface TimerProps {
   /** Classe CSS opzionale */
   className?: string;
   /** Stile inline opzionale */
-  style?: React.CSSProperties;
+  style?: CSSProperties;
 }

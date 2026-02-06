@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import type { JSX } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from '~/components/ui/button';
 import { cn } from '~/lib/utils';
 
@@ -67,7 +68,7 @@ function isMobile(): boolean {
  * - Su iOS: mostra istruzioni manuali
  * - Non mostra nulla se l'app è già installata o se l'utente ha già dismesso il prompt
  */
-export function PWAInstallPrompt(): React.JSX.Element | null {
+export function PWAInstallPrompt(): JSX.Element | null {
   const [showPrompt, setShowPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] =
     useState<BeforeInstallPromptEvent | null>(null);
