@@ -30,7 +30,7 @@ export function UserCell({
   imageUrl,
   isFriend,
 }: UserCellProps): JSX.Element {
-  const { userId: currentUserId } = useAuth();
+  const { userId: currentUserId, isLoaded: isAuthLoaded } = useAuth();
   const queryClient = useQueryClient();
 
   const addFriendFn = useServerFn(addFriend);
@@ -100,8 +100,8 @@ export function UserCell({
         </span>
         <span className="truncate text-xs text-muted-foreground">{name}</span>
 
-        {/* Bottone amicizia (non mostrare per se stessi) */}
-        {!isOwnUser && (
+        {/* Bottone amicizia (non mostrare per se stessi, né prima che auth sia caricato) */}
+        {isAuthLoaded && !isOwnUser && (
           <button
             type="button"
             onClick={handleFriendToggle}

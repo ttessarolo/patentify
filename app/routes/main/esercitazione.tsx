@@ -305,7 +305,7 @@ function EsercitazionePage(): JSX.Element {
       {/* Sezione filtri (osservata dall'Intersection Observer) */}
       <div ref={filtersSectionRef} className="space-y-4 sm:space-y-6">
         {/* Titolo con link back a Errori Ricorrenti se titolo_quesito presente */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-center gap-2 sm:justify-start">
           {searchParams.titolo_quesito && (
             <Link
               to="/main/errori-ricorrenti"
@@ -328,7 +328,7 @@ function EsercitazionePage(): JSX.Element {
               </svg>
             </Link>
           )}
-          <h1 className="text-2xl font-bold">Esercitazione Libera</h1>
+          <h1 className="text-center text-2xl font-bold sm:text-left">Esercitazione Libera</h1>
         </div>
 
         {/* Filtri collapsible */}
