@@ -12,12 +12,18 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 
-import type { AppState, ErroriRicorrentiFilters, StatisticheFilters } from './types';
+import type {
+  AppState,
+  ErroriRicorrentiFilters,
+  StatisticheFilters,
+  ClassificheFilters,
+} from './types';
 import { createUISlice } from './slices/ui';
 import {
   createFiltersSlice,
   erroriRicorrentiDefaults,
   statisticheDefaults,
+  classificheDefaults,
 } from './slices/filters';
 import { createQuizSlice } from './slices/quiz';
 import { createVersionSlice, versionDefaults } from './slices/version';
@@ -56,6 +62,7 @@ export const useAppStore = create<AppState>()(
         esercitazione: state.esercitazione,
         erroriRicorrenti: state.erroriRicorrenti,
         statistiche: state.statistiche,
+        classifiche: state.classifiche,
         activeQuiz: state.activeQuiz,
         preferences: state.preferences,
         // Version state
@@ -79,6 +86,12 @@ export const useAppStore = create<AppState>()(
           ...(persisted.statistiche ?? {}),
         };
 
+        // Deep merge per classifiche
+        const mergedClassifiche: ClassificheFilters = {
+          ...classificheDefaults,
+          ...(persisted.classifiche ?? {}),
+        };
+
         return {
           ...currentState,
           // Sovrascriviamo con i valori persistiti (shallow per i campi top-level)
@@ -89,6 +102,7 @@ export const useAppStore = create<AppState>()(
           // Deep merge per gli oggetti che hanno nested values
           erroriRicorrenti: mergedErroriRicorrenti,
           statistiche: mergedStatistiche,
+          classifiche: mergedClassifiche,
           // Version state
           currentVersion: persisted.currentVersion ?? versionDefaults.currentVersion,
           // Non persistiamo updateAvailable - viene sempre ricalcolato
@@ -112,5 +126,6 @@ export type {
   EsercitazioneFilters,
   ErroriRicorrentiFilters,
   StatisticheFilters,
+  ClassificheFilters,
   ErroriRicorrentiChartType,
 } from './types';

@@ -36,10 +36,11 @@ export const Route = createFileRoute('/api/webhooks/clerk')({
         const updatedAtTs = new Date(updated_at).toISOString();
 
         await sql`
-          INSERT INTO public.utente (id, name, email, email_verified, image_url, created_at, updated_at)
-          VALUES (${id}, ${name}, ${email}, ${emailVerified}, ${image_url || null}, ${createdAtTs}, ${updatedAtTs})
+          INSERT INTO public.utente (id, name, username, email, email_verified, image_url, created_at, updated_at)
+          VALUES (${id}, ${name}, ${username || null}, ${email}, ${emailVerified}, ${image_url || null}, ${createdAtTs}, ${updatedAtTs})
           ON CONFLICT (id) DO UPDATE SET
             name = EXCLUDED.name,
+            username = EXCLUDED.username,
             email = EXCLUDED.email,
             email_verified = EXCLUDED.email_verified,
             image_url = EXCLUDED.image_url,
@@ -61,7 +62,7 @@ export const Route = createFileRoute('/api/webhooks/clerk')({
 
         await sql`
           UPDATE public.utente
-          SET name = ${name}, email = ${email}, email_verified = ${emailVerified}, image_url = ${image_url || null}, updated_at = ${updatedAtTs}
+          SET name = ${name}, username = ${username || null}, email = ${email}, email_verified = ${emailVerified}, image_url = ${image_url || null}, updated_at = ${updatedAtTs}
           WHERE id = ${id}
         `;
 

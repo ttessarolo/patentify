@@ -26,9 +26,11 @@ import { Route as MainEsercitazioneRouteImport } from './routes/main/esercitazio
 import { Route as MainHelpRouteRouteImport } from './routes/main/help/route'
 import { Route as MainErroriRicorrentiRouteRouteImport } from './routes/main/errori-ricorrenti/route'
 import { Route as MainConsigliETrucchiRouteRouteImport } from './routes/main/consigli-e-trucchi/route'
+import { Route as MainClassificheRouteRouteImport } from './routes/main/classifiche/route'
 import { Route as MainHelpIndexRouteImport } from './routes/main/help/index'
 import { Route as MainErroriRicorrentiIndexRouteImport } from './routes/main/errori-ricorrenti/index'
 import { Route as MainConsigliETrucchiIndexRouteImport } from './routes/main/consigli-e-trucchi/index'
+import { Route as MainClassificheIndexRouteImport } from './routes/main/classifiche/index'
 import { Route as MainErroriRicorrentiTutteCategorieRouteImport } from './routes/main/errori-ricorrenti/tutte-categorie'
 import { Route as MainErroriRicorrentiSkullSelezionateRouteImport } from './routes/main/errori-ricorrenti/skull-selezionate'
 import { Route as MainErroriRicorrentiMaggioriErroriRouteImport } from './routes/main/errori-ricorrenti/maggiori-errori'
@@ -36,6 +38,8 @@ import { Route as MainErroriRicorrentiFocusSkullRouteImport } from './routes/mai
 import { Route as MainErroriRicorrentiDomandeSbagliateRouteImport } from './routes/main/errori-ricorrenti/domande-sbagliate'
 import { Route as MainErroriRicorrentiDomandeEsatteRouteImport } from './routes/main/errori-ricorrenti/domande-esatte'
 import { Route as MainErroriRicorrentiCategorieCriticheRouteImport } from './routes/main/errori-ricorrenti/categorie-critiche'
+import { Route as MainClassificheRisposteRouteImport } from './routes/main/classifiche/risposte'
+import { Route as MainClassificheQuizRouteImport } from './routes/main/classifiche/quiz'
 import { Route as ApiWebhooksClerkRouteImport } from './routes/api/webhooks/clerk'
 
 const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
@@ -126,6 +130,11 @@ const MainConsigliETrucchiRouteRoute =
     path: '/consigli-e-trucchi',
     getParentRoute: () => MainRouteRoute,
   } as any)
+const MainClassificheRouteRoute = MainClassificheRouteRouteImport.update({
+  id: '/classifiche',
+  path: '/classifiche',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainHelpIndexRoute = MainHelpIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -143,6 +152,11 @@ const MainConsigliETrucchiIndexRoute =
     path: '/',
     getParentRoute: () => MainConsigliETrucchiRouteRoute,
   } as any)
+const MainClassificheIndexRoute = MainClassificheIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MainClassificheRouteRoute,
+} as any)
 const MainErroriRicorrentiTutteCategorieRoute =
   MainErroriRicorrentiTutteCategorieRouteImport.update({
     id: '/tutte-categorie',
@@ -185,6 +199,16 @@ const MainErroriRicorrentiCategorieCriticheRoute =
     path: '/categorie-critiche',
     getParentRoute: () => MainErroriRicorrentiRouteRoute,
   } as any)
+const MainClassificheRisposteRoute = MainClassificheRisposteRouteImport.update({
+  id: '/risposte',
+  path: '/risposte',
+  getParentRoute: () => MainClassificheRouteRoute,
+} as any)
+const MainClassificheQuizRoute = MainClassificheQuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => MainClassificheRouteRoute,
+} as any)
 const ApiWebhooksClerkRoute = ApiWebhooksClerkRouteImport.update({
   id: '/api/webhooks/clerk',
   path: '/api/webhooks/clerk',
@@ -197,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/sign-up': typeof SignUpRouteRouteWithChildren
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/main/classifiche': typeof MainClassificheRouteRouteWithChildren
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
   '/main/help': typeof MainHelpRouteRouteWithChildren
@@ -210,6 +235,8 @@ export interface FileRoutesByFullPath {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
+  '/main/classifiche/quiz': typeof MainClassificheQuizRoute
+  '/main/classifiche/risposte': typeof MainClassificheRisposteRoute
   '/main/errori-ricorrenti/categorie-critiche': typeof MainErroriRicorrentiCategorieCriticheRoute
   '/main/errori-ricorrenti/domande-esatte': typeof MainErroriRicorrentiDomandeEsatteRoute
   '/main/errori-ricorrenti/domande-sbagliate': typeof MainErroriRicorrentiDomandeSbagliateRoute
@@ -217,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/classifiche/': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
   '/main/help/': typeof MainHelpIndexRoute
@@ -235,6 +263,8 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
+  '/main/classifiche/quiz': typeof MainClassificheQuizRoute
+  '/main/classifiche/risposte': typeof MainClassificheRisposteRoute
   '/main/errori-ricorrenti/categorie-critiche': typeof MainErroriRicorrentiCategorieCriticheRoute
   '/main/errori-ricorrenti/domande-esatte': typeof MainErroriRicorrentiDomandeEsatteRoute
   '/main/errori-ricorrenti/domande-sbagliate': typeof MainErroriRicorrentiDomandeSbagliateRoute
@@ -242,6 +272,7 @@ export interface FileRoutesByTo {
   '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/classifiche': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiIndexRoute
   '/main/help': typeof MainHelpIndexRoute
@@ -253,6 +284,7 @@ export interface FileRoutesById {
   '/sign-up': typeof SignUpRouteRouteWithChildren
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/main/classifiche': typeof MainClassificheRouteRouteWithChildren
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
   '/main/help': typeof MainHelpRouteRouteWithChildren
@@ -266,6 +298,8 @@ export interface FileRoutesById {
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
+  '/main/classifiche/quiz': typeof MainClassificheQuizRoute
+  '/main/classifiche/risposte': typeof MainClassificheRisposteRoute
   '/main/errori-ricorrenti/categorie-critiche': typeof MainErroriRicorrentiCategorieCriticheRoute
   '/main/errori-ricorrenti/domande-esatte': typeof MainErroriRicorrentiDomandeEsatteRoute
   '/main/errori-ricorrenti/domande-sbagliate': typeof MainErroriRicorrentiDomandeSbagliateRoute
@@ -273,6 +307,7 @@ export interface FileRoutesById {
   '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/classifiche/': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
   '/main/help/': typeof MainHelpIndexRoute
@@ -285,6 +320,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/privacy-policy'
     | '/terms-of-service'
+    | '/main/classifiche'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
@@ -298,6 +334,8 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/webhooks/clerk'
+    | '/main/classifiche/quiz'
+    | '/main/classifiche/risposte'
     | '/main/errori-ricorrenti/categorie-critiche'
     | '/main/errori-ricorrenti/domande-esatte'
     | '/main/errori-ricorrenti/domande-sbagliate'
@@ -305,6 +343,7 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/maggiori-errori'
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/classifiche/'
     | '/main/consigli-e-trucchi/'
     | '/main/errori-ricorrenti/'
     | '/main/help/'
@@ -323,6 +362,8 @@ export interface FileRouteTypes {
     | '/sign-in'
     | '/sign-up'
     | '/api/webhooks/clerk'
+    | '/main/classifiche/quiz'
+    | '/main/classifiche/risposte'
     | '/main/errori-ricorrenti/categorie-critiche'
     | '/main/errori-ricorrenti/domande-esatte'
     | '/main/errori-ricorrenti/domande-sbagliate'
@@ -330,6 +371,7 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/maggiori-errori'
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/classifiche'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
@@ -340,6 +382,7 @@ export interface FileRouteTypes {
     | '/sign-up'
     | '/privacy-policy'
     | '/terms-of-service'
+    | '/main/classifiche'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
@@ -353,6 +396,8 @@ export interface FileRouteTypes {
     | '/sign-in/'
     | '/sign-up/'
     | '/api/webhooks/clerk'
+    | '/main/classifiche/quiz'
+    | '/main/classifiche/risposte'
     | '/main/errori-ricorrenti/categorie-critiche'
     | '/main/errori-ricorrenti/domande-esatte'
     | '/main/errori-ricorrenti/domande-sbagliate'
@@ -360,6 +405,7 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/maggiori-errori'
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/classifiche/'
     | '/main/consigli-e-trucchi/'
     | '/main/errori-ricorrenti/'
     | '/main/help/'
@@ -497,6 +543,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainConsigliETrucchiRouteRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/main/classifiche': {
+      id: '/main/classifiche'
+      path: '/classifiche'
+      fullPath: '/main/classifiche'
+      preLoaderRoute: typeof MainClassificheRouteRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/main/help/': {
       id: '/main/help/'
       path: '/'
@@ -517,6 +570,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/main/consigli-e-trucchi/'
       preLoaderRoute: typeof MainConsigliETrucchiIndexRouteImport
       parentRoute: typeof MainConsigliETrucchiRouteRoute
+    }
+    '/main/classifiche/': {
+      id: '/main/classifiche/'
+      path: '/'
+      fullPath: '/main/classifiche/'
+      preLoaderRoute: typeof MainClassificheIndexRouteImport
+      parentRoute: typeof MainClassificheRouteRoute
     }
     '/main/errori-ricorrenti/tutte-categorie': {
       id: '/main/errori-ricorrenti/tutte-categorie'
@@ -567,6 +627,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainErroriRicorrentiCategorieCriticheRouteImport
       parentRoute: typeof MainErroriRicorrentiRouteRoute
     }
+    '/main/classifiche/risposte': {
+      id: '/main/classifiche/risposte'
+      path: '/risposte'
+      fullPath: '/main/classifiche/risposte'
+      preLoaderRoute: typeof MainClassificheRisposteRouteImport
+      parentRoute: typeof MainClassificheRouteRoute
+    }
+    '/main/classifiche/quiz': {
+      id: '/main/classifiche/quiz'
+      path: '/quiz'
+      fullPath: '/main/classifiche/quiz'
+      preLoaderRoute: typeof MainClassificheQuizRouteImport
+      parentRoute: typeof MainClassificheRouteRoute
+    }
     '/api/webhooks/clerk': {
       id: '/api/webhooks/clerk'
       path: '/api/webhooks/clerk'
@@ -576,6 +650,21 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface MainClassificheRouteRouteChildren {
+  MainClassificheQuizRoute: typeof MainClassificheQuizRoute
+  MainClassificheRisposteRoute: typeof MainClassificheRisposteRoute
+  MainClassificheIndexRoute: typeof MainClassificheIndexRoute
+}
+
+const MainClassificheRouteRouteChildren: MainClassificheRouteRouteChildren = {
+  MainClassificheQuizRoute: MainClassificheQuizRoute,
+  MainClassificheRisposteRoute: MainClassificheRisposteRoute,
+  MainClassificheIndexRoute: MainClassificheIndexRoute,
+}
+
+const MainClassificheRouteRouteWithChildren =
+  MainClassificheRouteRoute._addFileChildren(MainClassificheRouteRouteChildren)
 
 interface MainConsigliETrucchiRouteRouteChildren {
   MainConsigliETrucchiIndexRoute: typeof MainConsigliETrucchiIndexRoute
@@ -638,6 +727,7 @@ const MainHelpRouteRouteWithChildren = MainHelpRouteRoute._addFileChildren(
 )
 
 interface MainRouteRouteChildren {
+  MainClassificheRouteRoute: typeof MainClassificheRouteRouteWithChildren
   MainConsigliETrucchiRouteRoute: typeof MainConsigliETrucchiRouteRouteWithChildren
   MainErroriRicorrentiRouteRoute: typeof MainErroriRicorrentiRouteRouteWithChildren
   MainHelpRouteRoute: typeof MainHelpRouteRouteWithChildren
@@ -649,6 +739,7 @@ interface MainRouteRouteChildren {
 }
 
 const MainRouteRouteChildren: MainRouteRouteChildren = {
+  MainClassificheRouteRoute: MainClassificheRouteRouteWithChildren,
   MainConsigliETrucchiRouteRoute: MainConsigliETrucchiRouteRouteWithChildren,
   MainErroriRicorrentiRouteRoute: MainErroriRicorrentiRouteRouteWithChildren,
   MainHelpRouteRoute: MainHelpRouteRouteWithChildren,

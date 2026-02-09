@@ -10,6 +10,7 @@ import type {
   FiltersSlice,
   EsercitazioneFilters,
   ErroriRicorrentiChartType,
+  ClassificheFilters,
 } from '../types';
 
 /**
@@ -41,6 +42,19 @@ export const statisticheDefaults = {
 };
 
 /**
+ * Valori default per i filtri classifiche (leaderboard).
+ */
+export const classificheDefaults: ClassificheFilters = {
+  period: 'tutti' as TimePeriod,
+  view: 'quiz',
+  scope: 'generale',
+  quizSortField: 'promosso',
+  quizSortDir: 'desc',
+  risposteSortField: 'corrette',
+  risposteSortDir: 'desc',
+};
+
+/**
  * Crea lo slice Filters con Immer.
  */
 export const createFiltersSlice: StateCreator<
@@ -52,6 +66,7 @@ export const createFiltersSlice: StateCreator<
   esercitazione: { ...esercitazioneDefaults },
   erroriRicorrenti: { ...erroriRicorrentiDefaults },
   statistiche: { ...statisticheDefaults },
+  classifiche: { ...classificheDefaults },
 
   setEsercitazioneFilter: <K extends keyof EsercitazioneFilters>(
     key: K,
@@ -103,6 +118,44 @@ export const createFiltersSlice: StateCreator<
     set((state) => {
       state.statistiche.chartType =
         state.statistiche.chartType === 'pie' ? 'bar' : 'pie';
+    });
+  },
+
+  setClassifichePeriod: (period: TimePeriod): void => {
+    set((state) => {
+      state.classifiche.period = period;
+    });
+  },
+
+  setClassificheView: (view: ClassificheFilters['view']): void => {
+    set((state) => {
+      state.classifiche.view = view;
+    });
+  },
+
+  setClassificheScope: (scope: ClassificheFilters['scope']): void => {
+    set((state) => {
+      state.classifiche.scope = scope;
+    });
+  },
+
+  setClassificheQuizSort: (
+    field: ClassificheFilters['quizSortField'],
+    dir: ClassificheFilters['quizSortDir']
+  ): void => {
+    set((state) => {
+      state.classifiche.quizSortField = field;
+      state.classifiche.quizSortDir = dir;
+    });
+  },
+
+  setClassificheRisposteSort: (
+    field: ClassificheFilters['risposteSortField'],
+    dir: ClassificheFilters['risposteSortDir']
+  ): void => {
+    set((state) => {
+      state.classifiche.risposteSortField = field;
+      state.classifiche.risposteSortDir = dir;
     });
   },
 });

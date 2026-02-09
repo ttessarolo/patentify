@@ -11,6 +11,8 @@ export interface Utente {
   /** ID Clerk (es. user_2xxx) - PK */
   id: string;
   name: string;
+  /** Username Clerk (può essere null se non impostato) */
+  username: string | null;
   email: string;
   email_verified: boolean;
   image_url: string | null;
@@ -449,4 +451,88 @@ export interface QuizTimelineStatsResult {
   granularity: TimeGranularity;
   /** Punti dati della timeline */
   data: QuizTimelineDataPoint[];
+}
+
+// ============================================================
+// Tipi per Classifiche (Leaderboard)
+// ============================================================
+
+/** Tabella public.amici - relazione amicizia unidirezionale */
+export interface Amicizia {
+  /** ID Clerk dell'utente che ha aggiunto l'amico (FK a utente.id) */
+  user_id: string;
+  /** ID Clerk dell'amico aggiunto (FK a utente.id) */
+  friend_id: string;
+  created_at: string;
+}
+
+/** Campo di ordinamento per classifica quiz */
+export type ClassificaSortField = 'promosso' | 'bocciato';
+
+/** Campo di ordinamento per classifica risposte */
+export type ClassificaRisposteSortField = 'copertura' | 'sbagliate' | 'corrette';
+
+/** Direzione di ordinamento */
+export type SortDirection = 'asc' | 'desc';
+
+/** Scope della classifica (tutti o solo amici) */
+export type ClassificaScope = 'generale' | 'amici';
+
+/** Singola riga della classifica quiz */
+export interface ClassificaQuizRow {
+  /** ID Clerk dell'utente */
+  user_id: string;
+  /** Nome completo dell'utente */
+  name: string;
+  /** Username dell'utente */
+  username: string | null;
+  /** URL immagine profilo */
+  image_url: string | null;
+  /** Numero di quiz bocciati */
+  bocciato: number;
+  /** Numero di quiz promossi */
+  promosso: number;
+  /** Se l'utente è amico dell'utente autenticato */
+  is_friend: boolean;
+}
+
+/** Risultato paginato della classifica quiz */
+export interface ClassificaQuizResult {
+  rows: ClassificaQuizRow[];
+  hasMore: boolean;
+}
+
+/** Singola riga della classifica risposte */
+export interface ClassificaRisposteRow {
+  /** ID Clerk dell'utente */
+  user_id: string;
+  /** Nome completo dell'utente */
+  name: string;
+  /** Username dell'utente */
+  username: string | null;
+  /** URL immagine profilo */
+  image_url: string | null;
+  /** Numero totale di risposte date dall'utente */
+  totale_risposte: number;
+  /** Numero di risposte corrette */
+  risposte_corrette: number;
+  /** Numero di risposte errate */
+  risposte_errate: number;
+  /** Totale domande nel DB (per calcolo copertura) */
+  totale_domande_db: number;
+  /** Numero di domande uniche a cui l'utente ha risposto (per copertura) */
+  domande_uniche: number;
+  /** Se l'utente è amico dell'utente autenticato */
+  is_friend: boolean;
+}
+
+/** Risultato paginato della classifica risposte */
+export interface ClassificaRisposteResult {
+  rows: ClassificaRisposteRow[];
+  hasMore: boolean;
+}
+
+/** Risultato di addFriend / removeFriend */
+export interface FriendActionResult {
+  success: boolean;
 }

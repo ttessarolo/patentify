@@ -53,6 +53,12 @@ function MainIndex(): JSX.Element {
               asChild
               className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
             >
+              <Link to="/main/classifiche">Classifiche</Link>
+            </Button>
+            <Button
+              asChild
+              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
+            >
               <Link to="/main/consigli-e-trucchi">Consigli e Trucchi</Link>
             </Button>
             <Button

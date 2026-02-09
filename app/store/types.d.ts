@@ -61,6 +61,25 @@ export interface StatisticheFilters {
 }
 
 /**
+ * Stato filtri per la sezione Classifiche (Leaderboard).
+ */
+export interface ClassificheFilters {
+  period: TimePeriod;
+  /** Vista corrente: quiz o risposte */
+  view: 'quiz' | 'risposte';
+  /** Scope: tutti gli utenti o solo amici */
+  scope: 'generale' | 'amici';
+  /** Campo di ordinamento per la classifica quiz */
+  quizSortField: 'promosso' | 'bocciato';
+  /** Direzione ordinamento classifica quiz */
+  quizSortDir: 'asc' | 'desc';
+  /** Campo di ordinamento per la classifica risposte */
+  risposteSortField: 'copertura' | 'sbagliate' | 'corrette';
+  /** Direzione ordinamento classifica risposte */
+  risposteSortDir: 'asc' | 'desc';
+}
+
+/**
  * Slice per i filtri utente persistenti.
  */
 export interface FiltersSlice {
@@ -70,6 +89,8 @@ export interface FiltersSlice {
   erroriRicorrenti: ErroriRicorrentiFilters;
   /** Filtri statistiche quiz */
   statistiche: StatisticheFilters;
+  /** Filtri classifiche (leaderboard) */
+  classifiche: ClassificheFilters;
   /** Aggiorna un filtro esercitazione */
   setEsercitazioneFilter: <K extends keyof EsercitazioneFilters>(
     key: K,
@@ -89,6 +110,22 @@ export interface FiltersSlice {
   setStatisticheChartType: (chartType: ErroriRicorrentiChartType) => void;
   /** Toggle del tipo di grafico statistiche */
   toggleStatisticheChartType: () => void;
+  /** Aggiorna il periodo classifiche */
+  setClassifichePeriod: (period: TimePeriod) => void;
+  /** Aggiorna la vista classifiche (quiz/risposte) */
+  setClassificheView: (view: ClassificheFilters['view']) => void;
+  /** Aggiorna lo scope classifiche (generale/amici) */
+  setClassificheScope: (scope: ClassificheFilters['scope']) => void;
+  /** Aggiorna ordinamento classifica quiz */
+  setClassificheQuizSort: (
+    field: ClassificheFilters['quizSortField'],
+    dir: ClassificheFilters['quizSortDir']
+  ) => void;
+  /** Aggiorna ordinamento classifica risposte */
+  setClassificheRisposteSort: (
+    field: ClassificheFilters['risposteSortField'],
+    dir: ClassificheFilters['risposteSortDir']
+  ) => void;
 }
 
 // ============================================================
@@ -206,6 +243,7 @@ export interface AppStateDefaults {
     esercitazione: EsercitazioneFilters;
     erroriRicorrenti: ErroriRicorrentiFilters;
     statistiche: StatisticheFilters;
+    classifiche: ClassificheFilters;
   };
   quiz: {
     activeQuiz: ActiveQuizState | null;

@@ -19,3 +19,8 @@ export { default as SettimanaIcon } from './settimana.svg?react';
 export { default as MeseIcon } from './mese.svg?react';
 export { default as AllIcon } from './all.svg?react';
 export { default as RandomIcon } from './random.svg?react';
+export { default as AllPeopleIcon } from './all_people.svg?react';
+export { default as FriendAddIcon } from './friend_add.svg?react';
+export { default as FriendOnIcon } from './friend_on.svg?react';
+export { default as FriendRemoveIcon } from './friend_remove.svg?react';
+export { default as FriendsIcon } from './friends.svg?react';
