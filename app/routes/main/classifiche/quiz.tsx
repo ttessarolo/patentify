@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useTimePeriodFor } from '~/components/errori-ricorrenti';
-import { UserCell, SortableHeader, MobileSortControl } from '~/components/classifiche';
+import { UserCell, SortableHeader } from '~/components/classifiche';
 import { Pill } from '~/components/ui/pill';
 import { useAppStore } from '~/store';
 import { getClassificaQuiz } from '~/server/classifiche';
@@ -113,30 +113,6 @@ function ClassificaQuizPage(): JSX.Element {
     [sortField, sortDir, setQuizSort]
   );
 
-  // Handler mobile sort: cambio campo
-  const handleMobileSortField = useCallback(
-    (field: string): void => {
-      const f = field as 'promosso' | 'bocciato';
-      if (f !== sortField) {
-        setQuizSort(f, 'desc');
-      }
-    },
-    [sortField, setQuizSort]
-  );
-
-  // Handler mobile sort: toggle direzione
-  const handleMobileDirToggle = useCallback((): void => {
-    setQuizSort(sortField, sortDir === 'desc' ? 'asc' : 'desc');
-  }, [sortField, sortDir, setQuizSort]);
-
-  /** Opzioni per il selettore di ordinamento mobile */
-  const mobileSortOptions = useMemo(
-    () => [
-      { value: 'promosso', label: 'Promosso' },
-      { value: 'bocciato', label: 'Bocciato' },
-    ],
-    []
-  );
 
   // Definizione colonne (dipende da stato)
   const columns = useMemo(
@@ -294,17 +270,8 @@ function ClassificaQuizPage(): JSX.Element {
     <div className="space-y-2">
       {/* ===================== MOBILE: card layout ===================== */}
       <div className="sm:hidden">
-        {/* Controllo ordinamento mobile */}
-        <MobileSortControl
-          sortOptions={mobileSortOptions}
-          currentField={sortField}
-          currentDir={sortDir}
-          onFieldChange={handleMobileSortField}
-          onDirToggle={handleMobileDirToggle}
-        />
-
         {/* Lista card */}
-        <div className="mt-2 space-y-2">
+        <div className="space-y-2">
           {flatData.map((row) => (
             <div
               key={row.user_id}

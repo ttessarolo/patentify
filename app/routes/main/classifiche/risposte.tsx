@@ -10,7 +10,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { useTimePeriodFor } from '~/components/errori-ricorrenti';
-import { UserCell, SortableHeader, MobileSortControl } from '~/components/classifiche';
+import { UserCell, SortableHeader } from '~/components/classifiche';
 import { Pill } from '~/components/ui/pill';
 import { useAppStore } from '~/store';
 import { getClassificaRisposte } from '~/server/classifiche';
@@ -125,31 +125,6 @@ function ClassificaRispostePage(): JSX.Element {
     [sortField, sortDir, setRisposteSort]
   );
 
-  // Handler mobile sort: cambio campo
-  const handleMobileSortField = useCallback(
-    (field: string): void => {
-      const f = field as 'copertura' | 'sbagliate' | 'corrette';
-      if (f !== sortField) {
-        setRisposteSort(f, 'desc');
-      }
-    },
-    [sortField, setRisposteSort]
-  );
-
-  // Handler mobile sort: toggle direzione
-  const handleMobileDirToggle = useCallback((): void => {
-    setRisposteSort(sortField, sortDir === 'desc' ? 'asc' : 'desc');
-  }, [sortField, sortDir, setRisposteSort]);
-
-  /** Opzioni per il selettore di ordinamento mobile */
-  const mobileSortOptions = useMemo(
-    () => [
-      { value: 'copertura', label: '% Copertura' },
-      { value: 'sbagliate', label: '% Sbagliate' },
-      { value: 'corrette', label: '% Giuste' },
-    ],
-    []
-  );
 
   // Definizione colonne
   const columns = useMemo(
@@ -351,17 +326,8 @@ function ClassificaRispostePage(): JSX.Element {
     <div className="space-y-2">
       {/* ===================== MOBILE: card layout ===================== */}
       <div className="sm:hidden">
-        {/* Controllo ordinamento mobile */}
-        <MobileSortControl
-          sortOptions={mobileSortOptions}
-          currentField={sortField}
-          currentDir={sortDir}
-          onFieldChange={handleMobileSortField}
-          onDirToggle={handleMobileDirToggle}
-        />
-
         {/* Lista card */}
-        <div className="mt-2 space-y-2">
+        <div className="space-y-2">
           {flatData.map((row) => {
             const percentCopertura = safePercent(
               row.domande_uniche,
