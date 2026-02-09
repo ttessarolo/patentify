@@ -125,7 +125,6 @@ function ClassificaQuizPage(): JSX.Element {
     [sortField, sortDir, setQuizSort]
   );
 
-
   // Definizione colonne (dipende da stato)
   const columns = useMemo(
     () => [
@@ -261,10 +260,7 @@ function ClassificaQuizPage(): JSX.Element {
     return (
       <div className="space-y-2">
         {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="h-20 animate-pulse rounded-lg bg-muted"
-          />
+          <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
         ))}
       </div>
     );
@@ -303,17 +299,21 @@ function ClassificaQuizPage(): JSX.Element {
                 key={row.user_id}
                 className="rounded-lg border border-border bg-card p-3"
               >
-                {/* Info utente */}
+                {/* Header: info utente + bottone amicizia a destra */}
                 <UserCell
                   userId={row.user_id}
                   name={row.name}
                   username={row.username}
                   imageUrl={row.image_url}
                   isFriend={row.is_friend}
+                  layout="header"
                 />
 
+                {/* Divisore */}
+                <hr className="my-3 border-border" />
+
                 {/* Dati quiz — griglia 3 colonne fisse, sx + dx occupate, centro vuota */}
-                <div className="mt-3 grid grid-cols-3">
+                <div className="grid grid-cols-3">
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
                       % Bocciato
@@ -353,10 +353,7 @@ function ClassificaQuizPage(): JSX.Element {
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="px-3 py-3 text-left sm:px-4"
-                    >
+                    <th key={header.id} className="px-3 py-3 text-left sm:px-4">
                       {header.isPlaceholder
                         ? null
                         : flexRender(

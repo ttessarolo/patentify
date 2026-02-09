@@ -20,6 +20,9 @@ interface ClassificheSwitchProps<T extends string> {
 /**
  * Switch pill-style (segmented control) con due opzioni e icone.
  * Usato per Quiz/Risposte e Generale/Amici.
+ *
+ * Mobile: icona in un pill colorato con label sotto (stile TimePeriodToolbar).
+ * Desktop: segmented control orizzontale classico.
  */
 export function ClassificheSwitch<T extends string>({
   options,
@@ -30,18 +33,28 @@ export function ClassificheSwitch<T extends string>({
   const colorClasses =
     activeColor === 'pink'
       ? {
-          active: 'bg-pink-500 text-white shadow-md',
-          inactive:
-            'bg-transparent text-muted-foreground hover:text-foreground',
+          btnActive: 'sm:bg-pink-500 sm:text-white sm:shadow-md',
+          btnInactive:
+            'sm:bg-muted sm:text-muted-foreground sm:hover:text-foreground',
+          iconActive:
+            'bg-pink-500 text-white shadow-md sm:bg-transparent sm:shadow-none',
+          iconInactive: 'bg-muted text-muted-foreground sm:bg-transparent',
+          labelActive: 'text-pink-500 sm:text-white',
+          labelInactive: 'text-muted-foreground',
         }
       : {
-          active: 'bg-teal-500 text-white shadow-md',
-          inactive:
-            'bg-transparent text-muted-foreground hover:text-foreground',
+          btnActive: 'sm:bg-amber-600 sm:text-white sm:shadow-md',
+          btnInactive:
+            'sm:bg-muted sm:text-muted-foreground sm:hover:text-foreground',
+          iconActive:
+            'bg-amber-600 text-white shadow-md sm:bg-transparent sm:shadow-none',
+          iconInactive: 'bg-muted text-muted-foreground sm:bg-transparent',
+          labelActive: 'text-amber-600 sm:text-white',
+          labelInactive: 'text-muted-foreground',
         };
 
   return (
-    <div className="inline-flex items-center rounded-full bg-card p-1">
+    <div className="inline-flex items-center gap-3 sm:gap-2 sm:rounded-full sm:bg-card sm:p-1">
       {options.map((option) => {
         const isActive = value === option.value;
         const { Icon } = option;
@@ -50,13 +63,27 @@ export function ClassificheSwitch<T extends string>({
             key={option.value}
             type="button"
             onClick={(): void => onChange(option.value)}
-            className={`flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium transition-all sm:px-3 sm:text-sm ${
-              isActive ? colorClasses.active : colorClasses.inactive
+            className={`flex flex-col items-center gap-1 text-xs font-medium transition-all sm:flex-row sm:gap-1.5 sm:rounded-full sm:px-3 sm:py-1.5 sm:text-sm ${
+              isActive ? colorClasses.btnActive : colorClasses.btnInactive
             }`}
             aria-pressed={isActive}
           >
-            <Icon className="h-4 w-4" />
-            <span className="hidden sm:inline">{option.label}</span>
+            {/* Icona in pill allungato su mobile, trasparente su desktop */}
+            <span
+              className={`flex items-center justify-center rounded-full px-4 py-2 transition-all sm:rounded-none sm:bg-transparent sm:p-0 ${
+                isActive ? colorClasses.iconActive : colorClasses.iconInactive
+              }`}
+            >
+              <Icon className="h-5 w-5 sm:h-4 sm:w-4" />
+            </span>
+            {/* Label sotto l'icona su mobile, inline su desktop */}
+            <span
+              className={`text-[10px] sm:text-sm ${
+                isActive ? colorClasses.labelActive : colorClasses.labelInactive
+              }`}
+            >
+              {option.label}
+            </span>
           </button>
         );
       })}

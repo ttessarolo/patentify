@@ -27,9 +27,14 @@ function ErroriRicorrentiLayout(): JSX.Element {
 
   return (
     <div className="mx-auto max-w-4xl px-2 pb-4 sm:px-4">
-      {/* Toolbar sticky: attaccata alla navbar (nessuno spazio sopra) */}
-      <TimePeriodToolbar currentPeriod={currentPeriod} />
-      {/* Contenuto sotto-rotte: titolo sticky attaccato alla toolbar (space-y solo dopo) */}
+      {/* Blocco sticky: toolbar + titolo */}
+      <div className="sticky top-[var(--header-height,3.5rem)] z-20 -mx-2 bg-background px-2 pb-0 sm:-mx-4 sm:px-4">
+        <TimePeriodToolbar currentPeriod={currentPeriod} disableSticky />
+        <h1 className="my-2 text-center text-2xl font-bold sm:text-left sm:text-3xl">
+          Errori Ricorrenti
+        </h1>
+      </div>
+      {/* Contenuto sotto-rotte */}
       <div className="space-y-4 sm:space-y-6">
         <Outlet />
       </div>

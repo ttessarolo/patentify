@@ -1,6 +1,11 @@
 import type { JSX } from 'react';
 import { useEffect, useCallback, useMemo } from 'react';
-import { createFileRoute, Outlet, useNavigate, useLocation } from '@tanstack/react-router';
+import {
+  createFileRoute,
+  Outlet,
+  useNavigate,
+  useLocation,
+} from '@tanstack/react-router';
 import { z } from 'zod';
 import {
   TimePeriodToolbar,
@@ -24,20 +29,17 @@ export const Route = createFileRoute('/main/classifiche')({
  * Layout per la sezione Classifiche.
  * Contiene la toolbar periodo, i due switch e l'Outlet per le sotto-rotte.
  *
- * La view attiva (quiz/risposte) è derivata dall'URL (source of truth),
- * non dallo store. Lo store viene tenuto in sync per il redirect iniziale.
+ * La view attiva (quiz/risposte) è derivata dall'URL quando siamo su una
+ * sotto-rotta (/quiz o /risposte). Sulla rotta index viene usato il valore
+ * persistito nello store per evitare flickering del toggle prima del redirect.
  */
 function ClassificheLayout(): JSX.Element {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPeriod = useTimePeriodFor('classifiche');
 
-  // Deriva la view corrente dall'URL (source of truth)
-  const view: 'quiz' | 'risposte' = location.pathname.includes('/risposte')
-    ? 'risposte'
-    : 'quiz';
-
-  // Store: scope + setter per persistenza
+  // Store: view persistita + scope + setter
+  const storeView = useAppStore((s) => s.classifiche.view);
   const scope = useAppStore((s) => s.classifiche.scope);
   const setView = useAppStore((s) => s.setClassificheView);
   const setScope = useAppStore((s) => s.setClassificheScope);
@@ -50,13 +52,19 @@ function ClassificheLayout(): JSX.Element {
   const risposteSortDir = useAppStore((s) => s.classifiche.risposteSortDir);
   const setRisposteSort = useAppStore((s) => s.setClassificheRisposteSort);
 
-  // Sincronizza lo store con l'URL corrente (per il redirect futuro).
-  // NON sovrascrivere quando siamo sulla rotta index (/main/classifiche)
-  // perché lì il view è derivato come 'quiz' di default e cancellerebbe
-  // il valore persistito (es. 'risposte') prima che il redirect lo legga.
+  // Siamo su una sotto-rotta (/quiz o /risposte) o sulla rotta index?
   const isOnSubRoute =
     location.pathname.includes('/quiz') ||
     location.pathname.includes('/risposte');
+
+  // Deriva la view corrente: su sotto-rotta usa l'URL (source of truth),
+  // sulla rotta index usa lo store per evitare flickering del toggle
+  // (altrimenti mostrerebbe sempre 'quiz' prima del redirect).
+  const view: 'quiz' | 'risposte' = isOnSubRoute
+    ? location.pathname.includes('/risposte')
+      ? 'risposte'
+      : 'quiz'
+    : storeView;
 
   useEffect(() => {
     if (isOnSubRoute) {
@@ -106,7 +114,10 @@ function ClassificheLayout(): JSX.Element {
   );
 
   const handleRisposteDirToggle = useCallback((): void => {
-    setRisposteSort(risposteSortField, risposteSortDir === 'desc' ? 'asc' : 'desc');
+    setRisposteSort(
+      risposteSortField,
+      risposteSortDir === 'desc' ? 'asc' : 'desc'
+    );
   }, [risposteSortField, risposteSortDir, setRisposteSort]);
 
   // Switch Quiz/Risposte: naviga tra sotto-rotte
@@ -129,7 +140,9 @@ function ClassificheLayout(): JSX.Element {
         />
 
         {/* Titolo */}
-        <h1 className="mt-2 text-center text-2xl font-bold sm:text-left sm:text-3xl">{title}</h1>
+        <h1 className="mt-2 mb-4 text-center text-2xl font-bold sm:my-2 sm:text-left sm:text-3xl">
+          {title}
+        </h1>
 
         {/* Switch row */}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -137,7 +150,11 @@ function ClassificheLayout(): JSX.Element {
           <ClassificheSwitch
             options={[
               { value: 'quiz' as const, label: 'Quiz', Icon: QuizIcon },
-              { value: 'risposte' as const, label: 'Risposte', Icon: WrongIcon },
+              {
+                value: 'risposte' as const,
+                label: 'Risposte',
+                Icon: WrongIcon,
+              },
             ]}
             value={view}
             onChange={handleViewChange}
@@ -147,7 +164,11 @@ function ClassificheLayout(): JSX.Element {
           {/* Switch Generale / Amici */}
           <ClassificheSwitch
             options={[
-              { value: 'generale' as const, label: 'Generale', Icon: AllPeopleIcon },
+              {
+                value: 'generale' as const,
+                label: 'Generale',
+                Icon: AllPeopleIcon,
+              },
               { value: 'amici' as const, label: 'Amici', Icon: FriendsIcon },
             ]}
             value={scope}
