@@ -23,7 +23,7 @@ import {
 import { domandaUserStats } from '~/server/domandaUserStats';
 import { addSkull, removeSkull } from '~/server/skull';
 import { getSpiegazione } from '~/server/spiegazione';
-import { getValueColorClass } from '~/commons';
+import { getValueColorClass, SHOW_SPIEGAZIONE } from '~/commons';
 import type {
   Domanda,
   DomandaUserStatsResult,
@@ -613,8 +613,9 @@ export function DomandaCard({
           </div>
         )}
 
-        {/* Reveal box Spiegazione - in modalità learning dopo la risposta, o in review mode (readOnly con initialAnswer) */}
-        {answered &&
+        {/* Reveal box Spiegazione - condizionato a SHOW_SPIEGAZIONE, in modalità learning dopo la risposta o in review mode */}
+        {SHOW_SPIEGAZIONE &&
+          answered &&
           !isChecking &&
           (learning || (readOnly && initialAnswer != null)) && (
           <div className="mt-4 overflow-hidden rounded-md border border-muted-foreground/30">
@@ -622,13 +623,13 @@ export function DomandaCard({
             <button
               type="button"
               onClick={(): void => setShowSpiegazione((prev) => !prev)}
-              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+              className="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-muted/50"
               aria-expanded={showSpiegazione}
               aria-controls="spiegazione-content"
             >
               {/* Chevron con rotazione */}
               <svg
-                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                className={`h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200 ${
                   showSpiegazione ? 'rotate-90' : ''
                 }`}
                 fill="none"
@@ -645,7 +646,7 @@ export function DomandaCard({
               </svg>
 
               {/* Titolo */}
-              <span className="text-base font-semibold text-muted-foreground">
+              <span className="text-xs font-medium text-muted-foreground">
                 Spiegazione
               </span>
             </button>
