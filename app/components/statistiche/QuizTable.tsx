@@ -10,6 +10,8 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 import { Pill } from '~/components/ui/pill';
+import { MetricIndicator } from '~/commons/metric-indicator';
+import { IreIcon, AmbiguitaIcon, DifficoltaIcon } from '~/icons';
 import { getQuizList } from '~/server/statistiche';
 import type { TimePeriod, QuizTableRow, QuizListResult } from '~/types/db';
 
@@ -95,13 +97,21 @@ const columns = [
     },
   }),
   columnHelper.accessor('errori', {
-    header: 'Errori',
+    header: () => <span className="block text-center">Errori</span>,
     cell: (info) => {
       const errori = info.getValue();
       return (
-        <span className={errori > 4 ? 'font-bold text-red-500' : ''}>
-          {errori}
-        </span>
+        <div className="flex justify-center">
+          <Pill
+            className={
+              errori > 4
+                ? 'bg-red-500/15 text-red-500'
+                : ''
+            }
+          >
+            {errori}
+          </Pill>
+        </div>
       );
     },
   }),
@@ -113,6 +123,28 @@ const columns = [
         <Pill className="bg-green-500/15 text-green-500">Promosso</Pill>
       ) : (
         <Pill className="bg-red-500/15 text-red-500">Bocciato</Pill>
+      );
+    },
+  }),
+  columnHelper.display({
+    id: 'indicatori',
+    header: 'Indicatori',
+    cell: (info) => {
+      const row = info.row.original;
+      return (
+        <div className="flex flex-col gap-1 sm:flex-row sm:gap-3">
+          <MetricIndicator icon={IreIcon} value={row.ire} ariaLabel="IRE medio" />
+          <MetricIndicator
+            icon={DifficoltaIcon}
+            value={row.difficolta}
+            ariaLabel="Difficoltà media"
+          />
+          <MetricIndicator
+            icon={AmbiguitaIcon}
+            value={row.ambiguita}
+            ariaLabel="Ambiguità media"
+          />
+        </div>
       );
     },
   }),
@@ -277,8 +309,59 @@ export function QuizTable({ period }: QuizTableProps): JSX.Element {
 
   return (
     <div className="space-y-2">
-      {/* Tabella */}
-      <div className="overflow-hidden rounded-lg border border-border">
+      {/* Titolo con conteggio totale */}
+      <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+        Storico Quiz
+        {!hasNextPage && flatData.length > 0 && (
+          <Pill>{flatData.length}</Pill>
+        )}
+      </h2>
+
+      {/* ===== Layout MOBILE: card a 2 righe (visibile solo sotto sm) ===== */}
+      <div className="space-y-2 sm:hidden">
+        {flatData.map((quiz) => (
+          <div
+            key={quiz.quiz_id}
+            onClick={(): void => handleRowClick(quiz.quiz_id)}
+            className="cursor-pointer rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/50"
+          >
+            {/* Riga 1: Data + Esito */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                {formatDataOraCompact(quiz.completed_at)}
+              </span>
+              {quiz.promosso ? (
+                <Pill className="bg-green-500/15 text-green-500">Promosso</Pill>
+              ) : (
+                <Pill className="bg-red-500/15 text-red-500">Bocciato</Pill>
+              )}
+            </div>
+            {/* Riga 2: Errori + Indicatori */}
+            <div className="mt-2 flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-sm">
+                <span className="text-muted-foreground">Errori</span>
+                <Pill
+                  className={
+                    quiz.errori > 4
+                      ? 'bg-red-500/15 text-red-500'
+                      : ''
+                  }
+                >
+                  {quiz.errori}
+                </Pill>
+              </div>
+              <div className="flex items-center gap-3">
+                <MetricIndicator icon={IreIcon} value={quiz.ire} ariaLabel="IRE medio" />
+                <MetricIndicator icon={DifficoltaIcon} value={quiz.difficolta} ariaLabel="Difficoltà media" />
+                <MetricIndicator icon={AmbiguitaIcon} value={quiz.ambiguita} ariaLabel="Ambiguità media" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ===== Layout DESKTOP: tabella classica (visibile da sm in su) ===== */}
+      <div className="hidden overflow-hidden rounded-lg border border-border sm:block">
         <table className="w-full">
           <thead className="bg-card">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -286,7 +369,7 @@ export function QuizTable({ period }: QuizTableProps): JSX.Element {
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground sm:px-4"
+                    className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground"
                   >
                     {header.isPlaceholder
                       ? null
@@ -309,7 +392,7 @@ export function QuizTable({ period }: QuizTableProps): JSX.Element {
                 {row.getVisibleCells().map((cell) => (
                   <td
                     key={cell.id}
-                    className="px-3 py-3 text-sm sm:px-4 sm:py-4"
+                    className="px-4 py-4 text-sm"
                   >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
@@ -324,11 +407,6 @@ export function QuizTable({ period }: QuizTableProps): JSX.Element {
       <div ref={loadMoreRef} className="flex justify-center py-4">
         {isFetchingNextPage && (
           <div className="h-6 w-6 animate-spin rounded-full border-2 border-muted border-t-primary" />
-        )}
-        {!hasNextPage && flatData.length > 0 && (
-          <span className="text-xs text-muted-foreground">
-            {flatData.length} quiz totali
-          </span>
         )}
       </div>
     </div>

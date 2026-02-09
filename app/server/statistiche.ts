@@ -121,12 +121,15 @@ export const getQuizList = createServerFn({ method: 'GET' }).handler(
     const { period, limit, offset } = parsed.data;
     const periodFilter = getPeriodFilter(period);
 
-    // Query per lista quiz con conteggio errori
+    // Query per lista quiz con conteggio errori e metriche
     const quizResult = await sql`
       SELECT 
         q.id as quiz_id,
         q.completed_at,
         q.promosso,
+        q.ire,
+        q.difficolta,
+        q.ambiguita,
         (
           SELECT COUNT(*)
           FROM user_domanda_attempt uda
@@ -148,6 +151,9 @@ export const getQuizList = createServerFn({ method: 'GET' }).handler(
       completed_at: string;
       promosso: boolean;
       errori: string;
+      ire: number | null;
+      difficolta: number | null;
+      ambiguita: number | null;
     }[];
 
     const hasMore = rows.length > limit;
@@ -156,6 +162,9 @@ export const getQuizList = createServerFn({ method: 'GET' }).handler(
       completed_at: row.completed_at,
       promosso: row.promosso,
       errori: parseInt(row.errori, 10) || 0,
+      ire: row.ire,
+      difficolta: row.difficolta,
+      ambiguita: row.ambiguita,
     }));
 
     return { quiz, hasMore };

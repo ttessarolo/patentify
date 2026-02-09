@@ -22,6 +22,7 @@ import {
 } from '~/icons';
 import { domandaUserStats } from '~/server/domandaUserStats';
 import { addSkull, removeSkull } from '~/server/skull';
+import { getValueColorClass } from '~/commons';
 import type { Domanda, DomandaUserStatsResult, SkullResult } from '~/types/db';
 
 /** Payload per domandaUserStats (user_id handled server-side via Clerk) */
@@ -66,25 +67,7 @@ export interface DomandaCardProps {
 
 const IMAGE_PREFIX_PATH = import.meta.env.VITE_IMAGE_PREFIX_PATH ?? '';
 
-/**
- * Restituisce la classe Tailwind per il colore in base al valore 1-5.
- */
-function getValueColorClass(value: number | null): string {
-  switch (value) {
-    case 1:
-      return 'text-green-500';
-    case 2:
-      return 'text-cyan-500';
-    case 3:
-      return 'text-yellow-500';
-    case 4:
-      return 'text-orange-500';
-    case 5:
-      return 'text-red-500';
-    default:
-      return 'text-muted-foreground';
-  }
-}
+// getValueColorClass importata da ~/commons
 
 /**
  * Effettua il parsing di una stringa separata da ";" restituendo un array di fattori.

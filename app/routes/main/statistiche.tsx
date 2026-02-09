@@ -66,7 +66,6 @@ function StatistichePage(): JSX.Element {
 
         {/* Tabella Quiz con infinite scroll */}
         <div className="px-4">
-          <h2 className="mb-4 text-lg font-semibold">Storico Quiz</h2>
           <QuizTable period={period} />
         </div>
       </div>

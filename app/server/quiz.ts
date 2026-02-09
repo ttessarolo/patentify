@@ -114,6 +114,25 @@ export const generateQuiz = createServerFn({ method: 'POST' }).handler(
       `;
     }
 
+    // Fire-and-forget: calcola medie indicatori per il quiz (non blocca la risposta)
+    void sql`
+      UPDATE quiz SET
+        ire_plus = sub.avg_ire_plus,
+        ire = sub.avg_ire,
+        difficolta = sub.avg_difficolta,
+        ambiguita = sub.avg_ambiguita
+      FROM (
+        SELECT
+          AVG(d.ire_plus)::real as avg_ire_plus,
+          AVG(d.ire)::real as avg_ire,
+          AVG(d.difficolta)::real as avg_difficolta,
+          AVG(d.ambiguita)::real as avg_ambiguita
+        FROM domande d
+        WHERE d.id = ANY(${selectedDomande})
+      ) sub
+      WHERE quiz.id = ${quizId}
+    `;
+
     return { quiz_id: quizId };
   }
 );

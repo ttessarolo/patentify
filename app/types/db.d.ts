@@ -56,6 +56,14 @@ export interface Quiz {
   boost_skull: boolean;
   /** Esito del quiz: true = promosso, false = bocciato, null = non completato */
   promosso: boolean | null;
+  /** Media ire_plus delle domande del quiz */
+  ire_plus: number | null;
+  /** Media ire delle domande del quiz */
+  ire: number | null;
+  /** Media difficoltà delle domande del quiz */
+  difficolta: number | null;
+  /** Media ambiguità delle domande del quiz */
+  ambiguita: number | null;
 }
 
 /** Tabella public.user_domanda_attempt */
@@ -405,6 +413,12 @@ export interface QuizTableRow {
   errori: number;
   /** Esito del quiz: true = promosso, false = bocciato */
   promosso: boolean;
+  /** Media ire delle domande del quiz */
+  ire: number | null;
+  /** Media difficoltà delle domande del quiz */
+  difficolta: number | null;
+  /** Media ambiguità delle domande del quiz */
+  ambiguita: number | null;
 }
 
 /** Risultato di getQuizList */

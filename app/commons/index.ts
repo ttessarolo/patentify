@@ -21,3 +21,29 @@ export const MIN_PRECEDENZE = 3; // TODO: rimettere a 3 per produzione
 
 /** Numero massimo di errori ammessi per superare il quiz */
 export const MAX_ERRORS = 4;
+
+// ============================================================
+// Utility per indicatori metriche (ire, difficolta, ambiguita)
+// ============================================================
+
+/**
+ * Restituisce la classe Tailwind per il colore in base al valore 1-5.
+ * Per valori decimali (es. medie) arrotonda al più vicino intero.
+ */
+export function getValueColorClass(value: number | null): string {
+  const rounded = value !== null ? Math.round(value) : null;
+  switch (rounded) {
+    case 1:
+      return 'text-green-500';
+    case 2:
+      return 'text-cyan-500';
+    case 3:
+      return 'text-yellow-500';
+    case 4:
+      return 'text-orange-500';
+    case 5:
+      return 'text-red-500';
+    default:
+      return 'text-muted-foreground';
+  }
+}
