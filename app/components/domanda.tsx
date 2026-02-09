@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { useCallback, useState } from 'react';
 import { useServerFn } from '@tanstack/react-start';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
 import { Pill } from '~/components/ui/pill';
@@ -22,8 +22,14 @@ import {
 } from '~/icons';
 import { domandaUserStats } from '~/server/domandaUserStats';
 import { addSkull, removeSkull } from '~/server/skull';
+import { getSpiegazione } from '~/server/spiegazione';
 import { getValueColorClass } from '~/commons';
-import type { Domanda, DomandaUserStatsResult, SkullResult } from '~/types/db';
+import type {
+  Domanda,
+  DomandaUserStatsResult,
+  GetSpiegazioneResult,
+  SkullResult,
+} from '~/types/db';
 
 /** Payload per domandaUserStats (user_id handled server-side via Clerk) */
 type DomandaUserStatsPayload = {
@@ -32,6 +38,11 @@ type DomandaUserStatsPayload = {
 
 /** Payload per addSkull/removeSkull */
 type SkullPayload = {
+  data: { domanda_id: number };
+};
+
+/** Payload per getSpiegazione */
+type SpiegazionePayload = {
   data: { domanda_id: number };
 };
 
@@ -121,12 +132,29 @@ export function DomandaCard({
   const [stats, setStats] = useState<DomandaUserStatsResult | null>(null);
   const [statsFetched, setStatsFetched] = useState(false);
 
+  // Stato per il reveal box spiegazione
+  const [showSpiegazione, setShowSpiegazione] = useState(false);
+
   // Server function per statistiche
   const domandaUserStatsFn = useServerFn(domandaUserStats);
 
   // Server functions per skull
   const addSkullFn = useServerFn(addSkull);
   const removeSkullFn = useServerFn(removeSkull);
+
+  // Server function e query per spiegazione (lazy loading)
+  const getSpiegazioneFn = useServerFn(getSpiegazione);
+  const spiegazioneQuery = useQuery({
+    queryKey: ['spiegazione', domanda.id],
+    queryFn: async (): Promise<GetSpiegazioneResult> =>
+      (
+        getSpiegazioneFn as unknown as (
+          opts: SpiegazionePayload
+        ) => Promise<GetSpiegazioneResult>
+      )({ data: { domanda_id: domanda.id } }),
+    enabled: showSpiegazione,
+    staleTime: Infinity,
+  });
 
   // Stato locale per skull (persistito sul DB ma gestito localmente per evitare reload)
   const [isSkull, setIsSkull] = useState(domanda.skull ?? false);
@@ -581,6 +609,67 @@ export function DomandaCard({
               >
                 {isCorrect ? '✓ Corretto!' : '✗ Sbagliato!'}
               </p>
+            )}
+          </div>
+        )}
+
+        {/* Reveal box Spiegazione - in modalità learning dopo la risposta, o in review mode (readOnly con initialAnswer) */}
+        {answered &&
+          !isChecking &&
+          (learning || (readOnly && initialAnswer != null)) && (
+          <div className="mt-4 overflow-hidden rounded-md border border-muted-foreground/30">
+            {/* Header cliccabile */}
+            <button
+              type="button"
+              onClick={(): void => setShowSpiegazione((prev) => !prev)}
+              className="flex w-full cursor-pointer items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+              aria-expanded={showSpiegazione}
+              aria-controls="spiegazione-content"
+            >
+              {/* Chevron con rotazione */}
+              <svg
+                className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${
+                  showSpiegazione ? 'rotate-90' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+
+              {/* Titolo */}
+              <span className="text-base font-semibold text-muted-foreground">
+                Spiegazione
+              </span>
+            </button>
+
+            {/* Contenuto espandibile */}
+            {showSpiegazione && (
+              <div id="spiegazione-content" className="px-4 pb-4">
+                {spiegazioneQuery.isLoading && (
+                  <p className="text-sm text-muted-foreground">
+                    Caricamento...
+                  </p>
+                )}
+                {spiegazioneQuery.isError && (
+                  <p className="text-sm text-red-500">
+                    Errore nel caricamento della spiegazione
+                  </p>
+                )}
+                {spiegazioneQuery.isSuccess && (
+                  <p className="text-sm leading-relaxed">
+                    {spiegazioneQuery.data.spiegazione ??
+                      'Nessuna spiegazione disponibile per questa domanda.'}
+                  </p>
+                )}
+              </div>
             )}
           </div>
         )}

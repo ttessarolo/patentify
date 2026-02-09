@@ -538,3 +538,17 @@ export interface ClassificaRisposteResult {
 export interface FriendActionResult {
   success: boolean;
 }
+
+// ============================================================
+// Tipi per Spiegazioni Risposte
+// ============================================================
+
+/** Parametri per getSpiegazione */
+export interface GetSpiegazioneParams {
+  domanda_id: number;
+}
+
+/** Risultato di getSpiegazione */
+export interface GetSpiegazioneResult {
+  spiegazione: string | null;
+}
