@@ -95,9 +95,9 @@ export const getClassificaQuiz = createServerFn({ method: 'GET' }).handler(
     const { period, scope, sortField, sortDir, limit, offset } = parsed.data;
     const periodFilter = getPeriodFilter(period, 'q.completed_at');
 
-    // Costruisci ORDER BY in modo sicuro
+    // Costruisci ORDER BY in modo sicuro (percentuale)
     const sortColumn =
-      sortField === 'promosso' ? 'promosso_count' : 'bocciato_count';
+      sortField === 'promosso' ? 'pct_promosso' : 'pct_bocciato';
     const sortDirection = sortDir === 'asc' ? 'ASC' : 'DESC';
 
     // Filtro scope: se 'amici' filtra solo gli amici dell'utente
@@ -114,6 +114,13 @@ export const getClassificaQuiz = createServerFn({ method: 'GET' }).handler(
         u.image_url,
         COUNT(*) FILTER (WHERE q.promosso = false) AS bocciato_count,
         COUNT(*) FILTER (WHERE q.promosso = true) AS promosso_count,
+        COUNT(*) AS totale_quiz,
+        CASE WHEN COUNT(*) = 0 THEN 0
+             ELSE COUNT(*) FILTER (WHERE q.promosso = false) * 100.0 / COUNT(*)
+        END AS pct_bocciato,
+        CASE WHEN COUNT(*) = 0 THEN 0
+             ELSE COUNT(*) FILTER (WHERE q.promosso = true) * 100.0 / COUNT(*)
+        END AS pct_promosso,
         CASE WHEN EXISTS (
           SELECT 1 FROM amici a WHERE a.user_id = ${userId} AND a.friend_id = u.id
         ) THEN true ELSE false END AS is_friend
@@ -136,6 +143,7 @@ export const getClassificaQuiz = createServerFn({ method: 'GET' }).handler(
       image_url: string | null;
       bocciato_count: string;
       promosso_count: string;
+      totale_quiz: string;
       is_friend: boolean;
     }[];
 
@@ -147,6 +155,7 @@ export const getClassificaQuiz = createServerFn({ method: 'GET' }).handler(
       image_url: row.image_url,
       bocciato: parseInt(row.bocciato_count, 10) || 0,
       promosso: parseInt(row.promosso_count, 10) || 0,
+      totale_quiz: parseInt(row.totale_quiz, 10) || 0,
       is_friend: row.is_friend,
     }));
 
@@ -177,18 +186,18 @@ export const getClassificaRisposte = createServerFn({ method: 'GET' }).handler(
     const { period, scope, sortField, sortDir, limit, offset } = parsed.data;
     const periodFilter = getPeriodFilter(period, 'uda.answered_at');
 
-    // Mappatura campo di ordinamento
+    // Mappatura campo di ordinamento (percentuale)
     let sortColumn: string;
     switch (sortField) {
       case 'copertura':
-        sortColumn = 'domande_uniche';
+        sortColumn = 'pct_copertura';
         break;
       case 'sbagliate':
-        sortColumn = 'risposte_errate';
+        sortColumn = 'pct_sbagliate';
         break;
       case 'corrette':
       default:
-        sortColumn = 'risposte_corrette';
+        sortColumn = 'pct_corrette';
         break;
     }
     const sortDirection = sortDir === 'asc' ? 'ASC' : 'DESC';
@@ -219,6 +228,15 @@ export const getClassificaRisposte = createServerFn({ method: 'GET' }).handler(
         COUNT(*) FILTER (WHERE uda.is_correct = true) AS risposte_corrette,
         COUNT(*) FILTER (WHERE uda.is_correct = false) AS risposte_errate,
         COUNT(DISTINCT uda.domanda_id) AS domande_uniche,
+        CASE WHEN ${totaleDomandeDb} = 0 THEN 0
+             ELSE COUNT(DISTINCT uda.domanda_id) * 100.0 / ${totaleDomandeDb}
+        END AS pct_copertura,
+        CASE WHEN COUNT(*) = 0 THEN 0
+             ELSE COUNT(*) FILTER (WHERE uda.is_correct = false) * 100.0 / COUNT(*)
+        END AS pct_sbagliate,
+        CASE WHEN COUNT(*) = 0 THEN 0
+             ELSE COUNT(*) FILTER (WHERE uda.is_correct = true) * 100.0 / COUNT(*)
+        END AS pct_corrette,
         CASE WHEN EXISTS (
           SELECT 1 FROM amici a WHERE a.user_id = ${userId} AND a.friend_id = u.id
         ) THEN true ELSE false END AS is_friend

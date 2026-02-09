@@ -492,6 +492,8 @@ export interface ClassificaQuizRow {
   bocciato: number;
   /** Numero di quiz promossi */
   promosso: number;
+  /** Numero totale di quiz completati */
+  totale_quiz: number;
   /** Se l'utente è amico dell'utente autenticato */
   is_friend: boolean;
 }

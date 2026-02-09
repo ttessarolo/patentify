@@ -70,8 +70,8 @@ function ClassificheLayout(): JSX.Element {
   // ---- Mobile sort control (view-aware) ----
   const quizSortOptions = useMemo(
     () => [
-      { value: 'promosso', label: 'Promosso' },
-      { value: 'bocciato', label: 'Bocciato' },
+      { value: 'promosso', label: '% Promosso' },
+      { value: 'bocciato', label: '% Bocciato' },
     ],
     []
   );

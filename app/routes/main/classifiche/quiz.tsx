@@ -31,6 +31,18 @@ const PAGE_SIZE = 10;
 const MAX_ROWS = 50;
 
 // ============================================================
+// Helpers
+// ============================================================
+
+/**
+ * Calcola percentuale sicura (evita divisione per zero).
+ */
+function safePercent(numerator: number, denominator: number): number {
+  if (denominator === 0) return 0;
+  return Math.round((numerator / denominator) * 100);
+}
+
+// ============================================================
 // Column Helper
 // ============================================================
 
@@ -137,42 +149,52 @@ function ClassificaQuizPage(): JSX.Element {
           );
         },
       }),
-      columnHelper.accessor('bocciato', {
+      columnHelper.display({
+        id: 'bocciato',
         header: () => (
           <SortableHeader
-            label="Bocciato"
+            label="% Bocciato"
             isActive={sortField === 'bocciato'}
             direction={sortField === 'bocciato' ? sortDir : 'desc'}
             onClick={(): void => handleSortClick('bocciato')}
           />
         ),
         cell: (info) => {
-          const value = info.getValue();
+          const row = info.row.original;
+          const percent = safePercent(row.bocciato, row.totale_quiz);
           return (
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-0.5">
               <Pill className="bg-red-500/15 text-red-500 text-sm font-bold">
-                {value}
+                {percent}%
               </Pill>
+              <span className="text-[10px] text-muted-foreground">
+                {row.bocciato} bocciati
+              </span>
             </div>
           );
         },
       }),
-      columnHelper.accessor('promosso', {
+      columnHelper.display({
+        id: 'promosso',
         header: () => (
           <SortableHeader
-            label="Promosso"
+            label="% Promosso"
             isActive={sortField === 'promosso'}
             direction={sortField === 'promosso' ? sortDir : 'desc'}
             onClick={(): void => handleSortClick('promosso')}
           />
         ),
         cell: (info) => {
-          const value = info.getValue();
+          const row = info.row.original;
+          const percent = safePercent(row.promosso, row.totale_quiz);
           return (
-            <div className="flex justify-center">
+            <div className="flex flex-col items-center gap-0.5">
               <Pill className="bg-green-500/15 text-green-500 text-sm font-bold">
-                {value}
+                {percent}%
               </Pill>
+              <span className="text-[10px] text-muted-foreground">
+                {row.promosso} promossi
+              </span>
             </div>
           );
         },
@@ -272,43 +294,54 @@ function ClassificaQuizPage(): JSX.Element {
       <div className="sm:hidden">
         {/* Lista card */}
         <div className="space-y-2">
-          {flatData.map((row) => (
-            <div
-              key={row.user_id}
-              className="rounded-lg border border-border bg-card p-3"
-            >
-              {/* Info utente */}
-              <UserCell
-                userId={row.user_id}
-                name={row.name}
-                username={row.username}
-                imageUrl={row.image_url}
-                isFriend={row.is_friend}
-              />
+          {flatData.map((row) => {
+            const percentBocciato = safePercent(row.bocciato, row.totale_quiz);
+            const percentPromosso = safePercent(row.promosso, row.totale_quiz);
 
-              {/* Dati quiz — griglia 3 colonne fisse, sx + dx occupate, centro vuota */}
-              <div className="mt-3 grid grid-cols-3">
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Bocciato
-                  </span>
-                  <Pill className="bg-red-500/15 text-red-500 text-sm font-bold">
-                    {row.bocciato}
-                  </Pill>
-                </div>
-                {/* Colonna centrale vuota */}
-                <div />
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    Promosso
-                  </span>
-                  <Pill className="bg-green-500/15 text-green-500 text-sm font-bold">
-                    {row.promosso}
-                  </Pill>
+            return (
+              <div
+                key={row.user_id}
+                className="rounded-lg border border-border bg-card p-3"
+              >
+                {/* Info utente */}
+                <UserCell
+                  userId={row.user_id}
+                  name={row.name}
+                  username={row.username}
+                  imageUrl={row.image_url}
+                  isFriend={row.is_friend}
+                />
+
+                {/* Dati quiz — griglia 3 colonne fisse, sx + dx occupate, centro vuota */}
+                <div className="mt-3 grid grid-cols-3">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      % Bocciato
+                    </span>
+                    <Pill className="bg-red-500/15 text-red-500 text-sm font-bold">
+                      {percentBocciato}%
+                    </Pill>
+                    <span className="text-[10px] text-muted-foreground">
+                      {row.bocciato} bocciati
+                    </span>
+                  </div>
+                  {/* Colonna centrale vuota */}
+                  <div />
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      % Promosso
+                    </span>
+                    <Pill className="bg-green-500/15 text-green-500 text-sm font-bold">
+                      {percentPromosso}%
+                    </Pill>
+                    <span className="text-[10px] text-muted-foreground">
+                      {row.promosso} promossi
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
