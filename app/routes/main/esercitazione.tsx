@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { useCallback, useRef, useEffect, useState } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { z } from 'zod';
@@ -10,44 +9,13 @@ import { DomandaCard } from '~/components/domanda';
 import { Button } from '~/components/ui/button';
 import { RandomIcon } from '~/icons';
 import { useAppStore } from '~/store';
-import {
-  getDomandeEsercitazione,
-  getAmbitiDistinct,
-} from '~/server/esercitazione';
-import { trackAttempt } from '~/server/track_attempt';
-import { checkResponse } from '~/server/checkResponse';
-import type {
-  DomandaWithSkull,
-  CheckResponseResult,
-  TrackAttemptResult,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+import type { DomandaWithSkull } from '~/types/db';
 
 // Schema per i search params (titolo_quesito opzionale)
 const searchSchema = z.object({
   titolo_quesito: z.string().optional(),
 });
-
-/** Parametri per getDomandeEsercitazione (allineati al server) */
-type DomandeQueryParams = {
-  search?: string;
-  ire_plus?: number;
-  ambiguita?: number;
-  difficolta?: number;
-  titolo_quesito?: string;
-  limit?: number;
-  offset?: number;
-  ordinamento_casuale?: boolean;
-};
-
-/** Payload per checkResponse */
-type CheckResponsePayload = {
-  data: { domanda_id: number; answer_given: string };
-};
-
-/** Payload per trackAttempt (user_id handled server-side via Clerk) */
-type TrackAttemptPayload = {
-  data: { domanda_id: number; answer_given: string };
-};
 
 export const Route = createFileRoute('/main/esercitazione')({
   validateSearch: searchSchema,
@@ -88,88 +56,56 @@ function EsercitazionePage(): JSX.Element {
   // Get userId from Clerk (for UI purposes only - server handles auth)
   const { userId } = useAuth();
 
-  const getDomandeFn = useServerFn(getDomandeEsercitazione);
-  const getAmbitiFn = useServerFn(getAmbitiDistinct);
-  const trackAttemptFn = useServerFn(trackAttempt);
-  const checkResponseFn = useServerFn(checkResponse);
-
   // Limite per pagina
   const PAGE_LIMIT = 10;
 
   // Query infinita per ottenere le domande con paginazione
-  const domandeQuery = useInfiniteQuery({
-    queryKey: [
-      'esercitazione',
-      'domande',
-      search,
-      irePlus,
-      ambiguita,
-      difficolta,
-      titoloQuesito,
-      ordinamentoCasuale,
-    ],
-    queryFn: async ({ pageParam }) => {
-      const params: DomandeQueryParams = {
-        limit: PAGE_LIMIT,
-        offset: pageParam,
-        ordinamento_casuale: ordinamentoCasuale,
-      };
-
-      if (search) params.search = search;
-      if (irePlus !== 'all') params.ire_plus = parseInt(irePlus, 10);
-      if (ambiguita !== 'all') params.ambiguita = parseInt(ambiguita, 10);
-      if (difficolta !== 'all') params.difficolta = parseInt(difficolta, 10);
-      if (titoloQuesito !== 'all') params.titolo_quesito = titoloQuesito;
-
-      return (
-        getDomandeFn as unknown as (opts: {
-          data: DomandeQueryParams;
-        }) => Promise<DomandaWithSkull[]>
-      )({ data: params });
-    },
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages) => {
-      // Se l'ultima pagina ha meno elementi del limite, non ci sono altre pagine
-      if (lastPage.length < PAGE_LIMIT) return undefined;
-      // Calcola il prossimo offset. In modalità Random il server ignora l'offset
-      // e restituisce ogni volta un nuovo batch casuale (possibili duplicate, accettabile)
-      return allPages.length * PAGE_LIMIT;
-    },
-    // Evita il refetch al ritorno da stand-by (es. iPhone)
-    refetchOnWindowFocus: false,
-    // I dati restano "freschi" per 5 minuti
-    staleTime: 5 * 60 * 1000,
-  });
+  const domandeQuery = useInfiniteQuery(
+    orpc.esercitazione.getDomande.infiniteOptions({
+      input: (pageParam: number) => {
+        const params: {
+          limit: number;
+          offset: number;
+          ordinamento_casuale?: boolean;
+          search?: string;
+          ire_plus?: number;
+          ambiguita?: number;
+          difficolta?: number;
+          titolo_quesito?: string;
+        } = {
+          limit: PAGE_LIMIT,
+          offset: pageParam,
+          ordinamento_casuale: ordinamentoCasuale,
+        };
+        if (search) params.search = search;
+        if (irePlus !== 'all') params.ire_plus = parseInt(irePlus, 10);
+        if (ambiguita !== 'all') params.ambiguita = parseInt(ambiguita, 10);
+        if (difficolta !== 'all') params.difficolta = parseInt(difficolta, 10);
+        if (titoloQuesito !== 'all') params.titolo_quesito = titoloQuesito;
+        return params;
+      },
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.length < PAGE_LIMIT) return undefined;
+        return allPages.length * PAGE_LIMIT;
+      },
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000,
+    })
+  );
 
   // Elenco domande appiattito da tutte le pagine
   const domande = domandeQuery.data?.pages.flat() ?? [];
 
   // Query per ottenere gli ambiti
   const ambitiQuery = useQuery({
-    queryKey: ['esercitazione', 'ambiti'],
-    queryFn: async () =>
-      (
-        getAmbitiFn as unknown as (opts: {
-          data: Record<string, never>;
-        }) => Promise<string[]>
-      )({ data: {} }),
+    ...orpc.esercitazione.getAmbiti.queryOptions({ input: {} }),
     staleTime: 5 * 60 * 1000,
   });
 
   // Mutation per tracciare i tentativi (user_id handled server-side via Clerk)
   const trackMutation = useMutation({
-    mutationFn: async ({
-      domanda_id,
-      answer_given,
-    }: {
-      domanda_id: number;
-      answer_given: string;
-    }) =>
-      (
-        trackAttemptFn as unknown as (
-          opts: TrackAttemptPayload
-        ) => Promise<TrackAttemptResult>
-      )({ data: { domanda_id, answer_given } }),
+    ...orpc.attempt.track.mutationOptions(),
     onSuccess: () => {
       console.log('[client] trackAttempt completato con successo');
     },
@@ -237,18 +173,17 @@ function EsercitazionePage(): JSX.Element {
   const handleCheckResponse = useCallback(
     async (domandaId: number, answerGiven: string): Promise<boolean> => {
       try {
-        const result = await (
-          checkResponseFn as unknown as (
-            opts: CheckResponsePayload
-          ) => Promise<CheckResponseResult>
-        )({ data: { domanda_id: domandaId, answer_given: answerGiven } });
+        const result = await client.attempt.check({
+          domanda_id: domandaId,
+          answer_given: answerGiven,
+        });
         return result.is_correct;
       } catch (error) {
         console.error('Errore verifica risposta:', error);
         return false;
       }
     },
-    [checkResponseFn]
+    []
   );
 
   // Intersection Observer per rilevare quando i filtri escono dalla viewport

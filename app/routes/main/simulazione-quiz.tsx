@@ -1,30 +1,14 @@
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { Button } from '~/components/ui/button';
 import { Switch } from '~/components/ui/switch';
 import { Label } from '~/components/ui/label';
 import { useAppStore } from '~/store';
-import { generateQuiz, getQuizBoostCounts } from '~/server/quiz';
+import { orpc } from '~/lib/orpc';
 import { Quiz } from '~/components/quiz-component';
-import type { QuizType, GenerateQuizResult, GetQuizBoostCountsResult } from '~/types/db';
-
-/** Payload per generateQuiz */
-type GenerateQuizPayload = {
-  data: {
-    quiz_type: QuizType;
-    boost_errors: boolean;
-    boost_skull: boolean;
-  };
-};
-
-/** Payload per getQuizBoostCounts (nessun parametro) */
-type GetQuizBoostCountsPayload = {
-  data: Record<string, never>;
-};
 
 export const Route = createFileRoute('/main/simulazione-quiz')({
   component: SimulazioneQuizPage,
@@ -43,18 +27,9 @@ function SimulazioneQuizPage(): JSX.Element {
   // Deriva i valori dalle preferenze
   const { quizType, boostErrors, boostSkull } = preferences;
 
-  const generateQuizFn = useServerFn(generateQuiz);
-  const getBoostCountsFn = useServerFn(getQuizBoostCounts);
-
   // Query per ottenere i conteggi boost (errori e skull)
   const boostCountsQuery = useQuery({
-    queryKey: ['quiz', 'boost-counts'],
-    queryFn: async () =>
-      (
-        getBoostCountsFn as unknown as (
-          opts: GetQuizBoostCountsPayload
-        ) => Promise<GetQuizBoostCountsResult>
-      )({ data: {} }),
+    ...orpc.quiz.getBoostCounts.queryOptions({}),
     staleTime: 2 * 60 * 1000, // 2 minuti
   });
 
@@ -64,16 +39,7 @@ function SimulazioneQuizPage(): JSX.Element {
 
   // Mutation per generare il quiz
   const generateMutation = useMutation({
-    mutationFn: async (params: {
-      quiz_type: QuizType;
-      boost_errors: boolean;
-      boost_skull: boolean;
-    }) =>
-      (
-        generateQuizFn as unknown as (
-          opts: GenerateQuizPayload
-        ) => Promise<GenerateQuizResult>
-      )({ data: params }),
+    ...orpc.quiz.generate.mutationOptions(),
     onSuccess: (result) => {
       // Salva il quiz attivo nello store (con timestamp per calcolo tempo)
       startQuizStore(result.quiz_id);

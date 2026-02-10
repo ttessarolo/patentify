@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { Timer, formatSecondsToHHMMSS } from '~/components/timer';
@@ -19,16 +18,10 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { StopIcon, QuizIcon, CorrectIcon, WrongIcon, TimelapseIcon, AvgTimeIcon } from '~/icons';
 import { useAppStore, type QuizStatus } from '~/store';
-import { getQuizDomanda, abortQuiz, completeQuiz } from '~/server/quiz';
-import { trackAttempt } from '~/server/track_attempt';
-import type {
-  Domanda,
-  GetQuizDomandaResult,
-  AbortQuizResult,
-  CompleteQuizResult,
-  TrackAttemptResult,
-} from '~/types/db';
+import { orpc } from '~/lib/orpc';
+import type { Domanda } from '~/types/db';
 import type { TimerTickPayload } from '~/types/components';
+import { QUIZ_SIZE, QUIZ_DURATION_SECONDS, MAX_ERRORS } from '~/commons';
 
 // ============================================================
 // Tipi
@@ -38,33 +31,6 @@ export interface QuizProps {
   quizId: number;
   onEnd: () => void;
 }
-
-/** Payload per getQuizDomanda */
-type GetQuizDomandaPayload = {
-  data: { quiz_id: number; quiz_pos: number };
-};
-
-/** Payload per abortQuiz */
-type AbortQuizPayload = {
-  data: { quiz_id: number };
-};
-
-/** Payload per completeQuiz */
-type CompleteQuizPayload = {
-  data: { quiz_id: number };
-};
-
-/** Payload per trackAttempt */
-type TrackAttemptPayload = {
-  data: {
-    domanda_id: number;
-    answer_given: string;
-    quiz_id?: number;
-    quiz_pos?: number;
-  };
-};
-
-import { QUIZ_SIZE, QUIZ_DURATION_SECONDS, MAX_ERRORS } from '~/commons';
 
 // ============================================================
 // Componente Quiz
@@ -126,58 +92,24 @@ export function Quiz({ quizId, onEnd }: QuizProps): JSX.Element {
   // Ref per tracciare il tempo trascorso (aggiornato da onTick del Timer)
   const lastElapsedRef = useRef(initialElapsed);
 
-  // Server functions
-  const getQuizDomandaFn = useServerFn(getQuizDomanda);
-  const abortQuizFn = useServerFn(abortQuiz);
-  const completeQuizFn = useServerFn(completeQuiz);
-  const trackAttemptFn = useServerFn(trackAttempt);
-
   // Query per ottenere la domanda corrente
   const domandaQuery = useQuery({
-    queryKey: ['quiz', quizId, 'domanda', currentPos],
-    queryFn: async () =>
-      (
-        getQuizDomandaFn as unknown as (
-          opts: GetQuizDomandaPayload
-        ) => Promise<GetQuizDomandaResult>
-      )({ data: { quiz_id: quizId, quiz_pos: currentPos } }),
+    ...orpc.quiz.getDomanda.queryOptions({
+      input: { quiz_id: quizId, quiz_pos: currentPos },
+    }),
     enabled: status === 'playing' && currentPos <= QUIZ_SIZE,
     staleTime: Infinity, // La domanda non cambia
     refetchOnWindowFocus: false,
   });
 
   // Mutation per tracciare la risposta
-  const trackMutation = useMutation({
-    mutationFn: async (params: {
-      domanda_id: number;
-      answer_given: string;
-      quiz_id: number;
-      quiz_pos: number;
-    }) =>
-      (
-        trackAttemptFn as unknown as (
-          opts: TrackAttemptPayload
-        ) => Promise<TrackAttemptResult>
-      )({ data: params }),
-  });
+  const trackMutation = useMutation(orpc.attempt.track.mutationOptions());
 
   // Mutation per abortire il quiz
-  const abortMutation = useMutation({
-    mutationFn: async () =>
-      (abortQuizFn as unknown as (opts: AbortQuizPayload) => Promise<AbortQuizResult>)({
-        data: { quiz_id: quizId },
-      }),
-  });
+  const abortMutation = useMutation(orpc.quiz.abort.mutationOptions());
 
   // Mutation per completare il quiz
-  const completeMutation = useMutation({
-    mutationFn: async () =>
-      (
-        completeQuizFn as unknown as (
-          opts: CompleteQuizPayload
-        ) => Promise<CompleteQuizResult>
-      )({ data: { quiz_id: quizId } }),
-  });
+  const completeMutation = useMutation(orpc.quiz.complete.mutationOptions());
 
   // Handler per aggiornare il tempo trascorso (chiamato dal Timer ogni secondo)
   const handleTimerTick = useCallback((payload: TimerTickPayload): void => {
@@ -229,7 +161,7 @@ export function Quiz({ quizId, onEnd }: QuizProps): JSX.Element {
         // Quiz completato - salva il tempo e lo status nello store (persistiti)
         setQuizFinalTime(lastElapsedRef.current);
         setQuizStatus('finished');
-        completeMutation.mutate();
+        completeMutation.mutate({ quiz_id: quizId });
       }
     },
     [status, quizId, currentPos, correctCount, wrongCount, trackMutation, completeMutation, domandaQuery.data, updateQuizProgress, setQuizStatus, setQuizFinalTime]
@@ -242,8 +174,8 @@ export function Quiz({ quizId, onEnd }: QuizProps): JSX.Element {
     // Salva il tempo e lo status nello store (persistiti)
     setQuizFinalTime(lastElapsedRef.current);
     setQuizStatus('time_expired');
-    abortMutation.mutate();
-  }, [status, abortMutation, setQuizStatus, setQuizFinalTime]);
+    abortMutation.mutate({ quiz_id: quizId });
+  }, [status, abortMutation, setQuizStatus, setQuizFinalTime, quizId]);
 
   // Handler per conferma abbandono
   const handleConfirmAbandon = useCallback((): void => {
@@ -251,8 +183,8 @@ export function Quiz({ quizId, onEnd }: QuizProps): JSX.Element {
     abortedRef.current = true;
     setAbandonDialogOpen(false);
     setQuizStatus('abandoned');
-    abortMutation.mutate();
-  }, [abortMutation, setQuizStatus]);
+    abortMutation.mutate({ quiz_id: quizId });
+  }, [abortMutation, setQuizStatus, quizId]);
 
   // Handler per tornare alla pagina principale
   const handleBackToSimulazione = useCallback((): void => {

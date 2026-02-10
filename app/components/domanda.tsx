@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 import { useCallback, useState } from 'react';
-import { useServerFn } from '@tanstack/react-start';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '~/components/ui/card';
 import { Button } from '~/components/ui/button';
@@ -20,31 +19,13 @@ import {
   WrongIcon,
   SkullIcon,
 } from '~/icons';
-import { domandaUserStats } from '~/server/domandaUserStats';
-import { addSkull, removeSkull } from '~/server/skull';
-import { getSpiegazione } from '~/server/spiegazione';
+import { orpc, client } from '~/lib/orpc';
 import { getValueColorClass, SHOW_SPIEGAZIONE } from '~/commons';
-import type {
-  Domanda,
-  DomandaUserStatsResult,
-  GetSpiegazioneResult,
-  SkullResult,
-} from '~/types/db';
+import type { Domanda } from '~/types/db';
 
-/** Payload per domandaUserStats (user_id handled server-side via Clerk) */
-type DomandaUserStatsPayload = {
-  data: { domanda_id: number };
-};
-
-/** Payload per addSkull/removeSkull */
-type SkullPayload = {
-  data: { domanda_id: number };
-};
-
-/** Payload per getSpiegazione */
-type SpiegazionePayload = {
-  data: { domanda_id: number };
-};
+type DomandaUserStatsResult = Awaited<
+  ReturnType<typeof client.attempt.getDomandaUserStats>
+>;
 
 export interface DomandaCardProps {
   domanda: Domanda & { skull?: boolean };
@@ -135,23 +116,11 @@ export function DomandaCard({
   // Stato per il reveal box spiegazione
   const [showSpiegazione, setShowSpiegazione] = useState(false);
 
-  // Server function per statistiche
-  const domandaUserStatsFn = useServerFn(domandaUserStats);
-
-  // Server functions per skull
-  const addSkullFn = useServerFn(addSkull);
-  const removeSkullFn = useServerFn(removeSkull);
-
-  // Server function e query per spiegazione (lazy loading)
-  const getSpiegazioneFn = useServerFn(getSpiegazione);
+  // Query per spiegazione (lazy loading)
   const spiegazioneQuery = useQuery({
-    queryKey: ['spiegazione', domanda.id],
-    queryFn: async (): Promise<GetSpiegazioneResult> =>
-      (
-        getSpiegazioneFn as unknown as (
-          opts: SpiegazionePayload
-        ) => Promise<GetSpiegazioneResult>
-      )({ data: { domanda_id: domanda.id } }),
+    ...orpc.spiegazione.get.queryOptions({
+      input: { domanda_id: domanda.id },
+    }),
     enabled: showSpiegazione,
     staleTime: Infinity,
   });
@@ -161,16 +130,11 @@ export function DomandaCard({
 
   // Mutation per aggiungere skull
   const addSkullMutation = useMutation({
-    mutationFn: async (domandaId: number): Promise<SkullResult> =>
-      (addSkullFn as unknown as (opts: SkullPayload) => Promise<SkullResult>)({
-        data: { domanda_id: domandaId },
-      }),
+    ...orpc.skull.add.mutationOptions(),
     onMutate: (): void => {
-      // Update ottimistico
       setIsSkull(true);
     },
     onError: (): void => {
-      // Rollback in caso di errore
       setIsSkull(false);
       console.error('Errore aggiungendo skull');
     },
@@ -178,18 +142,11 @@ export function DomandaCard({
 
   // Mutation per rimuovere skull
   const removeSkullMutation = useMutation({
-    mutationFn: async (domandaId: number): Promise<SkullResult> =>
-      (
-        removeSkullFn as unknown as (opts: SkullPayload) => Promise<SkullResult>
-      )({
-        data: { domanda_id: domandaId },
-      }),
+    ...orpc.skull.remove.mutationOptions(),
     onMutate: (): void => {
-      // Update ottimistico
       setIsSkull(false);
     },
     onError: (): void => {
-      // Rollback in caso di errore
       setIsSkull(true);
       console.error('Errore rimuovendo skull');
     },
@@ -198,9 +155,9 @@ export function DomandaCard({
   // Handler per toggle skull
   const handleSkullToggle = useCallback((): void => {
     if (isSkull) {
-      removeSkullMutation.mutate(domanda.id);
+      removeSkullMutation.mutate({ domanda_id: domanda.id });
     } else {
-      addSkullMutation.mutate(domanda.id);
+      addSkullMutation.mutate({ domanda_id: domanda.id });
     }
   }, [isSkull, domanda.id, addSkullMutation, removeSkullMutation]);
 
@@ -216,12 +173,9 @@ export function DomandaCard({
         setStatsLoading(true);
         setStatsError(false);
         try {
-          // user_id is handled server-side via Clerk auth()
-          const result = await (
-            domandaUserStatsFn as unknown as (
-              opts: DomandaUserStatsPayload
-            ) => Promise<DomandaUserStatsResult>
-          )({ data: { domanda_id: domanda.id } });
+          const result = await client.attempt.getDomandaUserStats({
+            domanda_id: domanda.id,
+          });
           setStats(result);
           setStatsFetched(true);
         } catch (error) {
@@ -232,7 +186,7 @@ export function DomandaCard({
         }
       }
     },
-    [statsFetched, userId, domandaUserStatsFn, domanda.id]
+    [statsFetched, userId, domanda.id]
   );
 
   const handleAnswer = useCallback(

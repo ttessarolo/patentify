@@ -1,17 +1,15 @@
 import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { Button } from '~/components/ui/button';
 import { DomandaCard } from '~/components/domanda';
 import { useTimePeriod } from '~/components/errori-ricorrenti';
-import { getDomandeMaggioriErrori } from '~/server/errori-ricorrenti';
-import type {
-  TimePeriod,
-  DomandeErroriResult,
-  DomandaConErrori,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+
+type DomandaConErrori = Awaited<
+  ReturnType<typeof client.errori.getMaggioriErrori>
+>['domande'][number];
 
 export const Route = createFileRoute('/main/errori-ricorrenti/maggiori-errori')(
   {
@@ -21,34 +19,24 @@ export const Route = createFileRoute('/main/errori-ricorrenti/maggiori-errori')(
 
 const PAGE_LIMIT = 10;
 
-type DomandePayload = {
-  data: { period: TimePeriod; limit: number; offset: number };
-};
-
 function MaggioriErroriPage(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 
-  const getMaggioriErroriFn = useServerFn(getDomandeMaggioriErrori);
-
   // Query infinita per paginazione
-  const domandeQuery = useInfiniteQuery({
-    queryKey: ['errori-ricorrenti', 'maggiori-errori-full', period],
-    queryFn: async ({ pageParam }): Promise<DomandeErroriResult> =>
-      (
-        getMaggioriErroriFn as unknown as (
-          opts: DomandePayload
-        ) => Promise<DomandeErroriResult>
-      )({
-        data: { period, limit: PAGE_LIMIT, offset: pageParam },
+  const domandeQuery = useInfiniteQuery(
+    orpc.errori.getMaggioriErrori.infiniteOptions({
+      input: (pageParam: number) => ({
+        period,
+        limit: PAGE_LIMIT,
+        offset: pageParam,
       }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages): number | undefined => {
-      if (!lastPage.hasMore) return undefined;
-      return allPages.length * PAGE_LIMIT;
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, _, lastParam): number | undefined =>
+        lastPage.hasMore ? (lastParam ?? 0) + PAGE_LIMIT : undefined,
+      staleTime: 2 * 60 * 1000,
+    })
+  );
 
   const domande = domandeQuery.data?.pages.flatMap((p) => p.domande) ?? [];
 

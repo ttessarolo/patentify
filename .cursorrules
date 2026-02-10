@@ -2,13 +2,15 @@
 
 ## Stack Tecnologico
 
-- **Framework**: TanStack Start (v0 - RC) con TanStack Router e TanStack Query
+- **Framework**: TanStack Start (v1) con TanStack Router e TanStack Query
+- **API Layer**: oRPC (`@orpc/server`, `@orpc/client`, `@orpc/openapi`, `@orpc/zod`, `@orpc/tanstack-query`) — procedures + router + OpenAPI
 - **UI**: React, Tailwind CSS, shadcn/ui
 - **State Management**: Zustand con Immer middleware e Persist middleware
 - **Font**: Noto Sans (Google Font)
 - **Icone**: Google Icons (SVG locali in `/app/icons`)
 - **Database**: Neon DB (progetto "patentify" - ID: dawn-paper-76642524)
-- **Auth**: Neon Auth (managed)
+- **Auth**: Clerk (`@clerk/tanstack-react-start`)
+- **Error Tracking**: Sentry (`@sentry/tanstackstart-react`)
 - **Testing**: Vitest
 - **Linting/Formatting**: ESLint + Prettier
 - **Form**: React Hook Form + Zod
@@ -68,11 +70,41 @@
 - **Connection string**: Usare la variabile ambiente `DATABASE_URL`
 - **Query**: Usare il client `sql` da `~/lib/db`
 
+### API (oRPC)
+
+- **Architettura a 3 livelli**: Services (business logic) -> Procedures (oRPC, validazione + auth) -> Handlers (RPC + OpenAPI)
+- **Services** (`app/server/services/`): Funzioni pure che ricevono parametri espliciti (userId, input). NON gestiscono auth ne validazione. Contengono query SQL e business logic.
+- **Schemas** (`app/server/schemas/`): Zod schemas per input/output. Sono il contratto API condiviso. I tipi TypeScript si inferiscono con `z.infer<>`.
+- **Procedures** (`app/server/procedures/`): Procedure oRPC sottili che collegano schema + middleware + service. Ogni procedure ha `.route()` per OpenAPI.
+- **Router** (`app/server/router.ts`): Router oRPC nested che organizza tutte le procedure per dominio.
+- **Client isomorfico** (`app/lib/orpc.ts`): Usa `createIsomorphicFn` per SSR optimization. Esporta `client` e `orpc` (TanStack Query utils).
+- **Middleware auth** (`app/server/middleware/auth.ts`): Middleware oRPC che wrappa Clerk `auth()`. Espone `authProcedure` e `publicProcedure`.
+- **Handlers**: RPCHandler su `/api/rpc/$` (web), OpenAPIHandler su `/api/v1/$` (mobile).
+- **OpenAPI Spec**: Endpoint `/api/v1/spec` genera la spec OpenAPI JSON automaticamente dal router.
+- **TanStack Query**: Usare `orpc.dominio.procedura.queryOptions()` / `mutationOptions()` nei componenti client.
+- **Import client**: `import { orpc } from '~/lib/orpc'` per query/mutation options, `import { client } from '~/lib/orpc'` per chiamate imperative.
+- **Import procedure base**: `import { authProcedure, publicProcedure } from '~/server/middleware/auth'`
+- **Errori oRPC**: Usare `ORPCError` con codici standard ('UNAUTHORIZED', 'NOT_FOUND', 'BAD_REQUEST', ecc.)
+- **OpenAPI routes**: Ogni procedure deve avere `.route({ method, path, summary })` per generazione spec
+- **Output schemas obbligatori**: Ogni procedure deve avere `.output()` per generazione OpenAPI corretta
+
 ### Autenticazione
 
-- **Neon Auth**: Usare il servizio managed Neon Auth
-- **Auth helpers**: Usare le funzioni da `~/lib/auth`
-- **Session**: Gestire le sessioni tramite Neon Auth API
+- **Clerk**: Usare Clerk come provider di autenticazione
+- **Web**: Session cookies gestite automaticamente da Clerk
+- **Mobile**: Bearer token JWT inviato in Authorization header
+- **Middleware oRPC**: `authProcedure` da `~/server/middleware/auth` per procedure autenticate
+- **Procedure pubbliche**: `publicProcedure` da `~/server/middleware/auth` per endpoint senza auth
+- **Webhook Clerk**: `app/routes/api/webhooks/clerk.ts` per sync utenti su DB
+
+### Error Tracking (Sentry)
+
+- **SDK**: `@sentry/tanstackstart-react` per client e server
+- **Init server**: `instrument.server.mjs` (importato via `NODE_OPTIONS='--import ./instrument.server.mjs'`)
+- **Init client**: In `app/router.tsx` con `Sentry.init()` condizionato a `!router.isServer`
+- **Browser tracing**: `Sentry.tanstackRouterBrowserTracingIntegration(router)` per tracing automatico delle navigazioni
+- **Database errors**: Usare `captureDatabaseError()` da `~/lib/db` per errori DB critici nei services
+- **oRPC error interceptor**: Usare `onError` interceptor negli handler oRPC per catturare errori non gestiti
 
 ### Routing
 
@@ -116,6 +148,15 @@
 - `app/` - Codice sorgente principale
 - `app/components/` - Componenti React
 - `app/lib/` - Utilities e helpers
+- `app/lib/orpc.ts` - Client isomorfico oRPC (SSR + client)
+- `app/server/` - Layer API
+- `app/server/services/` - Business logic (funzioni pure, query DB)
+- `app/server/schemas/` - Zod schemas input/output (contratto API)
+- `app/server/procedures/` - Procedure oRPC
+- `app/server/middleware/` - Middleware oRPC (auth, ecc.)
+- `app/server/router.ts` - Router oRPC completo
+- `app/routes/api/rpc.$.ts` - RPCHandler per web app
+- `app/routes/api/v1.$.ts` - OpenAPIHandler per mobile + spec
 - `app/store/` - Store Zustand (slices, hooks, tipi)
 - `app/icons/` - Icone SVG locali
 - `app/styles/` - Stili globali

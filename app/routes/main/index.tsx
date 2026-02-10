@@ -1,75 +1,81 @@
 import type { JSX } from 'react';
+import { useState, useEffect } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '~/components/ui/card';
-import { Button } from '~/components/ui/button';
+
+const menuItems = [
+  {
+    to: '/main/esercitazione',
+    img: '/bottoni/esercitazione_libera.png',
+    alt: 'Esercitazione Libera',
+  },
+  {
+    to: '/main/simulazione-quiz',
+    img: '/bottoni/simulazione_quiz.png',
+    alt: 'Simulazione Quiz',
+  },
+  {
+    to: '/main/errori-ricorrenti',
+    img: '/bottoni/errori_ricorrenti.png',
+    alt: 'Errori Ricorrenti',
+  },
+  {
+    to: '/main/statistiche',
+    img: '/bottoni/statistiche_quiz.png',
+    alt: 'Statistiche Quiz',
+  },
+  {
+    to: '/main/classifiche',
+    img: '/bottoni/classifiche.png',
+    alt: 'Classifiche',
+  },
+  { to: '/main/sfide', img: '/bottoni/sfide.png', alt: 'Sfide' },
+  {
+    to: '/main/consigli-e-trucchi',
+    img: '/bottoni/consigli_e_trucchi.png',
+    alt: 'Consigli e Trucchi',
+  },
+  { to: '/main/help', img: '/bottoni/help.png', alt: 'Help' },
+] as const;
 
 export const Route = createFileRoute('/main/')({
   component: MainIndex,
 });
 
 function MainIndex(): JSX.Element {
+  const [visibleCount, setVisibleCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (visibleCount >= menuItems.length) return;
+
+    const timeout = setTimeout(() => {
+      setVisibleCount((prev) => prev + 1);
+    }, 60);
+
+    return (): void => {
+      clearTimeout(timeout);
+    };
+  }, [visibleCount]);
+
   return (
-    <div className="space-y-6">
-      <Card className="border-0">
-        <CardHeader>
-          <CardTitle>Benvenuto in Patentify</CardTitle>
-          <CardDescription>
-            La guida Smart per i Quiz sulla Patente di Guida
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/esercitazione">Esercitazione Libera</Link>
-            </Button>
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/simulazione-quiz">Simulazione Quiz</Link>
-            </Button>
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/errori-ricorrenti">Errori Ricorrenti</Link>
-            </Button>
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/statistiche">Statistiche Quiz</Link>
-            </Button>
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/classifiche">Classifiche</Link>
-            </Button>
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/consigli-e-trucchi">Consigli e Trucchi</Link>
-            </Button>
-            <Button
-              asChild
-              className="border-2 border-white bg-transparent text-white transition-colors hover:bg-white hover:text-gray-900"
-            >
-              <Link to="/main/help">Help</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="mx-auto mt-4 grid h-[calc(100dvh-var(--header-height)-7rem)] grid-cols-1 grid-rows-8 gap-1.5 md:mt-0 md:max-h-[60dvh] md:max-w-3xl md:grid-cols-2 md:grid-rows-4 md:gap-2">
+      {menuItems.map((item, index) => (
+        <Link
+          key={item.to}
+          to={item.to}
+          className={`flex min-h-0 items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
+            index < visibleCount
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-4 opacity-0'
+          }`}
+        >
+          <img
+            src={item.img}
+            alt={item.alt}
+            className="max-h-full w-auto rounded-lg"
+            draggable={false}
+          />
+        </Link>
+      ))}
     </div>
   );
 }

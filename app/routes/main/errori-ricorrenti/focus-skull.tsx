@@ -1,22 +1,16 @@
 import type { JSX } from 'react';
 import { useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { Button } from '~/components/ui/button';
 import { DomandaCard } from '~/components/domanda';
 import { useTimePeriod } from '~/components/errori-ricorrenti';
-import { getDomandeSkull } from '~/server/errori-ricorrenti';
-import { trackAttempt } from '~/server/track_attempt';
-import { checkResponse } from '~/server/checkResponse';
-import type {
-  TimePeriod,
-  DomandeSkullResult,
-  DomandaSkull,
-  CheckResponseResult,
-  TrackAttemptResult,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+
+type DomandaSkull = Awaited<
+  ReturnType<typeof client.errori.getSkull>
+>['domande'][number];
 
 export const Route = createFileRoute('/main/errori-ricorrenti/focus-skull')({
   component: FocusSkullPage,
@@ -24,60 +18,29 @@ export const Route = createFileRoute('/main/errori-ricorrenti/focus-skull')({
 
 const PAGE_LIMIT = 10;
 
-type DomandePayload = {
-  data: { period: TimePeriod; limit: number; offset: number };
-};
-type CheckResponsePayload = {
-  data: { domanda_id: number; answer_given: string };
-};
-type TrackAttemptPayload = {
-  data: { domanda_id: number; answer_given: string };
-};
-
 function FocusSkullPage(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 
-  const getSkullFn = useServerFn(getDomandeSkull);
-  const trackAttemptFn = useServerFn(trackAttempt);
-  const checkResponseFn = useServerFn(checkResponse);
-
   // Query infinita per paginazione
-  const domandeQuery = useInfiniteQuery({
-    queryKey: ['errori-ricorrenti', 'focus-skull', period],
-    queryFn: async ({ pageParam }): Promise<DomandeSkullResult> =>
-      (
-        getSkullFn as unknown as (
-          opts: DomandePayload
-        ) => Promise<DomandeSkullResult>
-      )({
-        data: { period, limit: PAGE_LIMIT, offset: pageParam },
+  const domandeQuery = useInfiniteQuery(
+    orpc.errori.getSkull.infiniteOptions({
+      input: (pageParam: number) => ({
+        period,
+        limit: PAGE_LIMIT,
+        offset: pageParam,
       }),
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, allPages): number | undefined => {
-      if (!lastPage.hasMore) return undefined;
-      return allPages.length * PAGE_LIMIT;
-    },
-    staleTime: 2 * 60 * 1000,
-  });
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, _, lastParam): number | undefined =>
+        lastPage.hasMore ? (lastParam ?? 0) + PAGE_LIMIT : undefined,
+      staleTime: 2 * 60 * 1000,
+    })
+  );
 
   const domande = domandeQuery.data?.pages.flatMap((p) => p.domande) ?? [];
 
   // Mutation per tracking
-  const trackMutation = useMutation({
-    mutationFn: async ({
-      domanda_id,
-      answer_given,
-    }: {
-      domanda_id: number;
-      answer_given: string;
-    }): Promise<TrackAttemptResult> =>
-      (
-        trackAttemptFn as unknown as (
-          opts: TrackAttemptPayload
-        ) => Promise<TrackAttemptResult>
-      )({ data: { domanda_id, answer_given } }),
-  });
+  const trackMutation = useMutation(orpc.attempt.track.mutationOptions());
 
   const handleAnswer = useCallback(
     async (domandaId: number, value: string): Promise<void> => {
@@ -89,17 +52,16 @@ function FocusSkullPage(): JSX.Element {
   const handleCheckResponse = useCallback(
     async (domandaId: number, answerGiven: string): Promise<boolean> => {
       try {
-        const result = await (
-          checkResponseFn as unknown as (
-            opts: CheckResponsePayload
-          ) => Promise<CheckResponseResult>
-        )({ data: { domanda_id: domandaId, answer_given: answerGiven } });
+        const result = await client.attempt.check({
+          domanda_id: domandaId,
+          answer_given: answerGiven,
+        });
         return result.is_correct;
       } catch {
         return false;
       }
     },
-    [checkResponseFn]
+    []
   );
 
   return (

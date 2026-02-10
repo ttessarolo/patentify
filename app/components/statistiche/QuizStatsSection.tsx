@@ -9,17 +9,19 @@ import {
   LinearScale,
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { Pill } from '~/components/ui/pill';
 import { QuizIcon, CorrectIcon, WrongIcon } from '~/icons';
 import { useAppStore } from '~/store';
-import { getQuizTimeline } from '~/server/statistiche';
-import type {
-  QuizStatsResult,
-  TimePeriod,
-  QuizTimelineStatsResult,
-} from '~/types/db';
+import { client, orpc } from '~/lib/orpc';
+import type { TimePeriod } from '~/types/db';
+
+type QuizStatsResult = Awaited<
+  ReturnType<typeof client.statistiche.getQuizStats>
+>;
+type QuizTimelineStatsResult = Awaited<
+  ReturnType<typeof client.statistiche.getQuizTimeline>
+>;
 
 // Registra i componenti Chart.js necessari
 ChartJS.register(
@@ -70,20 +72,9 @@ export function QuizStatsSection({
   const chartType = useAppStore((s) => s.statistiche.chartType);
   const toggleChartType = useAppStore((s) => s.toggleStatisticheChartType);
 
-  // Server function per timeline
-  const getQuizTimelineFn = useServerFn(getQuizTimeline);
-
   // Query per timeline (lazy, attivata solo quando chartType === 'bar')
   const timelineQuery = useQuery({
-    queryKey: ['statistiche', 'quiz-timeline', period],
-    queryFn: async (): Promise<QuizTimelineStatsResult> =>
-      (
-        getQuizTimelineFn as unknown as (opts: {
-          data: { period: TimePeriod };
-        }) => Promise<QuizTimelineStatsResult>
-      )({
-        data: { period },
-      }),
+    ...orpc.statistiche.getQuizTimeline.queryOptions({ input: { period } }),
     staleTime: 2 * 60 * 1000,
     enabled: chartType === 'bar',
   });

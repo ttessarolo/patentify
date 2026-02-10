@@ -21,8 +21,10 @@ import { Route as SignUpVerifyEmailAddressRouteImport } from './routes/sign-up/v
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as MainStatisticheRouteImport } from './routes/main/statistiche'
 import { Route as MainSimulazioneQuizRouteImport } from './routes/main/simulazione-quiz'
+import { Route as MainSfideRouteImport } from './routes/main/sfide'
 import { Route as MainRivediQuizRouteImport } from './routes/main/rivedi-quiz'
 import { Route as MainEsercitazioneRouteImport } from './routes/main/esercitazione'
+import { Route as ApiDocsRouteImport } from './routes/api/docs'
 import { Route as MainHelpRouteRouteImport } from './routes/main/help/route'
 import { Route as MainErroriRicorrentiRouteRouteImport } from './routes/main/errori-ricorrenti/route'
 import { Route as MainConsigliETrucchiRouteRouteImport } from './routes/main/consigli-e-trucchi/route'
@@ -41,6 +43,8 @@ import { Route as MainErroriRicorrentiCategorieCriticheRouteImport } from './rou
 import { Route as MainClassificheRisposteRouteImport } from './routes/main/classifiche/risposte'
 import { Route as MainClassificheQuizRouteImport } from './routes/main/classifiche/quiz'
 import { Route as ApiWebhooksClerkRouteImport } from './routes/api/webhooks/clerk'
+import { Route as ApiV1SplatRouteImport } from './routes/api/v1.$'
+import { Route as ApiRpcSplatRouteImport } from './routes/api/rpc.$'
 
 const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
   id: '/terms-of-service',
@@ -103,6 +107,11 @@ const MainSimulazioneQuizRoute = MainSimulazioneQuizRouteImport.update({
   path: '/simulazione-quiz',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainSfideRoute = MainSfideRouteImport.update({
+  id: '/sfide',
+  path: '/sfide',
+  getParentRoute: () => MainRouteRoute,
+} as any)
 const MainRivediQuizRoute = MainRivediQuizRouteImport.update({
   id: '/rivedi-quiz',
   path: '/rivedi-quiz',
@@ -112,6 +121,11 @@ const MainEsercitazioneRoute = MainEsercitazioneRouteImport.update({
   id: '/esercitazione',
   path: '/esercitazione',
   getParentRoute: () => MainRouteRoute,
+} as any)
+const ApiDocsRoute = ApiDocsRouteImport.update({
+  id: '/api/docs',
+  path: '/api/docs',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const MainHelpRouteRoute = MainHelpRouteRouteImport.update({
   id: '/help',
@@ -214,6 +228,16 @@ const ApiWebhooksClerkRoute = ApiWebhooksClerkRouteImport.update({
   path: '/api/webhooks/clerk',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1SplatRoute = ApiV1SplatRouteImport.update({
+  id: '/api/v1/$',
+  path: '/api/v1/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRpcSplatRoute = ApiRpcSplatRouteImport.update({
+  id: '/api/rpc/$',
+  path: '/api/rpc/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -225,8 +249,10 @@ export interface FileRoutesByFullPath {
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
   '/main/help': typeof MainHelpRouteRouteWithChildren
+  '/api/docs': typeof ApiDocsRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
+  '/main/sfide': typeof MainSfideRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -234,6 +260,8 @@ export interface FileRoutesByFullPath {
   '/main/': typeof MainIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
   '/main/classifiche/quiz': typeof MainClassificheQuizRoute
   '/main/classifiche/risposte': typeof MainClassificheRisposteRoute
@@ -253,8 +281,10 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/terms-of-service': typeof TermsOfServiceRoute
+  '/api/docs': typeof ApiDocsRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
+  '/main/sfide': typeof MainSfideRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -262,6 +292,8 @@ export interface FileRoutesByTo {
   '/main': typeof MainIndexRoute
   '/sign-in': typeof SignInIndexRoute
   '/sign-up': typeof SignUpIndexRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
   '/main/classifiche/quiz': typeof MainClassificheQuizRoute
   '/main/classifiche/risposte': typeof MainClassificheRisposteRoute
@@ -288,8 +320,10 @@ export interface FileRoutesById {
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
   '/main/help': typeof MainHelpRouteRouteWithChildren
+  '/api/docs': typeof ApiDocsRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
+  '/main/sfide': typeof MainSfideRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -297,6 +331,8 @@ export interface FileRoutesById {
   '/main/': typeof MainIndexRoute
   '/sign-in/': typeof SignInIndexRoute
   '/sign-up/': typeof SignUpIndexRoute
+  '/api/rpc/$': typeof ApiRpcSplatRoute
+  '/api/v1/$': typeof ApiV1SplatRoute
   '/api/webhooks/clerk': typeof ApiWebhooksClerkRoute
   '/main/classifiche/quiz': typeof MainClassificheQuizRoute
   '/main/classifiche/risposte': typeof MainClassificheRisposteRoute
@@ -324,8 +360,10 @@ export interface FileRouteTypes {
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
+    | '/api/docs'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
+    | '/main/sfide'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -333,6 +371,8 @@ export interface FileRouteTypes {
     | '/main/'
     | '/sign-in/'
     | '/sign-up/'
+    | '/api/rpc/$'
+    | '/api/v1/$'
     | '/api/webhooks/clerk'
     | '/main/classifiche/quiz'
     | '/main/classifiche/risposte'
@@ -352,8 +392,10 @@ export interface FileRouteTypes {
     | '/'
     | '/privacy-policy'
     | '/terms-of-service'
+    | '/api/docs'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
+    | '/main/sfide'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -361,6 +403,8 @@ export interface FileRouteTypes {
     | '/main'
     | '/sign-in'
     | '/sign-up'
+    | '/api/rpc/$'
+    | '/api/v1/$'
     | '/api/webhooks/clerk'
     | '/main/classifiche/quiz'
     | '/main/classifiche/risposte'
@@ -386,8 +430,10 @@ export interface FileRouteTypes {
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
+    | '/api/docs'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
+    | '/main/sfide'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -395,6 +441,8 @@ export interface FileRouteTypes {
     | '/main/'
     | '/sign-in/'
     | '/sign-up/'
+    | '/api/rpc/$'
+    | '/api/v1/$'
     | '/api/webhooks/clerk'
     | '/main/classifiche/quiz'
     | '/main/classifiche/risposte'
@@ -417,8 +465,11 @@ export interface RootRouteChildren {
   SignUpRouteRoute: typeof SignUpRouteRouteWithChildren
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
+  ApiDocsRoute: typeof ApiDocsRoute
   SignInSplatRoute: typeof SignInSplatRoute
   SignInIndexRoute: typeof SignInIndexRoute
+  ApiRpcSplatRoute: typeof ApiRpcSplatRoute
+  ApiV1SplatRoute: typeof ApiV1SplatRoute
   ApiWebhooksClerkRoute: typeof ApiWebhooksClerkRoute
 }
 
@@ -508,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainSimulazioneQuizRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/main/sfide': {
+      id: '/main/sfide'
+      path: '/sfide'
+      fullPath: '/main/sfide'
+      preLoaderRoute: typeof MainSfideRouteImport
+      parentRoute: typeof MainRouteRoute
+    }
     '/main/rivedi-quiz': {
       id: '/main/rivedi-quiz'
       path: '/rivedi-quiz'
@@ -521,6 +579,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/main/esercitazione'
       preLoaderRoute: typeof MainEsercitazioneRouteImport
       parentRoute: typeof MainRouteRoute
+    }
+    '/api/docs': {
+      id: '/api/docs'
+      path: '/api/docs'
+      fullPath: '/api/docs'
+      preLoaderRoute: typeof ApiDocsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/main/help': {
       id: '/main/help'
@@ -648,6 +713,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWebhooksClerkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/$': {
+      id: '/api/v1/$'
+      path: '/api/v1/$'
+      fullPath: '/api/v1/$'
+      preLoaderRoute: typeof ApiV1SplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/rpc/$': {
+      id: '/api/rpc/$'
+      path: '/api/rpc/$'
+      fullPath: '/api/rpc/$'
+      preLoaderRoute: typeof ApiRpcSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -733,6 +812,7 @@ interface MainRouteRouteChildren {
   MainHelpRouteRoute: typeof MainHelpRouteRouteWithChildren
   MainEsercitazioneRoute: typeof MainEsercitazioneRoute
   MainRivediQuizRoute: typeof MainRivediQuizRoute
+  MainSfideRoute: typeof MainSfideRoute
   MainSimulazioneQuizRoute: typeof MainSimulazioneQuizRoute
   MainStatisticheRoute: typeof MainStatisticheRoute
   MainIndexRoute: typeof MainIndexRoute
@@ -745,6 +825,7 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainHelpRouteRoute: MainHelpRouteRouteWithChildren,
   MainEsercitazioneRoute: MainEsercitazioneRoute,
   MainRivediQuizRoute: MainRivediQuizRoute,
+  MainSfideRoute: MainSfideRoute,
   MainSimulazioneQuizRoute: MainSimulazioneQuizRoute,
   MainStatisticheRoute: MainStatisticheRoute,
   MainIndexRoute: MainIndexRoute,
@@ -774,8 +855,11 @@ const rootRouteChildren: RootRouteChildren = {
   SignUpRouteRoute: SignUpRouteRouteWithChildren,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,
+  ApiDocsRoute: ApiDocsRoute,
   SignInSplatRoute: SignInSplatRoute,
   SignInIndexRoute: SignInIndexRoute,
+  ApiRpcSplatRoute: ApiRpcSplatRoute,
+  ApiV1SplatRoute: ApiV1SplatRoute,
   ApiWebhooksClerkRoute: ApiWebhooksClerkRoute,
 }
 export const routeTree = rootRouteImport

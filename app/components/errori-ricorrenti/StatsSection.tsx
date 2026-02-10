@@ -9,7 +9,6 @@ import {
   LinearScale,
 } from 'chart.js';
 import { Doughnut, Bar } from 'react-chartjs-2';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { Pill } from '~/components/ui/pill';
 import {
@@ -20,12 +19,11 @@ import {
   SkullIcon,
 } from '~/icons';
 import { useAppStore } from '~/store';
-import { getTimelineStats } from '~/server/errori-ricorrenti';
-import type {
-  ErroriStatsResult,
-  TimePeriod,
-  TimelineStatsResult,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+
+type ErroriStatsResult = Awaited<ReturnType<typeof client.errori.getStats>>;
+type TimelineStatsResult = Awaited<ReturnType<typeof client.errori.getTimeline>>;
+type TimePeriod = Parameters<typeof client.errori.getStats>[0]['period'];
 
 // Registra i componenti Chart.js necessari
 ChartJS.register(
@@ -78,20 +76,9 @@ export function StatsSection({
   const chartType = useAppStore((s) => s.erroriRicorrenti.chartType);
   const toggleChartType = useAppStore((s) => s.toggleErroriRicorrentiChartType);
 
-  // Server function per timeline
-  const getTimelineStatsFn = useServerFn(getTimelineStats);
-
   // Query per timeline (lazy, attivata solo quando chartType === 'bar')
   const timelineQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'timeline', period],
-    queryFn: async (): Promise<TimelineStatsResult> =>
-      (
-        getTimelineStatsFn as unknown as (opts: {
-          data: { period: TimePeriod };
-        }) => Promise<TimelineStatsResult>
-      )({
-        data: { period },
-      }),
+    ...orpc.errori.getTimeline.queryOptions({ input: { period } }),
     staleTime: 2 * 60 * 1000,
     enabled: chartType === 'bar',
   });

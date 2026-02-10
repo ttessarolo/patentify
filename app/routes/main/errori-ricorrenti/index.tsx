@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { Button } from '~/components/ui/button';
@@ -11,117 +10,65 @@ import {
   StatsSection,
   SectionReveal,
 } from '~/components/errori-ricorrenti';
-import {
-  getErroriStats,
-  getTopCategorieErrori,
-  getDomandeMaggioriErrori,
-  getDomandeSkull,
-  getDomandeMaggioriEsatte,
-} from '~/server/errori-ricorrenti';
-import type {
-  TimePeriod,
-  ErroriStatsResult,
-  TopCategorieErroriResult,
-  DomandeErroriResult,
-  DomandeSkullResult,
-  DomandeEsatteResult,
-  DomandaConErrori,
-  DomandaConEsatte,
-  DomandaSkull,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+
+type TimePeriod = Parameters<typeof client.errori.getStats>[0]['period'];
+type DomandaConErrori = Awaited<
+  ReturnType<typeof client.errori.getMaggioriErrori>
+>['domande'][number];
+type DomandaConEsatte = Awaited<
+  ReturnType<typeof client.errori.getMaggioriEsatte>
+>['domande'][number];
+type DomandaSkull = Awaited<
+  ReturnType<typeof client.errori.getSkull>
+>['domande'][number];
 
 export const Route = createFileRoute('/main/errori-ricorrenti/')({
   component: ErroriRicorrentiIndex,
 });
 
-/** Payload types per server functions */
-type StatsPayload = { data: { period: TimePeriod } };
-type TopCategoriePayload = { data: { period: TimePeriod; limit: number } };
-type DomandePayload = {
-  data: { period: TimePeriod; limit: number; offset: number };
-};
-
 function ErroriRicorrentiIndex(): JSX.Element {
   const period = useTimePeriod();
   const { userId } = useAuth();
 
-  // Server functions
-  const getStatsFn = useServerFn(getErroriStats);
-  const getTopCategorieFn = useServerFn(getTopCategorieErrori);
-  const getMaggioriErroriFn = useServerFn(getDomandeMaggioriErrori);
-  const getSkullFn = useServerFn(getDomandeSkull);
-  const getMaggioriEsatteFn = useServerFn(getDomandeMaggioriEsatte);
-
   // Query per statistiche (Sezione B)
   const statsQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'stats', period],
-    queryFn: async (): Promise<ErroriStatsResult> =>
-      (
-        getStatsFn as unknown as (
-          opts: StatsPayload
-        ) => Promise<ErroriStatsResult>
-      )({
-        data: { period },
-      }),
+    ...orpc.errori.getStats.queryOptions({ input: { period } }),
     staleTime: 2 * 60 * 1000,
   });
 
   // Query per top 5 categorie (Sezione D) - Lazy loaded
   const categorieQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'top-categorie', period],
-    queryFn: async (): Promise<TopCategorieErroriResult> =>
-      (
-        getTopCategorieFn as unknown as (
-          opts: TopCategoriePayload
-        ) => Promise<TopCategorieErroriResult>
-      )({
-        data: { period, limit: 5 },
-      }),
+    ...orpc.errori.getTopCategorie.queryOptions({
+      input: { period, limit: 5 },
+    }),
     staleTime: 2 * 60 * 1000,
     enabled: false, // Lazy loaded
   });
 
   // Query per domande con maggiori errori (Sezione E)
   const maggioriErroriQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'maggiori-errori', period],
-    queryFn: async (): Promise<DomandeErroriResult> =>
-      (
-        getMaggioriErroriFn as unknown as (
-          opts: DomandePayload
-        ) => Promise<DomandeErroriResult>
-      )({
-        data: { period, limit: 5, offset: 0 },
-      }),
+    ...orpc.errori.getMaggioriErrori.queryOptions({
+      input: { period, limit: 5, offset: 0 },
+    }),
     staleTime: 2 * 60 * 1000,
     enabled: false, // Lazy loaded
   });
 
   // Query per domande skull (Sezione F)
   const skullQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'skull', period],
-    queryFn: async (): Promise<DomandeSkullResult> =>
-      (
-        getSkullFn as unknown as (
-          opts: DomandePayload
-        ) => Promise<DomandeSkullResult>
-      )({
-        data: { period, limit: 5, offset: 0 },
-      }),
+    ...orpc.errori.getSkull.queryOptions({
+      input: { period, limit: 5, offset: 0 },
+    }),
     staleTime: 2 * 60 * 1000,
     enabled: false, // Lazy loaded
   });
 
   // Query per domande con maggiori risposte esatte (Sezione G)
   const maggioriEsatteQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'maggiori-esatte', period],
-    queryFn: async (): Promise<DomandeEsatteResult> =>
-      (
-        getMaggioriEsatteFn as unknown as (
-          opts: DomandePayload
-        ) => Promise<DomandeEsatteResult>
-      )({
-        data: { period, limit: 5, offset: 0 },
-      }),
+    ...orpc.errori.getMaggioriEsatte.queryOptions({
+      input: { period, limit: 5, offset: 0 },
+    }),
     staleTime: 2 * 60 * 1000,
     enabled: false, // Lazy loaded
   });

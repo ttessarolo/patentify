@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   createColumnHelper,
@@ -13,13 +12,11 @@ import { useTimePeriodFor } from '~/components/errori-ricorrenti';
 import { UserCell, SortableHeader } from '~/components/classifiche';
 import { Pill } from '~/components/ui/pill';
 import { useAppStore } from '~/store';
-import { getClassificaRisposte } from '~/server/classifiche';
-import type {
-  TimePeriod,
-  ClassificaRisposteRow,
-  ClassificaRisposteResult,
-  ClassificaScope,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+
+type ClassificaRisposteRow = Awaited<
+  ReturnType<typeof client.classifiche.risposte>
+>['rows'][number];
 
 export const Route = createFileRoute('/main/classifiche/risposte')({
   component: ClassificaRispostePage,
@@ -60,18 +57,6 @@ function ClassificaRispostePage(): JSX.Element {
   const setRisposteSort = useAppStore((s) => s.setClassificheRisposteSort);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const getClassificaRisposteFn = useServerFn(getClassificaRisposte);
-
-  type RispostePayload = {
-    data: {
-      period: TimePeriod;
-      scope: ClassificaScope;
-      sortField: string;
-      sortDir: string;
-      limit: number;
-      offset: number;
-    };
-  };
 
   const {
     data,
@@ -80,32 +65,26 @@ function ClassificaRispostePage(): JSX.Element {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteQuery({
-    queryKey: ['classifiche', 'risposte', period, scope, sortField, sortDir],
-    queryFn: async ({ pageParam = 0 }): Promise<ClassificaRisposteResult> =>
-      (
-        getClassificaRisposteFn as unknown as (
-          opts: RispostePayload
-        ) => Promise<ClassificaRisposteResult>
-      )({
-        data: {
-          period,
-          scope,
-          sortField,
-          sortDir,
-          limit: PAGE_SIZE,
-          offset: pageParam,
-        },
+  } = useInfiniteQuery(
+    orpc.classifiche.risposte.infiniteOptions({
+      input: (pageParam: number) => ({
+        period,
+        scope,
+        sortField,
+        sortDir,
+        limit: PAGE_SIZE,
+        offset: pageParam,
       }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage.hasMore) return undefined;
-      const totalLoaded = allPages.length * PAGE_SIZE;
-      if (totalLoaded >= MAX_ROWS) return undefined;
-      return totalLoaded;
-    },
-    initialPageParam: 0,
-    staleTime: 2 * 60 * 1000,
-  });
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        if (!lastPage.hasMore) return undefined;
+        const totalLoaded = allPages.length * PAGE_SIZE;
+        if (totalLoaded >= MAX_ROWS) return undefined;
+        return totalLoaded;
+      },
+      staleTime: 2 * 60 * 1000,
+    })
+  );
 
   // Flatten dati
   const flatData = useMemo(

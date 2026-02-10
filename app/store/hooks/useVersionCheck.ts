@@ -9,7 +9,7 @@
 
 import { useEffect, useRef, useCallback } from 'react';
 import { useAppStore } from '../index';
-import { getAppVersion } from '~/server/version';
+import { client } from '~/lib/orpc';
 
 /** Intervallo di check in millisecondi (10 minuti) */
 const CHECK_INTERVAL_MS = 10 * 60 * 1000;
@@ -27,7 +27,7 @@ export function useVersionCheck(): void {
    */
   const performVersionCheck = useCallback(async (): Promise<void> => {
     try {
-      const { version } = await getAppVersion();
+      const { version } = await client.version.get();
       checkForUpdate(version);
     } catch (error) {
       // Ignora errori di rete - riproveremo al prossimo check

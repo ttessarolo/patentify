@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { useState, useCallback } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { z } from 'zod';
@@ -9,40 +8,13 @@ import { z } from 'zod';
 import { Button } from '~/components/ui/button';
 import { DomandaCard } from '~/components/domanda';
 import { ShareQuizButton } from '~/components/share-quiz-button';
-import { getFullQuiz } from '~/server/quiz';
-import { checkResponse } from '~/server/checkResponse';
-import { trackAttempt } from '~/server/track_attempt';
-import type {
-  GetFullQuizResult,
-  CheckResponseResult,
-  TrackAttemptResult,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
 
 // Schema per i search params
 const searchSchema = z.object({
   quizId: z.coerce.number().int().positive(),
   back: z.enum(['quiz_stats']).optional(),
 });
-
-/** Payload per getFullQuiz */
-type GetFullQuizPayload = {
-  data: { quiz_id: number };
-};
-
-/** Payload per checkResponse */
-type CheckResponsePayload = {
-  data: { domanda_id: number; answer_given: string };
-};
-
-/** Payload per trackAttempt */
-type TrackAttemptPayload = {
-  data: {
-    domanda_id: number;
-    answer_given: string;
-    quiz_id?: number;
-    quiz_pos?: number;
-  };
-};
 
 type ViewMode = 'choosing' | 'view_answers' | 'answer_questions';
 
@@ -58,56 +30,37 @@ function RivediQuizPage(): JSX.Element {
   // Stato per la modalità di visualizzazione
   const [viewMode, setViewMode] = useState<ViewMode>('choosing');
 
-  // Server functions
-  const getFullQuizFn = useServerFn(getFullQuiz);
-  const checkResponseFn = useServerFn(checkResponse);
-  const trackAttemptFn = useServerFn(trackAttempt);
-
   // Query per ottenere il quiz completo
   const quizQuery = useQuery({
-    queryKey: ['quiz', 'full', quizId],
-    queryFn: async () =>
-      (
-        getFullQuizFn as unknown as (
-          opts: GetFullQuizPayload
-        ) => Promise<GetFullQuizResult>
-      )({ data: { quiz_id: quizId } }),
+    ...orpc.quiz.getFull.queryOptions({ input: { quiz_id: quizId } }),
     staleTime: 5 * 60 * 1000, // 5 minuti
   });
 
   // Handler per verificare la risposta (usato in modalità answer_questions)
   const handleCheckResponse = useCallback(
     async (domandaId: number, answerGiven: string): Promise<boolean> => {
-      const result = await (
-        checkResponseFn as unknown as (
-          opts: CheckResponsePayload
-        ) => Promise<CheckResponseResult>
-      )({ data: { domanda_id: domandaId, answer_given: answerGiven } });
+      const result = await client.attempt.check({
+        domanda_id: domandaId,
+        answer_given: answerGiven,
+      });
       return result.is_correct;
     },
-    [checkResponseFn]
+    []
   );
 
   // Handler per tracciare la risposta (NON associata al quiz originale)
   const handleAnswer = useCallback(
     async (domandaId: number, answerGiven: string): Promise<void> => {
       try {
-        await (
-          trackAttemptFn as unknown as (
-            opts: TrackAttemptPayload
-          ) => Promise<TrackAttemptResult>
-        )({
-          data: {
-            domanda_id: domandaId,
-            answer_given: answerGiven,
-            // NON passiamo quiz_id e quiz_pos così viene registrata come esercitazione libera
-          },
+        await client.attempt.track({
+          domanda_id: domandaId,
+          answer_given: answerGiven,
         });
       } catch (error) {
         console.error('Errore nel tracciamento risposta:', error);
       }
     },
-    [trackAttemptFn]
+    []
   );
 
   // Handler vuoto per modalità view_answers (non fa nulla)

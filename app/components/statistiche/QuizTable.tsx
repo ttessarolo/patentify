@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { useRef, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   createColumnHelper,
@@ -12,8 +11,12 @@ import {
 import { Pill } from '~/components/ui/pill';
 import { MetricIndicator } from '~/commons/metric-indicator';
 import { IreIcon, AmbiguitaIcon, DifficoltaIcon } from '~/icons';
-import { getQuizList } from '~/server/statistiche';
-import type { TimePeriod, QuizTableRow, QuizListResult } from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+import type { TimePeriod } from '~/types/db';
+
+type QuizTableRow = Awaited<
+  ReturnType<typeof client.statistiche.getQuizList>
+>['quiz'][number];
 
 // ============================================================
 // Helpers per formattazione data
@@ -171,9 +174,6 @@ export function QuizTable({ period }: QuizTableProps): JSX.Element {
   const navigate = useNavigate();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // Server function
-  const getQuizListFn = useServerFn(getQuizList);
-
   // Infinite query per la lista quiz
   const {
     data,
@@ -182,23 +182,21 @@ export function QuizTable({ period }: QuizTableProps): JSX.Element {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteQuery({
-    queryKey: ['statistiche', 'quiz-list', period],
-    queryFn: async ({ pageParam = 0 }): Promise<QuizListResult> =>
-      (
-        getQuizListFn as unknown as (opts: {
-          data: { period: TimePeriod; limit: number; offset: number };
-        }) => Promise<QuizListResult>
-      )({
-        data: { period, limit: PAGE_SIZE, offset: pageParam },
+  } = useInfiniteQuery(
+    orpc.statistiche.getQuizList.infiniteOptions({
+      input: (pageParam: number) => ({
+        period,
+        limit: PAGE_SIZE,
+        offset: pageParam,
       }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage.hasMore) return undefined;
-      return allPages.length * PAGE_SIZE;
-    },
-    initialPageParam: 0,
-    staleTime: 2 * 60 * 1000,
-  });
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        if (!lastPage.hasMore) return undefined;
+        return allPages.length * PAGE_SIZE;
+      },
+      staleTime: 2 * 60 * 1000,
+    })
+  );
 
   // Flatten dei dati per la tabella (memoizzato per evitare ricreazioni)
   const flatData = useMemo(

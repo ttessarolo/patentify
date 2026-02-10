@@ -1,10 +1,8 @@
 import type { JSX } from 'react';
-import { useServerFn } from '@tanstack/react-start';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { FriendAddIcon, FriendOnIcon } from '~/icons';
-import { addFriend, removeFriend } from '~/server/classifiche';
-import type { FriendActionResult } from '~/types/db';
+import { orpc } from '~/lib/orpc';
 
 interface UserCellProps {
   /** ID utente */
@@ -43,27 +41,14 @@ export function UserCell({
   const { userId: currentUserId, isLoaded: isAuthLoaded } = useAuth();
   const queryClient = useQueryClient();
 
-  const addFriendFn = useServerFn(addFriend);
-  const removeFriendFn = useServerFn(removeFriend);
-
-  type FriendPayload = { data: { friendId: string } };
-
   const friendMutation = useMutation({
     mutationFn: async (
       action: 'add' | 'remove'
-    ): Promise<FriendActionResult> => {
+    ): Promise<{ success: boolean }> => {
       if (action === 'add') {
-        return (
-          addFriendFn as unknown as (
-            opts: FriendPayload
-          ) => Promise<FriendActionResult>
-        )({ data: { friendId: userId } });
+        return orpc.classifiche.addFriend.call({ friendId: userId });
       }
-      return (
-        removeFriendFn as unknown as (
-          opts: FriendPayload
-        ) => Promise<FriendActionResult>
-      )({ data: { friendId: userId } });
+      return orpc.classifiche.removeFriend.call({ friendId: userId });
     },
     onSuccess: (): void => {
       // Invalida TUTTE le query classifiche (quiz + risposte, qualsiasi filtro)

@@ -1,7 +1,6 @@
 import type { JSX } from 'react';
 import { useRef, useEffect, useMemo, useCallback } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   createColumnHelper,
@@ -13,13 +12,11 @@ import { useTimePeriodFor } from '~/components/errori-ricorrenti';
 import { UserCell, SortableHeader } from '~/components/classifiche';
 import { Pill } from '~/components/ui/pill';
 import { useAppStore } from '~/store';
-import { getClassificaQuiz } from '~/server/classifiche';
-import type {
-  TimePeriod,
-  ClassificaQuizRow,
-  ClassificaQuizResult,
-  ClassificaScope,
-} from '~/types/db';
+import { orpc, client } from '~/lib/orpc';
+
+type ClassificaQuizRow = Awaited<
+  ReturnType<typeof client.classifiche.quiz>
+>['rows'][number];
 
 export const Route = createFileRoute('/main/classifiche/quiz')({
   component: ClassificaQuizPage,
@@ -60,18 +57,6 @@ function ClassificaQuizPage(): JSX.Element {
   const setQuizSort = useAppStore((s) => s.setClassificheQuizSort);
 
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const getClassificaQuizFn = useServerFn(getClassificaQuiz);
-
-  type ClassificaPayload = {
-    data: {
-      period: TimePeriod;
-      scope: ClassificaScope;
-      sortField: string;
-      sortDir: string;
-      limit: number;
-      offset: number;
-    };
-  };
 
   const {
     data,
@@ -80,32 +65,26 @@ function ClassificaQuizPage(): JSX.Element {
     isFetchingNextPage,
     isLoading,
     isError,
-  } = useInfiniteQuery({
-    queryKey: ['classifiche', 'quiz', period, scope, sortField, sortDir],
-    queryFn: async ({ pageParam = 0 }): Promise<ClassificaQuizResult> =>
-      (
-        getClassificaQuizFn as unknown as (
-          opts: ClassificaPayload
-        ) => Promise<ClassificaQuizResult>
-      )({
-        data: {
-          period,
-          scope,
-          sortField,
-          sortDir,
-          limit: PAGE_SIZE,
-          offset: pageParam,
-        },
+  } = useInfiniteQuery(
+    orpc.classifiche.quiz.infiniteOptions({
+      input: (pageParam: number) => ({
+        period,
+        scope,
+        sortField,
+        sortDir,
+        limit: PAGE_SIZE,
+        offset: pageParam,
       }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (!lastPage.hasMore) return undefined;
-      const totalLoaded = allPages.length * PAGE_SIZE;
-      if (totalLoaded >= MAX_ROWS) return undefined;
-      return totalLoaded;
-    },
-    initialPageParam: 0,
-    staleTime: 2 * 60 * 1000,
-  });
+      initialPageParam: 0,
+      getNextPageParam: (lastPage, allPages) => {
+        if (!lastPage.hasMore) return undefined;
+        const totalLoaded = allPages.length * PAGE_SIZE;
+        if (totalLoaded >= MAX_ROWS) return undefined;
+        return totalLoaded;
+      },
+      staleTime: 2 * 60 * 1000,
+    })
+  );
 
   // Flatten dati
   const flatData = useMemo(

@@ -1,6 +1,5 @@
 import type { JSX } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { z } from 'zod';
 import {
@@ -9,17 +8,13 @@ import {
   StatisticheTimePeriodToolbar,
   useStatistichePeriod,
 } from '~/components/statistiche';
-import { getQuizStats } from '~/server/statistiche';
-import type { TimePeriod, QuizStatsResult } from '~/types/db';
+import { orpc } from '~/lib/orpc';
 
 // Schema per i search params
 // NON usare .default() qui, altrimenti sovrascrive sempre il valore dello store
 const searchSchema = z.object({
   period: z.enum(['oggi', 'settimana', 'mese', 'tutti']).optional(),
 });
-
-/** Payload types per server functions */
-type StatsPayload = { data: { period: TimePeriod } };
 
 export const Route = createFileRoute('/main/statistiche')({
   validateSearch: searchSchema,
@@ -29,18 +24,9 @@ export const Route = createFileRoute('/main/statistiche')({
 function StatistichePage(): JSX.Element {
   const period = useStatistichePeriod();
 
-  // Server function
-  const getStatsFn = useServerFn(getQuizStats);
-
   // Query per statistiche quiz
   const statsQuery = useQuery({
-    queryKey: ['statistiche', 'quiz-stats', period],
-    queryFn: async (): Promise<QuizStatsResult> =>
-      (
-        getStatsFn as unknown as (opts: StatsPayload) => Promise<QuizStatsResult>
-      )({
-        data: { period },
-      }),
+    ...orpc.statistiche.getQuizStats.queryOptions({ input: { period } }),
     staleTime: 2 * 60 * 1000,
   });
 

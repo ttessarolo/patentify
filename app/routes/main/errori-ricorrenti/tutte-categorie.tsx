@@ -1,11 +1,9 @@
 import type { JSX } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
-import { useServerFn } from '@tanstack/react-start';
 import { useQuery } from '@tanstack/react-query';
 import { Pill } from '~/components/ui/pill';
 import { useTimePeriod, SectionSkeleton } from '~/components/errori-ricorrenti';
-import { getAllCategorieErrori } from '~/server/errori-ricorrenti';
-import type { TimePeriod, AllCategorieErroriResult } from '~/types/db';
+import { orpc } from '~/lib/orpc';
 
 export const Route = createFileRoute('/main/errori-ricorrenti/tutte-categorie')(
   {
@@ -13,23 +11,11 @@ export const Route = createFileRoute('/main/errori-ricorrenti/tutte-categorie')(
   }
 );
 
-type CategoriePayload = { data: { period: TimePeriod } };
-
 function TutteCategoriePage(): JSX.Element {
   const period = useTimePeriod();
 
-  const getAllCategorieFn = useServerFn(getAllCategorieErrori);
-
   const categorieQuery = useQuery({
-    queryKey: ['errori-ricorrenti', 'tutte-categorie', period],
-    queryFn: async (): Promise<AllCategorieErroriResult> =>
-      (
-        getAllCategorieFn as unknown as (
-          opts: CategoriePayload
-        ) => Promise<AllCategorieErroriResult>
-      )({
-        data: { period },
-      }),
+    ...orpc.errori.getAllCategorie.queryOptions({ input: { period } }),
     staleTime: 2 * 60 * 1000,
   });
 
