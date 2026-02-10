@@ -111,8 +111,8 @@ export function UserCell({
       disabled={friendMutation.isPending}
       className={`inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors ${
         isFriend
-          ? 'bg-teal-500/15 text-teal-500 hover:bg-teal-500/25'
-          : 'bg-green-500/15 text-green-500 hover:bg-green-500/25'
+          ? 'border border-green-500 text-white hover:bg-green-500/10'
+          : 'bg-muted text-muted-foreground hover:bg-muted/80'
       } ${friendMutation.isPending ? 'opacity-50' : ''}`}
       aria-label={isFriend ? 'Rimuovi amico' : 'Aggiungi amico'}
     >

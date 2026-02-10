@@ -27,46 +27,6 @@ import type {
   TimelineStatsResult,
 } from '~/types/db';
 
-/** Plugin: riempie il centro del doughnut con i segmenti del dataset più interno (cerchio solido, no buco). */
-const doughnutFillCenterPlugin = {
-  id: 'doughnutFillCenter',
-  afterDraw(chart: {
-    config?: { type?: string };
-    ctx: CanvasRenderingContext2D;
-    chartArea: { left: number; right: number; top: number; bottom: number };
-    getDatasetMeta: (index: number) => {
-      data: { startAngle: number; endAngle: number; innerRadius: number }[];
-    };
-    data: { datasets: { backgroundColor: string | string[] }[] };
-  }): void {
-    if (chart.config?.type !== 'doughnut') return;
-    const datasets = chart.data?.datasets;
-    if (!datasets?.length) return;
-    const innerDatasetIndex = datasets.length - 1;
-    const meta = chart.getDatasetMeta(innerDatasetIndex);
-    if (!meta?.data?.length) return;
-    const firstArc = meta.data[0];
-    const innerRadius = firstArc.innerRadius;
-    if (innerRadius <= 0) return;
-    const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
-    const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
-    const dataset = datasets[innerDatasetIndex];
-    const colors = dataset.backgroundColor;
-    const ctx = chart.ctx;
-    meta.data.forEach((arc, i): void => {
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, innerRadius, arc.startAngle, arc.endAngle);
-      ctx.closePath();
-      const color = Array.isArray(colors) ? colors[i] : colors;
-      if (color) {
-        ctx.fillStyle = color;
-        ctx.fill();
-      }
-    });
-  },
-};
-
 // Registra i componenti Chart.js necessari
 ChartJS.register(
   ArcElement,
@@ -76,7 +36,6 @@ ChartJS.register(
   CategoryScale,
   LinearScale
 );
-ChartJS.register(doughnutFillCenterPlugin);
 
 interface StatsSectionProps {
   stats: ErroriStatsResult;
