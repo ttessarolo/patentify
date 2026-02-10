@@ -76,22 +76,25 @@ function PrivacyPolicy(): JSX.Element {
             <h2 className="text-xl font-semibold text-foreground">
               3. Finalità del Trattamento
             </h2>
-            <p>I tuoi dati personali vengono trattati per le seguenti finalità:</p>
+            <p>
+              I tuoi dati personali vengono trattati per le seguenti finalità:
+            </p>
             <ul className="list-disc space-y-2 pl-6">
               <li>
                 Fornire e gestire il servizio di preparazione ai quiz per la
                 patente di guida.
               </li>
               <li>
-                Personalizzare la tua esperienza di apprendimento in base ai tuoi
-                progressi e alle aree di miglioramento.
+                Personalizzare la tua esperienza di apprendimento in base ai
+                tuoi progressi e alle aree di miglioramento.
               </li>
               <li>
-                Inviare comunicazioni relative al servizio, inclusi aggiornamenti
-                e notifiche importanti.
+                Inviare comunicazioni relative al servizio, inclusi
+                aggiornamenti e notifiche importanti.
               </li>
               <li>
-                Migliorare e ottimizzare il funzionamento dell&apos;applicazione.
+                Migliorare e ottimizzare il funzionamento
+                dell&apos;applicazione.
               </li>
               <li>Garantire la sicurezza del servizio e prevenire frodi.</li>
             </ul>
@@ -102,10 +105,10 @@ function PrivacyPolicy(): JSX.Element {
               4. Base Giuridica del Trattamento
             </h2>
             <p>
-              Il trattamento dei tuoi dati personali si basa su: l&apos;esecuzione
-              del contratto di servizio, il tuo consenso esplicito per finalità
-              specifiche, il nostro legittimo interesse a migliorare il servizio,
-              e l&apos;adempimento di obblighi legali.
+              Il trattamento dei tuoi dati personali si basa su:
+              l&apos;esecuzione del contratto di servizio, il tuo consenso
+              esplicito per finalità specifiche, il nostro legittimo interesse a
+              migliorare il servizio, e l&apos;adempimento di obblighi legali.
             </p>
           </section>
 
@@ -130,8 +133,8 @@ function PrivacyPolicy(): JSX.Element {
               Non vendiamo i tuoi dati personali a terzi. Possiamo condividere i
               tuoi dati con fornitori di servizi che ci assistono
               nell&apos;erogazione del servizio (hosting, autenticazione,
-              analytics), sempre nel rispetto di adeguate garanzie di sicurezza e
-              riservatezza.
+              analytics), sempre nel rispetto di adeguate garanzie di sicurezza
+              e riservatezza.
             </p>
           </section>
 
@@ -140,10 +143,11 @@ function PrivacyPolicy(): JSX.Element {
               7. I Tuoi Diritti
             </h2>
             <p>
-              Ai sensi del GDPR, hai diritto di: accedere ai tuoi dati personali,
-              rettificare dati inesatti, richiedere la cancellazione dei tuoi
-              dati, limitare il trattamento, richiedere la portabilità dei dati,
-              opporti al trattamento, e revocare il consenso in qualsiasi momento.
+              Ai sensi del GDPR, hai diritto di: accedere ai tuoi dati
+              personali, rettificare dati inesatti, richiedere la cancellazione
+              dei tuoi dati, limitare il trattamento, richiedere la portabilità
+              dei dati, opporti al trattamento, e revocare il consenso in
+              qualsiasi momento.
             </p>
             <p>
               Per esercitare questi diritti, contattaci all&apos;indirizzo
@@ -168,10 +172,11 @@ function PrivacyPolicy(): JSX.Element {
               9. Sicurezza
             </h2>
             <p>
-              Adottiamo misure tecniche e organizzative appropriate per proteggere
-              i tuoi dati personali da accessi non autorizzati, perdita o
-              distruzione. Tuttavia, nessun sistema è completamente sicuro e non
-              possiamo garantire la sicurezza assoluta dei tuoi dati.
+              Adottiamo misure tecniche e organizzative appropriate per
+              proteggere i tuoi dati personali da accessi non autorizzati,
+              perdita o distruzione. Tuttavia, nessun sistema è completamente
+              sicuro e non possiamo garantire la sicurezza assoluta dei tuoi
+              dati.
             </p>
           </section>
 
@@ -181,9 +186,9 @@ function PrivacyPolicy(): JSX.Element {
             </h2>
             <p>
               Ci riserviamo il diritto di modificare questa informativa in
-              qualsiasi momento. Le modifiche saranno pubblicate su questa pagina
-              con indicazione della data di ultimo aggiornamento. Ti consigliamo
-              di consultare periodicamente questa pagina.
+              qualsiasi momento. Le modifiche saranno pubblicate su questa
+              pagina con indicazione della data di ultimo aggiornamento. Ti
+              consigliamo di consultare periodicamente questa pagina.
             </p>
           </section>
 
@@ -192,8 +197,9 @@ function PrivacyPolicy(): JSX.Element {
               11. Contatti
             </h2>
             <p>
-              Per qualsiasi domanda relativa a questa informativa o al trattamento
-              dei tuoi dati personali, puoi contattarci a: privacy@patentify.app
+              Per qualsiasi domanda relativa a questa informativa o al
+              trattamento dei tuoi dati personali, puoi contattarci a:
+              privacy@patentify.app
             </p>
           </section>
         </div>

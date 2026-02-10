@@ -232,7 +232,10 @@ function EsercitazionePage(): JSX.Element {
             {activeFiltersCount}
           </span>
           {ordinamentoCasuale && (
-            <RandomIcon className="ml-0.5 h-4 w-4 shrink-0 text-white" aria-hidden />
+            <RandomIcon
+              className="ml-0.5 h-4 w-4 shrink-0 text-white"
+              aria-hidden
+            />
           )}
         </button>
       )}
@@ -263,7 +266,9 @@ function EsercitazionePage(): JSX.Element {
               </svg>
             </Link>
           )}
-          <h1 className="text-center text-2xl font-bold sm:text-left">Esercitazione Libera</h1>
+          <h1 className="text-center text-2xl font-bold sm:text-left">
+            Esercitazione Libera
+          </h1>
         </div>
 
         {/* Filtri collapsible */}

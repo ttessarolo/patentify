@@ -56,7 +56,7 @@ function SfidaQuizPage(): JSX.Element {
   const handleReviewQuiz = useCallback((): void => {
     void navigate({
       to: '/main/rivedi-quiz',
-      search: { quizId },
+      search: { quizId, back: 'sfide' as const },
     });
   }, [navigate, quizId]);
 

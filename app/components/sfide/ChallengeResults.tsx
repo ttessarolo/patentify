@@ -44,8 +44,16 @@ export function ChallengeResults({
   onReviewQuiz,
   onRematch,
 }: ChallengeResultsProps): JSX.Element {
-  const isWinner = winnerId === myUserId;
-  const isDraw = winnerId === null;
+  // Safeguard: se winnerId è null ma i punteggi sono diversi,
+  // determina il vincitore dai punteggi (fallback per race condition server)
+  const computedWinnerId: string | null =
+    winnerId === null && myResult.correctCount !== opponentCorrect
+      ? myResult.correctCount > opponentCorrect
+        ? myUserId
+        : 'opponent'
+      : winnerId;
+  const isWinner = computedWinnerId === myUserId;
+  const isDraw = computedWinnerId === null;
   const opponentWrong = QUIZ_SIZE - opponentCorrect;
 
   return (

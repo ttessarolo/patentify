@@ -1,13 +1,9 @@
 import type { ComponentType, JSX } from 'react';
-import { useNavigate, useSearch, useLocation } from '@tanstack/react-router';
+import { useNavigate, useLocation } from '@tanstack/react-router';
 import { OggiIcon, SettimanaIcon, MeseIcon, AllIcon } from '~/icons';
 import { useAppStore } from '~/store';
 import type { TimePeriod } from '~/types/db';
-
-/**
- * Tipo per identificare la sezione dello store da usare.
- */
-export type PeriodSection = 'erroriRicorrenti' | 'statistiche' | 'classifiche';
+import type { PeriodSection } from './useTimePeriod';
 
 interface TimePeriodOption {
   value: TimePeriod;
@@ -62,7 +58,7 @@ export function TimePeriodToolbar({
 
   return (
     <div
-      className={`${disableSticky ? '' : 'sticky top-[var(--header-height,3.5rem)]'} z-20 -mx-4 bg-background px-4 py-2 sm:mx-0 sm:px-0`}
+      className={`${disableSticky ? '' : 'sticky top-(--header-height,3.5rem)'} z-20 -mx-4 bg-background px-4 py-2 sm:mx-0 sm:px-0`}
     >
       <div className="flex items-center justify-center gap-2 sm:gap-2">
         {TIME_PERIOD_OPTIONS.map(({ value, label, Icon }) => {
@@ -106,45 +102,4 @@ export function TimePeriodToolbar({
       </div>
     </div>
   );
-}
-
-/**
- * Hook generico per ottenere il periodo corrente per una sezione specifica.
- * Priorità:
- * 1. Se URL ha period esplicito → usa quello (permette link condivisi)
- * 2. Altrimenti → usa lo store (persistenza utente tra sessioni)
- *
- * Zustand gestisce automaticamente il re-render dopo l'idratazione,
- * quindi non serve un fallback hardcoded.
- */
-export function useTimePeriodFor(section: PeriodSection): TimePeriod {
-  const search = useSearch({ strict: false }) as { period?: TimePeriod };
-  const storePeriod = useAppStore((s) => {
-    if (section === 'statistiche') return s.statistiche.period;
-    if (section === 'classifiche') return s.classifiche.period;
-    return s.erroriRicorrenti.period;
-  });
-  const urlPeriod = search?.period;
-
-  // Se URL ha period valido, usa quello (sempre)
-  if (
-    urlPeriod === 'oggi' ||
-    urlPeriod === 'settimana' ||
-    urlPeriod === 'mese' ||
-    urlPeriod === 'tutti'
-  ) {
-    return urlPeriod;
-  }
-
-  // Ritorna storePeriod - Zustand gestisce automaticamente il re-render
-  // dopo l'idratazione (valore default → valore persistito)
-  return storePeriod;
-}
-
-/**
- * Hook per ottenere il periodo corrente per erroriRicorrenti.
- * Wrapper per retrocompatibilità.
- */
-export function useTimePeriod(): TimePeriod {
-  return useTimePeriodFor('erroriRicorrenti');
 }

@@ -45,9 +45,9 @@ function TermsOfService(): JSX.Element {
             <p>
               Accedendo e utilizzando Patentify, accetti di essere vincolato dai
               presenti Termini e Condizioni di Servizio. Se non accetti questi
-              termini, ti preghiamo di non utilizzare il servizio. L&apos;utilizzo
-              continuato del servizio costituisce accettazione di eventuali
-              modifiche ai presenti termini.
+              termini, ti preghiamo di non utilizzare il servizio.
+              L&apos;utilizzo continuato del servizio costituisce accettazione
+              di eventuali modifiche ai presenti termini.
             </p>
           </section>
 
@@ -74,11 +74,11 @@ function TermsOfService(): JSX.Element {
               3. Registrazione e Account
             </h2>
             <p>
-              Per utilizzare Patentify è necessario creare un account. Ti impegni
-              a fornire informazioni accurate e complete durante la registrazione
-              e a mantenere aggiornati i tuoi dati. Sei responsabile della
-              riservatezza delle tue credenziali di accesso e di tutte le attività
-              che avvengono tramite il tuo account.
+              Per utilizzare Patentify è necessario creare un account. Ti
+              impegni a fornire informazioni accurate e complete durante la
+              registrazione e a mantenere aggiornati i tuoi dati. Sei
+              responsabile della riservatezza delle tue credenziali di accesso e
+              di tutte le attività che avvengono tramite il tuo account.
             </p>
             <p>
               Ci riserviamo il diritto di sospendere o terminare account che
@@ -100,22 +100,16 @@ function TermsOfService(): JSX.Element {
             <p>È espressamente vietato:</p>
             <ul className="list-disc space-y-2 pl-6">
               <li>
-                Condividere le proprie credenziali con terzi o utilizzare account
-                altrui
+                Condividere le proprie credenziali con terzi o utilizzare
+                account altrui
               </li>
-              <li>
-                Tentare di accedere a parti del sistema non autorizzate
-              </li>
+              <li>Tentare di accedere a parti del sistema non autorizzate</li>
               <li>
                 Copiare, modificare, distribuire o rivendere i contenuti della
                 piattaforma
               </li>
-              <li>
-                Utilizzare bot, scraper o altri strumenti automatizzati
-              </li>
-              <li>
-                Interferire con il funzionamento del servizio
-              </li>
+              <li>Utilizzare bot, scraper o altri strumenti automatizzati</li>
+              <li>Interferire con il funzionamento del servizio</li>
             </ul>
           </section>
 
@@ -131,9 +125,9 @@ function TermsOfService(): JSX.Element {
               intellettuale.
             </p>
             <p>
-              Le domande dei quiz sono basate sul materiale ministeriale ufficiale
-              per l&apos;esame di teoria della patente di guida, elaborato e
-              organizzato in forma didattica da Patentify.
+              Le domande dei quiz sono basate sul materiale ministeriale
+              ufficiale per l&apos;esame di teoria della patente di guida,
+              elaborato e organizzato in forma didattica da Patentify.
             </p>
           </section>
 
@@ -143,20 +137,21 @@ function TermsOfService(): JSX.Element {
             </h2>
             <p>
               Patentify è fornito &quot;così com&apos;è&quot; senza garanzie di
-              alcun tipo. Non garantiamo che il servizio sarà sempre disponibile,
-              privo di errori o sicuro.
+              alcun tipo. Non garantiamo che il servizio sarà sempre
+              disponibile, privo di errori o sicuro.
             </p>
             <p>
               <strong>Importante:</strong> Patentify è uno strumento di supporto
               allo studio e non sostituisce la preparazione tradizionale né
-              garantisce il superamento dell&apos;esame di teoria. Il superamento
-              dell&apos;esame dipende esclusivamente dalla preparazione
-              individuale del candidato.
+              garantisce il superamento dell&apos;esame di teoria. Il
+              superamento dell&apos;esame dipende esclusivamente dalla
+              preparazione individuale del candidato.
             </p>
             <p>
               In nessun caso saremo responsabili per danni diretti, indiretti,
-              incidentali, consequenziali o punitivi derivanti dall&apos;utilizzo
-              o dall&apos;impossibilità di utilizzare il servizio.
+              incidentali, consequenziali o punitivi derivanti
+              dall&apos;utilizzo o dall&apos;impossibilità di utilizzare il
+              servizio.
             </p>
           </section>
 
@@ -165,8 +160,8 @@ function TermsOfService(): JSX.Element {
               7. Disponibilità del Servizio
             </h2>
             <p>
-              Ci impegniamo a garantire la massima disponibilità del servizio, ma
-              non possiamo garantire un funzionamento ininterrotto. Potremmo
+              Ci impegniamo a garantire la massima disponibilità del servizio,
+              ma non possiamo garantire un funzionamento ininterrotto. Potremmo
               sospendere temporaneamente il servizio per manutenzione,
               aggiornamenti o cause di forza maggiore, cercando di fornire
               preavviso quando possibile.
@@ -179,11 +174,11 @@ function TermsOfService(): JSX.Element {
             </h2>
             <p>
               Ci riserviamo il diritto di modificare, sospendere o interrompere
-              qualsiasi aspetto del servizio in qualsiasi momento. Possiamo inoltre
-              aggiornare questi Termini periodicamente. Le modifiche significative
-              saranno comunicate tramite email o avviso sulla piattaforma.
-              L&apos;uso continuato del servizio dopo tali modifiche costituisce
-              accettazione dei nuovi termini.
+              qualsiasi aspetto del servizio in qualsiasi momento. Possiamo
+              inoltre aggiornare questi Termini periodicamente. Le modifiche
+              significative saranno comunicate tramite email o avviso sulla
+              piattaforma. L&apos;uso continuato del servizio dopo tali
+              modifiche costituisce accettazione dei nuovi termini.
             </p>
           </section>
 
@@ -204,9 +199,9 @@ function TermsOfService(): JSX.Element {
               10. Legge Applicabile e Foro Competente
             </h2>
             <p>
-              I presenti Termini sono regolati dalla legge italiana. Per qualsiasi
-              controversia derivante dall&apos;utilizzo del servizio sarà
-              competente in via esclusiva il Foro di Milano, salvo diversa
+              I presenti Termini sono regolati dalla legge italiana. Per
+              qualsiasi controversia derivante dall&apos;utilizzo del servizio
+              sarà competente in via esclusiva il Foro di Milano, salvo diversa
               disposizione di legge inderogabile a tutela del consumatore.
             </p>
           </section>

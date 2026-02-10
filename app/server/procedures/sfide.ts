@@ -16,6 +16,8 @@ import {
   abortSfidaInputSchema,
   abortSfidaOutputSchema,
   sfidaHistoryOutputSchema,
+  getSfideHistoryAllInputSchema,
+  getSfideHistoryAllOutputSchema,
   getOnlineUsersDetailsInputSchema,
   getOnlineUsersDetailsOutputSchema,
 } from '../schemas/sfide';
@@ -147,6 +149,27 @@ export const getSfideHistory = authProcedure
       context,
     }): Promise<z.infer<typeof sfidaHistoryOutputSchema>> => {
       return sfideService.getSfideHistory(context.userId, 5);
+    },
+  );
+
+// ============================================================
+// getSfideHistoryAll
+// ============================================================
+
+export const getSfideHistoryAll = authProcedure
+  .route({
+    method: 'GET',
+    path: '/sfide/history-all',
+    summary: 'Storico completo sfide dell\'utente con filtro',
+  })
+  .input(getSfideHistoryAllInputSchema)
+  .output(getSfideHistoryAllOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof getSfideHistoryAllOutputSchema>> => {
+      return sfideService.getSfideHistoryAll(context.userId, input.filter);
     },
   );
 

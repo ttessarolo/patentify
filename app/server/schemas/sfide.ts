@@ -102,11 +102,24 @@ export const sfidaHistoryRowSchema = z.object({
   status: sfidaStatusSchema,
   my_correct: z.number().int(),
   opponent_correct: z.number().int(),
+  my_quiz_id: z.number().int().nullable(),
 });
 
 export const sfidaHistoryOutputSchema = z.object({
   sfide: z.array(sfidaHistoryRowSchema),
 });
+
+// ============================================================
+// getSfideHistoryAll
+// ============================================================
+
+export const sfideHistoryFilterSchema = z.enum(['all', 'won', 'lost']);
+
+export const getSfideHistoryAllInputSchema = z.object({
+  filter: sfideHistoryFilterSchema.default('all'),
+});
+
+export const getSfideHistoryAllOutputSchema = sfidaHistoryOutputSchema;
 
 // ============================================================
 // getOnlineUsersDetails

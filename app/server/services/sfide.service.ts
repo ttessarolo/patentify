@@ -41,6 +41,7 @@ interface SfidaHistoryRow {
   status: SfidaStatus;
   my_correct: number;
   opponent_correct: number;
+  my_quiz_id: number | null;
 }
 
 interface OnlineUserDetail {
@@ -195,12 +196,25 @@ export async function completeSfida(
     `;
   }
 
-  // Ricalcola lo stato
-  const updatedA = isPlayerA ? correctCount : sfida.player_a_correct;
-  const updatedB = isPlayerB ? correctCount : sfida.player_b_correct;
-  const aFinished = isPlayerA ? true : sfida.player_a_finished;
-  const bFinished = isPlayerB ? true : sfida.player_b_finished;
-  const bothFinished = aFinished && bFinished;
+  // Re-SELECT dopo l'UPDATE per catturare aggiornamenti concorrenti dell'altro player
+  const freshResult = await sql`
+    SELECT player_a_finished, player_b_finished,
+           player_a_correct, player_b_correct,
+           player_a_id, player_b_id
+    FROM sfide WHERE id = ${sfidaId}
+  `;
+  const fresh = freshResult[0] as {
+    player_a_finished: boolean;
+    player_b_finished: boolean;
+    player_a_correct: number;
+    player_b_correct: number;
+    player_a_id: string;
+    player_b_id: string;
+  };
+
+  const updatedA = Number(fresh.player_a_correct);
+  const updatedB = Number(fresh.player_b_correct);
+  const bothFinished = fresh.player_a_finished && fresh.player_b_finished;
 
   const wrongCount = QUIZ_SIZE - correctCount;
   const promosso = wrongCount <= MAX_ERRORS;
@@ -208,14 +222,16 @@ export async function completeSfida(
   if (bothFinished) {
     // Determina il vincitore
     let winnerId: string | null = null;
-    if (updatedA > updatedB) winnerId = sfida.player_a_id;
-    else if (updatedB > updatedA) winnerId = sfida.player_b_id;
+    if (updatedA > updatedB) winnerId = fresh.player_a_id;
+    else if (updatedB > updatedA) winnerId = fresh.player_b_id;
     // Pareggio: winnerId resta null
 
+    // UPDATE condizionale: setta winner_id solo se non già impostato (evita doppia scrittura)
     await sql`
       UPDATE sfide
-      SET status = 'completed', winner_id = ${winnerId}
-      WHERE id = ${sfidaId}
+      SET status = 'completed',
+          winner_id = CASE WHEN winner_id IS NULL THEN ${winnerId} ELSE winner_id END
+      WHERE id = ${sfidaId} AND status = 'in_progress'
     `;
   }
 
@@ -224,9 +240,9 @@ export async function completeSfida(
     both_finished: bothFinished,
     winner_id: bothFinished
       ? updatedA > updatedB
-        ? sfida.player_a_id
+        ? fresh.player_a_id
         : updatedB > updatedA
-          ? sfida.player_b_id
+          ? fresh.player_b_id
           : null
       : null,
     player_a_correct: updatedA,
@@ -287,8 +303,19 @@ export async function getSfidaResult(
 
   const bothFinished = sfida.player_a_finished && sfida.player_b_finished;
 
+  // Se entrambi hanno finito ma winner_id è NULL (race condition residua),
+  // calcola il vincitore on-the-fly confrontando i punteggi
+  let winnerId: string | null = sfida.winner_id;
+  if (bothFinished && winnerId === null) {
+    const aCorrect = Number(sfida.player_a_correct);
+    const bCorrect = Number(sfida.player_b_correct);
+    if (aCorrect > bCorrect) winnerId = sfida.player_a_id;
+    else if (bCorrect > aCorrect) winnerId = sfida.player_b_id;
+    // Pareggio reale: winnerId resta null
+  }
+
   return {
-    winner_id: sfida.winner_id,
+    winner_id: winnerId,
     my_correct: isPlayerA ? sfida.player_a_correct : sfida.player_b_correct,
     opponent_correct: isPlayerA ? sfida.player_b_correct : sfida.player_a_correct,
     both_finished: bothFinished,
@@ -396,7 +423,11 @@ export async function getSfideHistory(
       CASE
         WHEN s.player_a_id = ${userId} THEN s.player_b_correct
         ELSE s.player_a_correct
-      END as opponent_correct
+      END as opponent_correct,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN s.quiz_id_a
+        ELSE s.quiz_id_b
+      END as my_quiz_id
     FROM sfide s
     LEFT JOIN utente oa ON oa.id = s.player_a_id
     LEFT JOIN utente ob ON ob.id = s.player_b_id
@@ -417,6 +448,86 @@ export async function getSfideHistory(
       status: row.status as SfidaStatus,
       my_correct: Number(row.my_correct),
       opponent_correct: Number(row.opponent_correct),
+      my_quiz_id: row.my_quiz_id != null ? Number(row.my_quiz_id) : null,
+    })),
+  };
+}
+
+// ============================================================
+// getSfideHistoryAll
+// ============================================================
+
+type SfideHistoryFilter = 'all' | 'won' | 'lost';
+
+/**
+ * Ritorna tutte le sfide dell'utente con filtro opzionale (all/won/lost).
+ */
+export async function getSfideHistoryAll(
+  userId: string,
+  filter: SfideHistoryFilter = 'all',
+): Promise<{ sfide: SfidaHistoryRow[] }> {
+  let filterClause = sql``;
+  if (filter === 'won') {
+    filterClause = sql`AND s.status = 'completed' AND s.winner_id = ${userId}`;
+  } else if (filter === 'lost') {
+    filterClause = sql`AND s.status = 'completed' AND s.winner_id IS NOT NULL AND s.winner_id != ${userId}`;
+  }
+
+  const result = await sql`
+    SELECT
+      s.id as sfida_id,
+      s.created_at::text,
+      s.winner_id,
+      s.status,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN s.player_b_id
+        ELSE s.player_a_id
+      END as opponent_id,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN ob.name
+        ELSE oa.name
+      END as opponent_name,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN ob.username
+        ELSE oa.username
+      END as opponent_username,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN ob.image_url
+        ELSE oa.image_url
+      END as opponent_image_url,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN s.player_a_correct
+        ELSE s.player_b_correct
+      END as my_correct,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN s.player_b_correct
+        ELSE s.player_a_correct
+      END as opponent_correct,
+      CASE
+        WHEN s.player_a_id = ${userId} THEN s.quiz_id_a
+        ELSE s.quiz_id_b
+      END as my_quiz_id
+    FROM sfide s
+    LEFT JOIN utente oa ON oa.id = s.player_a_id
+    LEFT JOIN utente ob ON ob.id = s.player_b_id
+    WHERE (s.player_a_id = ${userId} OR s.player_b_id = ${userId})
+      ${filterClause}
+    ORDER BY s.created_at DESC
+  `;
+
+  return {
+    sfide: (result as SfidaHistoryRow[]).map((row) => ({
+      sfida_id: Number(row.sfida_id),
+      created_at: row.created_at,
+      opponent_id: row.opponent_id,
+      opponent_name: row.opponent_name,
+      opponent_username: row.opponent_username,
+      opponent_image_url: row.opponent_image_url,
+      winner_id: row.winner_id,
+      status: row.status as SfidaStatus,
+      my_correct: Number(row.my_correct),
+      opponent_correct: Number(row.opponent_correct),
+      my_quiz_id: row.my_quiz_id != null ? Number(row.my_quiz_id) : null,
     })),
   };
 }

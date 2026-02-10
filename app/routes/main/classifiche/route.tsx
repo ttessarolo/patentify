@@ -131,7 +131,7 @@ function ClassificheLayout(): JSX.Element {
   return (
     <div className="mx-auto max-w-4xl px-2 pb-4 sm:px-4">
       {/* Blocco sticky unico: toolbar + titolo + switch */}
-      <div className="sticky top-[var(--header-height,3.5rem)] z-20 -mx-2 bg-background px-2 pb-3 sm:-mx-4 sm:px-4">
+      <div className="sticky top-(--header-height,3.5rem) z-20 -mx-2 bg-background px-2 pb-3 sm:-mx-4 sm:px-4">
         {/* Toolbar periodo temporale (sticky disabilitato, gestito dal container) */}
         <TimePeriodToolbar
           currentPeriod={currentPeriod}

@@ -77,6 +77,7 @@ import {
   getSfidaResult,
   abortSfida,
   getSfideHistory,
+  getSfideHistoryAll,
   getOnlineUsersDetails,
 } from './procedures/sfide';
 
@@ -134,6 +135,7 @@ export const appRouter = {
     result: getSfidaResult,
     abort: abortSfida,
     history: getSfideHistory,
+    historyAll: getSfideHistoryAll,
     onlineUsersDetails: getOnlineUsersDetails,
   },
   skull: {

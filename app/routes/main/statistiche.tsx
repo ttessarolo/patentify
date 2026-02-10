@@ -33,8 +33,12 @@ function StatistichePage(): JSX.Element {
   return (
     <div className="mx-auto max-w-4xl px-2 pb-4 sm:px-4">
       {/* Blocco sticky: toolbar + titolo */}
-      <div className="sticky top-[var(--header-height,3.5rem)] z-20 -mx-2 bg-background px-2 pb-0 sm:-mx-4 sm:px-4">
-        <StatisticheTimePeriodToolbar currentPeriod={period} section="statistiche" disableSticky />
+      <div className="sticky top-(--header-height,3.5rem) z-20 -mx-2 bg-background px-2 pb-0 sm:-mx-4 sm:px-4">
+        <StatisticheTimePeriodToolbar
+          currentPeriod={period}
+          section="statistiche"
+          disableSticky
+        />
         <h1 className="my-2 text-center text-2xl font-bold sm:text-left sm:text-3xl">
           Statistiche Quiz
         </h1>

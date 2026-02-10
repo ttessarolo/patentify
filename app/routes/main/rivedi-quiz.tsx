@@ -13,10 +13,16 @@ import { orpc, client } from '~/lib/orpc';
 // Schema per i search params
 const searchSchema = z.object({
   quizId: z.coerce.number().int().positive(),
-  back: z.enum(['quiz_stats']).optional(),
+  back: z.enum(['quiz_stats', 'sfide']).optional(),
 });
 
 type ViewMode = 'choosing' | 'view_answers' | 'answer_questions';
+
+/** Mappa del parametro `back` alla rotta di destinazione */
+const BACK_ROUTES: Record<string, string> = {
+  quiz_stats: '/main/statistiche',
+  sfide: '/main/sfide',
+};
 
 export const Route = createFileRoute('/main/rivedi-quiz')({
   validateSearch: searchSchema,
@@ -107,9 +113,9 @@ function RivediQuizPage(): JSX.Element {
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-2 md:py-16 text-center">
         <div className="flex items-baseline gap-2">
-          {back === 'quiz_stats' && (
+          {back && BACK_ROUTES[back] && (
             <Link
-              to="/main/statistiche"
+              to={BACK_ROUTES[back]}
               className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
             >
               «
@@ -144,9 +150,9 @@ function RivediQuizPage(): JSX.Element {
     return (
       <div className="mx-auto max-w-2xl px-4 py-2 md:py-8">
         <div className="mb-6 flex items-baseline gap-2">
-          {back === 'quiz_stats' && (
+          {back && BACK_ROUTES[back] && (
             <Link
-              to="/main/statistiche"
+              to={BACK_ROUTES[back]}
               className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
             >
               «
@@ -182,9 +188,9 @@ function RivediQuizPage(): JSX.Element {
     return (
       <div className="mx-auto max-w-2xl px-4 py-2 md:py-8">
         <div className="mb-6 flex items-baseline gap-2">
-          {back === 'quiz_stats' && (
+          {back && BACK_ROUTES[back] && (
             <Link
-              to="/main/statistiche"
+              to={BACK_ROUTES[back]}
               className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
             >
               «

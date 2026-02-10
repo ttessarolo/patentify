@@ -1,26 +1,33 @@
 /**
- * Box storico sfide — mostra le ultime 5 sfide dell'utente.
+ * Storico completo sfide — elenco di tutte le sfide con filtri.
  *
- * Per ogni sfida mostra: avatar avversario, nickname, esito, data.
+ * Tre filtri: Tutte (arancione), Vinte (verde), Perse (rosso).
+ * Ogni riga completata è cliccabile → rivedi-quiz con back=sfide.
  */
 
 import type { JSX } from 'react';
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
-import { useNavigate, Link } from '@tanstack/react-router';
 import { orpc } from '~/lib/orpc';
 import { Button } from '~/components/ui/button';
 
-export function ChallengeHistory(): JSX.Element {
+type SfideFilter = 'all' | 'won' | 'lost';
+
+export const Route = createFileRoute('/main/sfide/storico')({
+  component: StoricoSfidePage,
+});
+
+function StoricoSfidePage(): JSX.Element {
   const { userId } = useAuth();
   const navigate = useNavigate();
+  const [filter, setFilter] = useState<SfideFilter>('all');
 
-  const historyQuery = useQuery(
-    orpc.sfide.history.queryOptions({
-      enabled: Boolean(userId),
-    }),
-  );
+  const historyQuery = useQuery({
+    ...orpc.sfide.historyAll.queryOptions({ input: { filter } }),
+    enabled: Boolean(userId),
+  });
 
   const sfide = historyQuery.data?.sfide ?? [];
 
@@ -35,19 +42,56 @@ export function ChallengeHistory(): JSX.Element {
     [navigate],
   );
 
+  const filterButtons: { value: SfideFilter; label: string; activeClass: string }[] = [
+    { value: 'all', label: 'Tutte', activeClass: 'bg-orange-500 text-white hover:bg-orange-600' },
+    { value: 'won', label: 'Vinte', activeClass: 'bg-green-500 text-white hover:bg-green-600' },
+    { value: 'lost', label: 'Perse', activeClass: 'bg-red-500 text-white hover:bg-red-600' },
+  ];
+
   return (
-    <div className="rounded-xl border border-border bg-card">
-      <div className="border-b border-border px-4 py-3">
-        <h2 className="text-sm font-semibold">Ultime Sfide</h2>
+    <div className="mx-auto w-full max-w-2xl">
+      {/* Header */}
+      <div className="mb-4 flex items-baseline gap-2">
+        <Link
+          to="/main/sfide"
+          className="inline-flex shrink-0 items-center justify-center text-3xl leading-none text-muted-foreground hover:text-foreground"
+        >
+          «
+        </Link>
+        <h1 className="text-2xl font-bold">Storico Sfide</h1>
       </div>
 
-      <div className="p-2">
-        {sfide.length === 0 ? (
-          <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-            Nessuna sfida ancora
+      {/* Filtri */}
+      <div className="mb-4 flex gap-2">
+        {filterButtons.map((btn) => (
+          <Button
+            key={btn.value}
+            variant="outline"
+            size="sm"
+            className={
+              filter === btn.value
+                ? btn.activeClass
+                : 'text-muted-foreground'
+            }
+            onClick={(): void => setFilter(btn.value)}
+          >
+            {btn.label}
+          </Button>
+        ))}
+      </div>
+
+      {/* Elenco */}
+      <div className="rounded-xl border border-border bg-card">
+        {historyQuery.isLoading ? (
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            Caricamento...
+          </div>
+        ) : sfide.length === 0 ? (
+          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            Nessuna sfida trovata
           </div>
         ) : (
-          <div className="space-y-1">
+          <div className="divide-y divide-border">
             {sfide.map((sfida) => {
               const isWinner = sfida.winner_id === userId;
               const isDraw =
@@ -86,7 +130,7 @@ export function ChallengeHistory(): JSX.Element {
               return (
                 <div
                   key={sfida.sfida_id}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2 ${isClickable ? 'cursor-pointer transition-colors hover:bg-muted/50' : ''}`}
+                  className={`flex items-center gap-3 px-4 py-3 ${isClickable ? 'cursor-pointer transition-colors hover:bg-muted/50' : ''}`}
                   role={isClickable ? 'button' : undefined}
                   tabIndex={isClickable ? 0 : undefined}
                   onClick={
@@ -153,20 +197,6 @@ export function ChallengeHistory(): JSX.Element {
           </div>
         )}
       </div>
-
-      {/* Bottone Vedi Tutte */}
-      {sfide.length > 0 && (
-        <div className="border-t border-border px-4 py-3">
-          <Link to="/main/sfide/storico">
-            <Button
-              variant="ghost"
-              className="w-full text-sm text-muted-foreground hover:text-foreground"
-            >
-              Vedi Tutte
-            </Button>
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

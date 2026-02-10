@@ -131,13 +131,19 @@ function SimulazioneQuizPage(): JSX.Element {
           <Switch
             id="boost-errors"
             checked={boostErrors}
-            onCheckedChange={(checked): void => setPreference('boostErrors', checked)}
+            onCheckedChange={(checked): void =>
+              setPreference('boostErrors', checked)
+            }
             disabled={!canBoostErrors}
             className="data-[state=checked]:bg-green-500"
           />
           <Label
             htmlFor="boost-errors"
-            className={canBoostErrors ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+            className={
+              canBoostErrors
+                ? 'cursor-pointer'
+                : 'cursor-not-allowed opacity-50'
+            }
           >
             Boost Errori
           </Label>
@@ -148,13 +154,17 @@ function SimulazioneQuizPage(): JSX.Element {
           <Switch
             id="boost-skull"
             checked={boostSkull}
-            onCheckedChange={(checked): void => setPreference('boostSkull', checked)}
+            onCheckedChange={(checked): void =>
+              setPreference('boostSkull', checked)
+            }
             disabled={!canBoostSkull}
             className="data-[state=checked]:bg-green-500"
           />
           <Label
             htmlFor="boost-skull"
-            className={canBoostSkull ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}
+            className={
+              canBoostSkull ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
+            }
           >
             Boost Skull
           </Label>

@@ -1,9 +1,6 @@
-export {
-  TimePeriodToolbar,
-  useTimePeriod,
-  useTimePeriodFor,
-} from './TimePeriodToolbar';
-export type { PeriodSection } from './TimePeriodToolbar';
+export { TimePeriodToolbar } from './TimePeriodToolbar';
+export { useTimePeriod, useTimePeriodFor } from './useTimePeriod';
+export type { PeriodSection } from './useTimePeriod';
 export { LazySection, SectionSkeleton, useLazyLoad } from './LazySection';
 export { StatsSection } from './StatsSection';
 export { SectionReveal } from './SectionReveal';
