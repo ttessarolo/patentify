@@ -60,6 +60,22 @@ export const completeSfidaOutputSchema = z.object({
 });
 
 // ============================================================
+// getSfidaResult
+// ============================================================
+
+export const getSfidaResultInputSchema = z.object({
+  sfida_id: z.number().int().positive(),
+});
+
+export const getSfidaResultOutputSchema = z.object({
+  winner_id: z.string().nullable(),
+  my_correct: z.number().int(),
+  opponent_correct: z.number().int(),
+  both_finished: z.boolean(),
+  status: z.string(),
+});
+
+// ============================================================
 // abortSfida
 // ============================================================
 

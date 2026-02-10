@@ -22,8 +22,6 @@ const searchSchema = z.object({
   sfidaId: z.coerce.number().int().positive(),
   quizId: z.coerce.number().int().positive(),
   opponentName: z.string(),
-  opponentCorrect: z.coerce.number().int().min(0).optional().default(0),
-  winnerId: z.string().optional(),
   gameStartedAt: z.string(),
 });
 
@@ -38,22 +36,14 @@ function SfidaQuizPage(): JSX.Element {
   const { user: clerkUser } = useUser();
   const navigate = useNavigate();
   const endSfida = useAppStore((s) => s.endSfida);
+  const opponentId = useAppStore((s) => s.activeSfida?.opponentId ?? null);
+  const setPendingRematch = useAppStore((s) => s.setPendingRematch);
 
   const [result, setResult] = useState<MultiplayerQuizResult | null>(null);
-  const [completedData, setCompletedData] = useState<{
-    opponentCorrect: number;
-    winnerId: string | null;
-  } | null>(null);
 
   const handleComplete = useCallback(
     (quizResult: MultiplayerQuizResult): void => {
       setResult(quizResult);
-      // I dati completi dell'avversario arriveranno dalla mutation completeSfida
-      // gestita dentro MultiplayerQuiz.
-      setCompletedData({
-        opponentCorrect: 0,
-        winnerId: null,
-      });
     },
     [],
   );
@@ -62,6 +52,21 @@ function SfidaQuizPage(): JSX.Element {
     endSfida();
     void navigate({ to: '/main/sfide' });
   }, [navigate, endSfida]);
+
+  const handleReviewQuiz = useCallback((): void => {
+    void navigate({
+      to: '/main/rivedi-quiz',
+      search: { quizId },
+    });
+  }, [navigate, quizId]);
+
+  const handleRematch = useCallback((): void => {
+    if (!opponentId) return;
+    // Salva il rematch target nello store e naviga alla pagina sfide
+    setPendingRematch({ opponentId, opponentName });
+    endSfida();
+    void navigate({ to: '/main/sfide' });
+  }, [opponentId, opponentName, setPendingRematch, endSfida, navigate]);
 
   // Mostra risultati se il quiz è finito
   if (result) {
@@ -73,10 +78,12 @@ function SfidaQuizPage(): JSX.Element {
         myResult={result}
         myName={myName}
         opponentName={opponentName}
-        opponentCorrect={completedData?.opponentCorrect ?? 0}
-        winnerId={completedData?.winnerId ?? null}
+        opponentCorrect={result.opponentCorrect ?? 0}
+        winnerId={result.winnerId ?? null}
         myUserId={userId ?? ''}
         onBack={handleBack}
+        onReviewQuiz={handleReviewQuiz}
+        onRematch={handleRematch}
       />
     );
   }

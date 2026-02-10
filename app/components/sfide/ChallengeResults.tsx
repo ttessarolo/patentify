@@ -27,6 +27,10 @@ interface ChallengeResultsProps {
   myUserId: string;
   /** Callback per tornare alle sfide */
   onBack: () => void;
+  /** Callback per rivedere il quiz */
+  onReviewQuiz: () => void;
+  /** Callback per sfidare di nuovo lo stesso avversario */
+  onRematch: () => void;
 }
 
 export function ChallengeResults({
@@ -37,6 +41,8 @@ export function ChallengeResults({
   winnerId,
   myUserId,
   onBack,
+  onReviewQuiz,
+  onRematch,
 }: ChallengeResultsProps): JSX.Element {
   const isWinner = winnerId === myUserId;
   const isDraw = winnerId === null;
@@ -118,10 +124,26 @@ export function ChallengeResults({
         </div>
       </div>
 
-      {/* Bottone torna alle sfide */}
-      <Button onClick={onBack} className="mt-4 w-full">
-        Torna alle Sfide
-      </Button>
+      {/* Azioni */}
+      <div className="mt-4 flex w-full flex-col gap-3">
+        <Button onClick={onRematch} className="w-full">
+          Sfida di Nuovo
+        </Button>
+        <Button
+          variant="outline"
+          onClick={onReviewQuiz}
+          className="w-full"
+        >
+          Rivedi Quiz
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="w-full"
+        >
+          Torna alle Sfide
+        </Button>
+      </div>
     </div>
   );
 }

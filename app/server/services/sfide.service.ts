@@ -236,6 +236,67 @@ export async function completeSfida(
 }
 
 // ============================================================
+// getSfidaResult
+// ============================================================
+
+interface SfidaResultData {
+  winner_id: string | null;
+  my_correct: number;
+  opponent_correct: number;
+  both_finished: boolean;
+  status: string;
+}
+
+/**
+ * Ritorna il risultato di una sfida dal punto di vista del player richiedente.
+ * Usato dal primo giocatore per recuperare i dati reali quando l'avversario finisce.
+ */
+export async function getSfidaResult(
+  sfidaId: number,
+  playerId: string,
+): Promise<SfidaResultData> {
+  const sfidaResult = await sql`
+    SELECT player_a_id, player_b_id,
+           player_a_correct, player_b_correct,
+           player_a_finished, player_b_finished,
+           winner_id, status
+    FROM sfide
+    WHERE id = ${sfidaId}
+  `;
+
+  if (!sfidaResult || sfidaResult.length === 0) {
+    throw new Error('Sfida non trovata');
+  }
+
+  const sfida = sfidaResult[0] as {
+    player_a_id: string;
+    player_b_id: string;
+    player_a_correct: number;
+    player_b_correct: number;
+    player_a_finished: boolean;
+    player_b_finished: boolean;
+    winner_id: string | null;
+    status: string;
+  };
+
+  const isPlayerA = playerId === sfida.player_a_id;
+  const isPlayerB = playerId === sfida.player_b_id;
+  if (!isPlayerA && !isPlayerB) {
+    throw new Error('Utente non partecipante alla sfida');
+  }
+
+  const bothFinished = sfida.player_a_finished && sfida.player_b_finished;
+
+  return {
+    winner_id: sfida.winner_id,
+    my_correct: isPlayerA ? sfida.player_a_correct : sfida.player_b_correct,
+    opponent_correct: isPlayerA ? sfida.player_b_correct : sfida.player_a_correct,
+    both_finished: bothFinished,
+    status: sfida.status,
+  };
+}
+
+// ============================================================
 // abortSfidaForPlayer
 // ============================================================
 

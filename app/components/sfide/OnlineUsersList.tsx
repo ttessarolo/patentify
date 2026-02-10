@@ -5,7 +5,7 @@
  * con possibilità di filtrare solo i seguiti e di sfidare un utente.
  */
 
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import type { JSX } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth, useUser } from '@clerk/tanstack-react-start';
@@ -13,6 +13,7 @@ import { useOnlineUsers } from '~/hooks/useOnlineUsers';
 import { useChallengeFlow } from '~/hooks/useChallengeFlow';
 import { UserCell } from '~/components/classifiche/UserCell';
 import { OutgoingChallengeDialog } from './OutgoingChallengeDialog';
+import { Button } from '~/components/ui/button';
 import { StarOnIcon, StarOffIcon } from '~/icons';
 import { useAppStore } from '~/store';
 import { orpc } from '~/lib/orpc';
@@ -26,6 +27,8 @@ export function OnlineUsersList(): JSX.Element {
 
   const showOnlyFollowed = useAppStore((s) => s.sfideShowOnlyFollowed);
   const toggleFollowedFilter = useAppStore((s) => s.toggleSfideFollowedFilter);
+  const pendingRematch = useAppStore((s) => s.pendingRematch);
+  const setPendingRematch = useAppStore((s) => s.setPendingRematch);
 
   // Filtra via il proprio userId dalla lista
   const otherUserIds = useMemo(
@@ -80,6 +83,24 @@ export function OnlineUsersList(): JSX.Element {
     resetChallenge();
   }, [resetChallenge]);
 
+  // ---- Rematch automatico (da schermata risultati) ----
+  useEffect(() => {
+    if (!pendingRematch || !clerkUser) return;
+
+    const myName = clerkUser.username ?? clerkUser.fullName ?? 'Utente';
+    const myImageUrl = clerkUser.imageUrl ?? null;
+
+    // Imposta il target e invia la sfida
+    setChallengeTarget({
+      userId: pendingRematch.opponentId,
+      name: pendingRematch.opponentName,
+    });
+    sendChallenge(pendingRematch.opponentId, myName, myImageUrl);
+
+    // Consuma il rematch
+    setPendingRematch(null);
+  }, [pendingRematch, clerkUser, sendChallenge, setPendingRematch]);
+
   // Se la sfida è stata accettata e abbiamo i dati, naviga al quiz
   // (gestito nella route sfide.tsx)
 
@@ -130,27 +151,27 @@ export function OnlineUsersList(): JSX.Element {
             {displayedUsers.map((user) => (
               <div
                 key={user.id}
-                role="button"
-                tabIndex={0}
-                onClick={() =>
-                  handleUserClick(user.id, user.username ?? user.name)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleUserClick(user.id, user.username ?? user.name);
-                  }
-                }}
-                className="w-full cursor-pointer rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+                className="flex items-center gap-2 rounded-lg px-3 py-2"
               >
-                <UserCell
-                  userId={user.id}
-                  name={user.name}
-                  username={user.username}
-                  imageUrl={user.image_url}
-                  isFollowing={user.is_following}
-                  layout="header"
-                />
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    handleUserClick(user.id, user.username ?? user.name)
+                  }
+                  className="shrink-0 bg-orange-500 text-xs font-semibold text-white hover:bg-orange-600"
+                >
+                  Sfida
+                </Button>
+                <div className="min-w-0 flex-1">
+                  <UserCell
+                    userId={user.id}
+                    name={user.name}
+                    username={user.username}
+                    imageUrl={user.image_url}
+                    isFollowing={user.is_following}
+                    layout="header"
+                  />
+                </div>
               </div>
             ))}
           </div>

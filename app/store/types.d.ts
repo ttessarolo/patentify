@@ -265,11 +265,23 @@ export interface ActiveSfidaState {
 /**
  * Slice per lo stato sfide multiplayer.
  */
+/**
+ * Dati per un rematch pendente (sfida di nuovo).
+ */
+export interface PendingRematchState {
+  /** ID Clerk dell'avversario */
+  opponentId: string;
+  /** Nome dell'avversario (per il dialog) */
+  opponentName: string;
+}
+
 export interface SfideSlice {
   /** Sfida attiva (null se nessuna sfida in corso) */
   activeSfida: ActiveSfidaState | null;
   /** Sfida in arrivo (per il dialog globale) */
   incomingChallenge: IncomingChallengeState | null;
+  /** Rematch pendente da triggerare nella pagina sfide */
+  pendingRematch: PendingRematchState | null;
   /** Filtro: mostra solo utenti seguiti nella lista online */
   sfideShowOnlyFollowed: boolean;
   /** Inizia una nuova sfida */
@@ -282,6 +294,8 @@ export interface SfideSlice {
   endSfida: () => void;
   /** Imposta una sfida in arrivo */
   setIncomingChallenge: (challenge: IncomingChallengeState | null) => void;
+  /** Imposta un rematch pendente */
+  setPendingRematch: (rematch: PendingRematchState | null) => void;
   /** Toggle filtro solo seguiti */
   toggleSfideFollowedFilter: () => void;
 }
@@ -320,6 +334,7 @@ export interface AppStateDefaults {
   sfide: {
     activeSfida: ActiveSfidaState | null;
     incomingChallenge: IncomingChallengeState | null;
+    pendingRematch: PendingRematchState | null;
     sfideShowOnlyFollowed: boolean;
   };
 }

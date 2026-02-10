@@ -32,7 +32,7 @@ import {
   WrongIcon,
 } from '~/icons';
 import { useAppStore } from '~/store';
-import { orpc } from '~/lib/orpc';
+import { orpc, client } from '~/lib/orpc';
 import { getAblyRealtime } from '~/lib/ably-client';
 import type { Domanda } from '~/types/db';
 import type { TimerTickPayload } from '~/types/components';
@@ -64,6 +64,10 @@ export interface MultiplayerQuizResult {
   promosso: boolean;
   finalTotalSeconds: number;
   wrongAnswers: Array<{ domanda: Domanda; answerGiven: string }>;
+  /** Risposte corrette dell'avversario (dal server, null se non disponibile) */
+  opponentCorrect: number | null;
+  /** ID del vincitore (dal server, undefined se non disponibile) */
+  winnerId: string | null | undefined;
 }
 
 /** Timeout inattivita durante la sfida: 2 minuti */
@@ -294,24 +298,39 @@ export function MultiplayerQuiz({
         completeSfidaMutation.mutate(
           { sfida_id: sfidaId, correct_count: newCorrectCount },
           {
-            onSuccess: (data) => {
-              // Pubblica finish su Ably
+            onSuccess: async (data) => {
+              // Pubblica finish su Ably — AWAIT per evitare race condition
+              // (onComplete causa unmount che cancella il canale Ably)
               if (gameChannelRef.current) {
-                gameChannelRef.current.presence
-                  .update({ pos: QUIZ_SIZE, finished: true })
-                  .catch(() => {});
-                gameChannelRef.current.publish('player-finished', {
-                  playerId: userId,
-                });
+                try {
+                  await gameChannelRef.current.presence
+                    .update({ pos: QUIZ_SIZE, finished: true });
+                  await gameChannelRef.current.publish('player-finished', {
+                    playerId: userId,
+                  });
+                } catch {
+                  // Ignora errori Ably
+                }
               }
 
               if (data.both_finished) {
+                // Determina opponentCorrect dal lato server:
+                // completeSfida ritorna player_a_correct e player_b_correct
+                // ma non sappiamo se siamo A o B. Usiamo la differenza.
+                const myServerCorrect = newCorrectCount;
+                const opponentServerCorrect =
+                  data.player_a_correct === myServerCorrect
+                    ? data.player_b_correct
+                    : data.player_a_correct;
+
                 onComplete({
                   correctCount: newCorrectCount,
                   wrongCount: newWrongCount,
                   promosso,
                   finalTotalSeconds: finalSeconds,
                   wrongAnswers,
+                  opponentCorrect: opponentServerCorrect,
+                  winnerId: data.winner_id,
                 });
               }
             },
@@ -329,17 +348,46 @@ export function MultiplayerQuiz({
 
   // ---- Quando l'avversario finisce (e noi eravamo in attesa) ----
   useEffect(() => {
-    if (status === 'waiting_opponent' && opponentFinished) {
-      const promosso = wrongCount <= MAX_ERRORS;
-      onComplete({
-        correctCount,
-        wrongCount,
-        promosso,
-        finalTotalSeconds: lastElapsedRef.current,
-        wrongAnswers,
-      });
-    }
-  }, [status, opponentFinished, correctCount, wrongCount, wrongAnswers, onComplete]);
+    if (status !== 'waiting_opponent' || !opponentFinished) return;
+
+    let cancelled = false;
+
+    void (async (): Promise<void> => {
+      try {
+        // Recupera i dati reali dal server
+        const result = await client.sfide.result({ sfida_id: sfidaId });
+        if (cancelled) return;
+
+        const promosso = wrongCount <= MAX_ERRORS;
+        onComplete({
+          correctCount,
+          wrongCount,
+          promosso,
+          finalTotalSeconds: lastElapsedRef.current,
+          wrongAnswers,
+          opponentCorrect: result.opponent_correct,
+          winnerId: result.winner_id,
+        });
+      } catch {
+        if (cancelled) return;
+        // Fallback: mostra risultati con dati locali se la chiamata fallisce
+        const promosso = wrongCount <= MAX_ERRORS;
+        onComplete({
+          correctCount,
+          wrongCount,
+          promosso,
+          finalTotalSeconds: lastElapsedRef.current,
+          wrongAnswers,
+          opponentCorrect: null,
+          winnerId: undefined,
+        });
+      }
+    })();
+
+    return (): void => {
+      cancelled = true;
+    };
+  }, [status, opponentFinished, sfidaId, correctCount, wrongCount, wrongAnswers, onComplete]);
 
   // ---- Abandon handler ----
   const handleConfirmAbandon = useCallback((): void => {
@@ -350,17 +398,34 @@ export function MultiplayerQuiz({
     abortSfidaMutation.mutate({ sfida_id: sfidaId });
   }, [sfidaId, abortSfidaMutation]);
 
-  // Force leave waiting
+  // Force leave waiting — tenta di recuperare dati reali dal server
   const handleForceLeaveWaiting = useCallback((): void => {
     const promosso = wrongCount <= MAX_ERRORS;
-    onComplete({
+    const localResult: MultiplayerQuizResult = {
       correctCount,
       wrongCount,
       promosso,
       finalTotalSeconds: lastElapsedRef.current,
       wrongAnswers,
-    });
-  }, [correctCount, wrongCount, wrongAnswers, onComplete]);
+      opponentCorrect: null,
+      winnerId: undefined,
+    };
+
+    // Tenta di ottenere i dati dal server (fire-and-forget con fallback)
+    void (async (): Promise<void> => {
+      try {
+        const result = await client.sfide.result({ sfida_id: sfidaId });
+        onComplete({
+          ...localResult,
+          opponentCorrect: result.opponent_correct,
+          winnerId: result.winner_id,
+        });
+      } catch {
+        // Se fallisce, usa i dati locali
+        onComplete(localResult);
+      }
+    })();
+  }, [correctCount, wrongCount, wrongAnswers, sfidaId, onComplete]);
 
   // ============================================================
   // Render — Attesa avversario
@@ -456,14 +521,14 @@ export function MultiplayerQuiz({
           <span className="text-muted-foreground">
             {opponentName}:
           </span>
-          <span className="font-semibold text-primary">
-            Domanda {opponentPos} / {QUIZ_SIZE}
+          <span className={`font-semibold ${opponentFinished ? 'text-green-500' : 'text-primary'}`}>
+            {opponentFinished ? 'Completato' : `Domanda ${opponentPos} / ${QUIZ_SIZE}`}
           </span>
         </div>
         <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
-            style={{ width: `${(opponentPos / QUIZ_SIZE) * 100}%` }}
+            className={`h-full rounded-full transition-all duration-300 ${opponentFinished ? 'bg-green-500' : 'bg-primary'}`}
+            style={{ width: `${opponentFinished ? 100 : (opponentPos / QUIZ_SIZE) * 100}%` }}
           />
         </div>
       </div>

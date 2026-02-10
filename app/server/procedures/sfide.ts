@@ -11,6 +11,8 @@ import {
   createSfidaOutputSchema,
   completeSfidaInputSchema,
   completeSfidaOutputSchema,
+  getSfidaResultInputSchema,
+  getSfidaResultOutputSchema,
   abortSfidaInputSchema,
   abortSfidaOutputSchema,
   sfidaHistoryOutputSchema,
@@ -84,6 +86,27 @@ export const completeSfida = authProcedure
         context.userId,
         input.correct_count,
       );
+    },
+  );
+
+// ============================================================
+// getSfidaResult
+// ============================================================
+
+export const getSfidaResult = authProcedure
+  .route({
+    method: 'GET',
+    path: '/sfide/result',
+    summary: 'Recupera il risultato di una sfida completata',
+  })
+  .input(getSfidaResultInputSchema)
+  .output(getSfidaResultOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof getSfidaResultOutputSchema>> => {
+      return sfideService.getSfidaResult(input.sfida_id, context.userId);
     },
   );
 

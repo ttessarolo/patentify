@@ -56,7 +56,19 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
     // Ref per evitare chiamate multiple di onEnd
     const onEndCalledRef = React.useRef<boolean>(initialElapsed >= seconds);
 
-    // Reset quando seconds o startMode cambiano (ma non initialElapsed per evitare loop)
+    // Refs per callbacks: evita che cambi di reference causino reset del timer
+    const onTickRef = React.useRef(onTick);
+    const onEndRef = React.useRef(onEnd);
+
+    React.useEffect(() => {
+      onTickRef.current = onTick;
+    }, [onTick]);
+
+    React.useEffect(() => {
+      onEndRef.current = onEnd;
+    }, [onEnd]);
+
+    // Reset quando seconds o startMode cambiano
     React.useEffect(() => {
       setElapsed(initialElapsed);
       const isAlreadyEnded = initialElapsed >= seconds;
@@ -65,10 +77,10 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
       setMode(startMode);
       
       // Se già scaduto al mount, chiama onEnd
-      if (isAlreadyEnded && isCountdownMode(startMode) && onEnd) {
-        onEnd();
+      if (isAlreadyEnded && isCountdownMode(startMode) && onEndRef.current) {
+        onEndRef.current();
       }
-    }, [seconds, startMode, initialElapsed, onEnd]);
+    }, [seconds, startMode, initialElapsed]);
 
     // Timer tick effect
     React.useEffect(() => {
@@ -90,17 +102,17 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
             ended: isEnded,
           };
 
-          // Chiama onTick se fornito
-          if (onTick) {
-            onTick(payload);
+          // Chiama onTick se fornito (via ref per stabilità)
+          if (onTickRef.current) {
+            onTickRef.current(payload);
           }
 
           // Gestisce fine timer (solo countdown)
           if (isEnded && isCountdownMode(mode) && !onEndCalledRef.current) {
             onEndCalledRef.current = true;
             setEnded(true);
-            if (onEnd) {
-              onEnd();
+            if (onEndRef.current) {
+              onEndRef.current();
             }
           }
 
@@ -111,7 +123,7 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
       return (): void => {
         clearInterval(intervalId);
       };
-    }, [seconds, tickInterval, onTick, onEnd, mode, ended]);
+    }, [seconds, tickInterval, mode, ended]);
 
     // Calcola il valore da mostrare in base alla modalità
     const displayValue = React.useMemo((): number => {

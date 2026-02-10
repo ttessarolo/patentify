@@ -9,6 +9,7 @@ import type {
   SfideSlice,
   ActiveSfidaState,
   IncomingChallengeState,
+  PendingRematchState,
 } from '../types';
 
 /**
@@ -22,6 +23,7 @@ export const createSfideSlice: StateCreator<
 > = (set) => ({
   activeSfida: null,
   incomingChallenge: null,
+  pendingRematch: null,
   sfideShowOnlyFollowed: false,
 
   startSfida: (sfida: ActiveSfidaState): void => {
@@ -57,6 +59,14 @@ export const createSfideSlice: StateCreator<
   ): void => {
     set((state) => {
       state.incomingChallenge = challenge;
+    });
+  },
+
+  setPendingRematch: (
+    rematch: PendingRematchState | null,
+  ): void => {
+    set((state) => {
+      state.pendingRematch = rematch;
     });
   },
 
