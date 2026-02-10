@@ -37,6 +37,9 @@ const menuItems = [
   { to: '/main/help', img: '/bottoni/help.png', alt: 'Help' },
 ] as const;
 
+// Offset orizzontali per effetto "S" su mobile (sin wave)
+const S_OFFSETS = [0, 1.75, 2.5, 1.75, 0, -1.75, -2.5, -1.75] as const;
+
 export const Route = createFileRoute('/main/')({
   component: MainIndex,
 });
@@ -57,12 +60,15 @@ function MainIndex(): JSX.Element {
   }, [visibleCount]);
 
   return (
-    <div className="mx-auto mt-4 grid h-[calc(100dvh-var(--header-height)-7rem)] grid-cols-1 grid-rows-8 gap-1.5 md:mt-0 md:max-h-[60dvh] md:max-w-3xl md:grid-cols-2 md:grid-rows-4 md:gap-2">
+    <div className="mx-auto mt-4 grid h-[calc(100dvh-var(--header-height)-4rem)] grid-cols-1 grid-rows-8 gap-1.5 md:mt-0 md:max-h-[60dvh] md:max-w-3xl md:grid-cols-2 md:grid-rows-4 md:gap-2">
       {menuItems.map((item, index) => (
         <Link
           key={item.to}
           to={item.to}
-          className={`flex min-h-0 items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
+          style={
+            { '--s-offset': `${S_OFFSETS[index]}rem` } as React.CSSProperties
+          }
+          className={`flex min-h-0 translate-x-[var(--s-offset)] items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 md:translate-x-0 ${
             index < visibleCount
               ? 'translate-y-0 opacity-100'
               : 'translate-y-4 opacity-0'
