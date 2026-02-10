@@ -128,13 +128,20 @@ export function OnlineUsersList(): JSX.Element {
         ) : (
           <div className="space-y-1">
             {displayedUsers.map((user) => (
-              <button
+              <div
                 key={user.id}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() =>
                   handleUserClick(user.id, user.username ?? user.name)
                 }
-                className="w-full rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleUserClick(user.id, user.username ?? user.name);
+                  }
+                }}
+                className="w-full cursor-pointer rounded-lg px-3 py-2 text-left transition-colors hover:bg-muted/50 active:bg-muted"
               >
                 <UserCell
                   userId={user.id}
@@ -144,7 +151,7 @@ export function OnlineUsersList(): JSX.Element {
                   isFollowing={user.is_following}
                   layout="header"
                 />
-              </button>
+              </div>
             ))}
           </div>
         )}

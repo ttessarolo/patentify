@@ -5,15 +5,15 @@
  * 1. Box Utenti Online (con filtro seguiti e click per sfidare)
  * 2. Box Storico Sfide (ultime 5 sfide)
  *
- * Gestisce anche la navigazione al quiz quando una sfida viene accettata
- * (sia come challenger che come challenged).
+ * Gestisce la navigazione al quiz quando viene ricevuto un messaggio
+ * `game-start` via Ably — sia come challenger (player A) che come
+ * challenged (player B). Tutta la navigazione è centralizzata qui.
  */
 
 import { useEffect, useRef } from 'react';
 import type { JSX } from 'react';
 import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router';
 import { useAuth } from '@clerk/tanstack-react-start';
-import { useChallengeFlow } from '~/hooks/useChallengeFlow';
 import { useAppStore } from '~/store';
 import { getAblyRealtime } from '~/lib/ably-client';
 import type * as Ably from 'ably';
@@ -26,48 +26,11 @@ function SfideLayout(): JSX.Element {
   const navigate = useNavigate();
   const { userId } = useAuth();
   const startSfida = useAppStore((s) => s.startSfida);
+  const navigatedSfidaRef = useRef<number | null>(null);
 
-  const { phase, sfidaData, resetChallenge } = useChallengeFlow({
-    userId,
-    enabled: Boolean(userId),
-  });
-
-  const navigatedRef = useRef<boolean>(false);
-
-  // Naviga al quiz quando la sfida è stata creata (come challenger)
-  useEffect(() => {
-    if (phase === 'accepted' && sfidaData && !navigatedRef.current) {
-      navigatedRef.current = true;
-
-      // Determina quale quizId è per questo player
-      // Il challenger è player A
-      const myQuizId = sfidaData.quizIdA;
-
-      startSfida({
-        sfidaId: sfidaData.sfidaId,
-        quizId: myQuizId,
-        opponentId: '',
-        opponentName: '',
-        gameStartedAt: sfidaData.gameStartedAt,
-        opponentPos: 0,
-        opponentFinished: false,
-      });
-
-      void navigate({
-        to: '/main/sfide/quiz',
-        search: {
-          sfidaId: sfidaData.sfidaId,
-          quizId: myQuizId,
-          opponentName: 'Avversario',
-          gameStartedAt: sfidaData.gameStartedAt,
-        },
-      });
-
-      resetChallenge();
-    }
-  }, [phase, sfidaData, navigate, startSfida, resetChallenge]);
-
-  // Ascolta game-start come player B (challenged)
+  // Ascolta game-start sul canale utente — gestisce ENTRAMBI i player.
+  // Il challenger (A) riceve il game-start che pubblica su se stesso.
+  // Il challenged (B) riceve il game-start pubblicato da A.
   useEffect(() => {
     if (!userId) return;
 
@@ -84,15 +47,32 @@ function SfideLayout(): JSX.Element {
         playerBId: string;
       };
 
-      // Solo se io sono player B
-      if (data.playerBId !== userId) return;
+      // Evita navigazione doppia per la stessa sfida
+      if (navigatedSfidaRef.current === data.sfidaId) return;
 
-      const myQuizId = data.quizIdB;
+      // Determina il mio ruolo e il quiz associato
+      let myQuizId: number;
+      let opponentId: string;
+
+      if (data.playerAId === userId) {
+        // Sono il challenger (player A)
+        myQuizId = data.quizIdA;
+        opponentId = data.playerBId;
+      } else if (data.playerBId === userId) {
+        // Sono il challenged (player B)
+        myQuizId = data.quizIdB;
+        opponentId = data.playerAId;
+      } else {
+        // Messaggio non destinato a me
+        return;
+      }
+
+      navigatedSfidaRef.current = data.sfidaId;
 
       startSfida({
         sfidaId: data.sfidaId,
         quizId: myQuizId,
-        opponentId: data.playerAId,
+        opponentId,
         opponentName: '',
         gameStartedAt: data.gameStartedAt,
         opponentPos: 0,
@@ -110,7 +90,6 @@ function SfideLayout(): JSX.Element {
       });
     };
 
-    // Ascolta su game-start pubblicato sul canale utente
     myChannel.subscribe('game-start', handleGameStart);
 
     return (): void => {

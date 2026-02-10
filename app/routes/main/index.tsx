@@ -1,6 +1,8 @@
 import type { JSX } from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createFileRoute, Link } from '@tanstack/react-router';
+import { useAuth } from '@clerk/tanstack-react-start';
+import { useOnlineUsers } from '~/hooks/useOnlineUsers';
 
 const menuItems = [
   {
@@ -42,7 +44,15 @@ export const Route = createFileRoute('/main/')({
 });
 
 function MainIndex(): JSX.Element {
+  const { userId } = useAuth();
   const [visibleCount, setVisibleCount] = useState<number>(0);
+
+  // Conteggio utenti online (escluso se stesso) per il badge Sfide
+  const { onlineUserIds } = useOnlineUsers({ enabled: Boolean(userId) });
+  const onlineCount = useMemo(
+    (): number => onlineUserIds.filter((id) => id !== userId).length,
+    [onlineUserIds, userId],
+  );
 
   useEffect(() => {
     if (visibleCount >= menuItems.length) return;
@@ -62,7 +72,7 @@ function MainIndex(): JSX.Element {
         <Link
           key={item.to}
           to={item.to}
-          className={`flex min-h-0 items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
+          className={`relative flex min-h-0 items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
             index < visibleCount
               ? 'translate-y-0 opacity-100'
               : 'translate-y-4 opacity-0'
@@ -74,6 +84,12 @@ function MainIndex(): JSX.Element {
             className="max-h-full w-auto rounded-lg"
             draggable={false}
           />
+          {/* Badge utenti online sul bottone Sfide */}
+          {item.to === '/main/sfide' && onlineCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground shadow-sm">
+              {onlineCount > 99 ? '99+' : onlineCount}
+            </span>
+          )}
         </Link>
       ))}
     </div>

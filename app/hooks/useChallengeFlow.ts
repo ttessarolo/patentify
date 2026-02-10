@@ -243,14 +243,21 @@ export function useChallengeFlow(
             const gameChannel = ably.channels.get(
               `sfide:game:${result.sfida_id}`,
             );
-            gameChannel.publish('game-start', gameStartPayload);
+            await gameChannel.publish('game-start', gameStartPayload);
 
             // Pubblica game-start sul canale utente dell'avversario
             // (per far navigare l'avversario al quiz)
             const opponentUserChannel = ably.channels.get(
               `sfide:user:${data.responderId}`,
             );
-            opponentUserChannel.publish('game-start', gameStartPayload);
+            await opponentUserChannel.publish('game-start', gameStartPayload);
+
+            // Pubblica game-start sul proprio canale utente
+            // (per triggerare la navigazione in SfideLayout anche per il challenger)
+            const myUserChannel = ably.channels.get(
+              `sfide:user:${userId}`,
+            );
+            await myUserChannel.publish('game-start', gameStartPayload);
           } catch {
             setPhase('error');
           }

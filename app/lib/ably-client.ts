@@ -87,8 +87,14 @@ export function disconnectAbly(): void {
 // ---------------------------------------------------------------------------
 
 if (typeof window !== 'undefined') {
-  // Disconnetti prima che la pagina si chiuda (reload, navigazione esterna)
+  // beforeunload: page close/reload (affidabile su desktop)
   window.addEventListener('beforeunload', () => {
+    disconnectAbly();
+  });
+
+  // pagehide: il più affidabile su mobile e PWA (iOS Safari, Android Chrome).
+  // Fires anche quando beforeunload non scatta (es. swipe-close della PWA).
+  window.addEventListener('pagehide', () => {
     disconnectAbly();
   });
 }

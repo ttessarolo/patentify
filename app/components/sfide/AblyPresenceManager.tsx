@@ -90,6 +90,31 @@ export function AblyPresenceManager(): JSX.Element | null {
     };
   }, [isSignedIn, userId, enterPresence, leavePresence]);
 
+  // Visibilitychange — intercetta tab switch, app in background, PWA minimizzata.
+  // Quando il tab va in background l'utente esce dalla presence (appare offline).
+  // Quando torna visibile, rientra (se non idle).
+  useEffect(() => {
+    if (!isSignedIn || !userId) return;
+
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState === 'hidden') {
+        leavePresence();
+      } else if (document.visibilityState === 'visible') {
+        // Ri-entra nella presence solo se la connessione è attiva
+        const ably = getAblyRealtime();
+        if (ably.connection.state === 'connected') {
+          enterPresence();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return (): void => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isSignedIn, userId, enterPresence, leavePresence]);
+
   // Non renderizza nulla — è un componente logico
   return null;
 }
