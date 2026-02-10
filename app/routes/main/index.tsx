@@ -72,24 +72,26 @@ function MainIndex(): JSX.Element {
         <Link
           key={item.to}
           to={item.to}
-          className={`relative flex min-h-0 items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
+          className={`flex min-h-0 items-center justify-center transition-all duration-300 hover:scale-[1.02] active:scale-95 ${
             index < visibleCount
               ? 'translate-y-0 opacity-100'
               : 'translate-y-4 opacity-0'
           }`}
         >
-          <img
-            src={item.img}
-            alt={item.alt}
-            className="max-h-full w-auto rounded-lg"
-            draggable={false}
-          />
-          {/* Badge utenti online sul bottone Sfide */}
-          {item.to === '/main/sfide' && onlineCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground shadow-sm">
-              {onlineCount > 99 ? '99+' : onlineCount}
-            </span>
-          )}
+          <div className="relative inline-block max-h-full">
+            <img
+              src={item.img}
+              alt={item.alt}
+              className="max-h-full w-auto rounded-lg"
+              draggable={false}
+            />
+            {/* Badge utenti online sul bottone Sfide */}
+            {item.to === '/main/sfide' && onlineCount > 0 && (
+              <span className="absolute -bottom-2 right-1 flex h-11 min-w-11 items-center justify-center rounded-full bg-red-600 px-2 text-lg font-bold leading-none text-white shadow-lg ring-2 ring-background">
+                {onlineCount > 99 ? '99+' : onlineCount}
+              </span>
+            )}
+          </div>
         </Link>
       ))}
     </div>
