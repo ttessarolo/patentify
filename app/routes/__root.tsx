@@ -24,6 +24,7 @@ import { PWAInstallPrompt } from '~/components/pwa-install-prompt';
 import { UpdateDialog } from '~/components/update-dialog';
 import { AblyPresenceManager } from '~/components/sfide/AblyPresenceManager';
 import { IncomingChallengeDialog } from '~/components/sfide/IncomingChallengeDialog';
+import { ChallengeGameStartHandler } from '~/components/sfide/ChallengeGameStartHandler';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient({
@@ -182,6 +183,7 @@ function Providers({
         <UpdateDialog />
         <AblyPresenceManager />
         <IncomingChallengeDialog />
+        <ChallengeGameStartHandler />
         {import.meta.env.DEV && (
           <>
             <TanStackDevtools

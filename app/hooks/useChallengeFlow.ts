@@ -113,6 +113,12 @@ export function useChallengeFlow(
       pendingChallengeIdRef.current = challengeId;
       setPhase('sending');
 
+      console.log(
+        '[ChallengeFlow] Invio sfida — challengeId=%s, target=%s',
+        challengeId,
+        targetUserId,
+      );
+
       const ably = getAblyRealtime();
       const targetChannel = ably.channels.get(`sfide:user:${targetUserId}`);
 
@@ -127,17 +133,30 @@ export function useChallengeFlow(
       targetChannel
         .publish('challenge-request', message)
         .then(() => {
+          console.log(
+            '[ChallengeFlow] challenge-request pubblicato con successo — challengeId=%s',
+            challengeId,
+          );
           setPhase('waiting_response');
 
           // Timer 30s per il timeout
           timeoutRef.current = setTimeout(() => {
             if (pendingChallengeIdRef.current === challengeId) {
+              console.warn(
+                '[ChallengeFlow] Timeout sfida scaduto — challengeId=%s',
+                challengeId,
+              );
               setPhase('expired');
               pendingChallengeIdRef.current = null;
             }
           }, CHALLENGE_TIMEOUT_MS);
         })
-        .catch(() => {
+        .catch((err: unknown) => {
+          console.error(
+            '[ChallengeFlow] Errore publish challenge-request — challengeId=%s',
+            challengeId,
+            err,
+          );
           setPhase('error');
         });
     },
@@ -150,7 +169,19 @@ export function useChallengeFlow(
       if (!userId) return;
 
       const incoming = useAppStore.getState().incomingChallenge;
-      if (!incoming) return;
+      if (!incoming) {
+        console.warn(
+          '[ChallengeFlow] respondToChallenge chiamato ma incomingChallenge è null',
+        );
+        return;
+      }
+
+      console.log(
+        '[ChallengeFlow] Risposta sfida — challengeId=%s, accepted=%s, challenger=%s',
+        incoming.challengeId,
+        accept,
+        incoming.challengerId,
+      );
 
       const ably = getAblyRealtime();
       const challengerChannel = ably.channels.get(
@@ -164,7 +195,22 @@ export function useChallengeFlow(
         responderId: userId,
       };
 
-      challengerChannel.publish('challenge-response', response);
+      // Await del publish per catturare errori di connessione/canale
+      challengerChannel
+        .publish('challenge-response', response)
+        .then(() => {
+          console.log(
+            '[ChallengeFlow] challenge-response pubblicato con successo — challengeId=%s',
+            incoming.challengeId,
+          );
+        })
+        .catch((err: unknown) => {
+          console.error(
+            '[ChallengeFlow] Errore publish challenge-response — challengeId=%s',
+            incoming.challengeId,
+            err,
+          );
+        });
 
       // Pulisci l'incoming challenge
       setIncomingChallenge(null);
@@ -193,6 +239,13 @@ export function useChallengeFlow(
       const data = message.data as ChallengeRequestMessage;
       if (data.type !== 'challenge-request') return;
 
+      console.log(
+        '[ChallengeFlow] challenge-request ricevuto — challengeId=%s, da=%s (%s)',
+        data.challengeId,
+        data.challengerId,
+        data.challengerName,
+      );
+
       setIncomingChallenge({
         challengeId: data.challengeId,
         challengerId: data.challengerId,
@@ -209,8 +262,20 @@ export function useChallengeFlow(
       const data = message.data as ChallengeResponseMessage;
       if (data.type !== 'challenge-response') return;
 
+      console.log(
+        '[ChallengeFlow] challenge-response ricevuto — challengeId=%s, accepted=%s, pending=%s',
+        data.challengeId,
+        data.accepted,
+        pendingChallengeIdRef.current,
+      );
+
       // Verifica che sia la risposta alla mia sfida pendente
-      if (data.challengeId !== pendingChallengeIdRef.current) return;
+      if (data.challengeId !== pendingChallengeIdRef.current) {
+        console.warn(
+          '[ChallengeFlow] challengeId non corrisponde — ignorato',
+        );
+        return;
+      }
 
       clearChallengeTimeout();
       pendingChallengeIdRef.current = null;
@@ -220,9 +285,19 @@ export function useChallengeFlow(
         setPhase('accepted');
         void (async (): Promise<void> => {
           try {
+            console.log(
+              '[ChallengeFlow] Creazione sfida su server — opponentId=%s',
+              data.responderId,
+            );
             const result = await client.sfide.create({
               opponentId: data.responderId,
             });
+            console.log(
+              '[ChallengeFlow] Sfida creata — sfidaId=%d, quizA=%d, quizB=%d',
+              result.sfida_id,
+              result.quiz_id_a,
+              result.quiz_id_b,
+            );
             setSfidaData({
               sfidaId: result.sfida_id,
               quizIdA: result.quiz_id_a,
@@ -244,6 +319,10 @@ export function useChallengeFlow(
               `sfide:game:${result.sfida_id}`,
             );
             await gameChannel.publish('game-start', gameStartPayload);
+            console.log(
+              '[ChallengeFlow] game-start pubblicato su sfide:game:%d',
+              result.sfida_id,
+            );
 
             // Pubblica game-start sul canale utente dell'avversario
             // (per far navigare l'avversario al quiz)
@@ -251,18 +330,31 @@ export function useChallengeFlow(
               `sfide:user:${data.responderId}`,
             );
             await opponentUserChannel.publish('game-start', gameStartPayload);
+            console.log(
+              '[ChallengeFlow] game-start pubblicato su sfide:user:%s (avversario)',
+              data.responderId,
+            );
 
             // Pubblica game-start sul proprio canale utente
-            // (per triggerare la navigazione in SfideLayout anche per il challenger)
+            // (per triggerare la navigazione anche per il challenger)
             const myUserChannel = ably.channels.get(
               `sfide:user:${userId}`,
             );
             await myUserChannel.publish('game-start', gameStartPayload);
-          } catch {
+            console.log(
+              '[ChallengeFlow] game-start pubblicato su sfide:user:%s (proprio)',
+              userId,
+            );
+          } catch (err: unknown) {
+            console.error(
+              '[ChallengeFlow] Errore creazione sfida o publish game-start',
+              err,
+            );
             setPhase('error');
           }
         })();
       } else {
+        console.log('[ChallengeFlow] Sfida rifiutata dall\'avversario');
         setPhase('rejected');
       }
     };
