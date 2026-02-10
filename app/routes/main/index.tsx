@@ -57,7 +57,7 @@ function MainIndex(): JSX.Element {
   }, [visibleCount]);
 
   return (
-    <div className="mx-auto mt-4 grid h-[calc(100dvh-var(--header-height)-7rem)] grid-cols-1 grid-rows-8 gap-1.5 md:mt-0 md:max-h-[60dvh] md:max-w-3xl md:grid-cols-2 md:grid-rows-4 md:gap-2">
+    <div className="mx-auto mt-4 grid h-[calc(100dvh-var(--header-height)-3.5rem)] grid-cols-1 grid-rows-8 gap-1.5 md:mt-0 md:max-h-[60dvh] md:max-w-3xl md:grid-cols-2 md:grid-rows-4 md:gap-2">
       {menuItems.map((item, index) => (
         <Link
           key={item.to}
