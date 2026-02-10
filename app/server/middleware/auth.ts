@@ -19,8 +19,22 @@ export interface AuthContext extends BaseContext {
 // ============================================================
 
 /**
+ * Codici ORPCError "attesi" — errori di business logic che NON
+ * devono essere inviati a Sentry (auth fallita, validazione, ecc.).
+ */
+const EXPECTED_ORPC_CODES: ReadonlySet<string> = new Set([
+  'UNAUTHORIZED',
+  'FORBIDDEN',
+  'NOT_FOUND',
+  'BAD_REQUEST',
+  'CONFLICT',
+]);
+
+/**
  * Middleware Sentry globale — cattura eccezioni a livello di procedura
  * e le invia a Sentry prima di ri-lanciare l'errore.
+ * Filtra automaticamente gli errori oRPC "attesi" (auth, validazione, ecc.)
+ * per evitare rumore nelle issue Sentry.
  * Ref: https://orpc.dev/docs/integrations/sentry
  */
 const sentryMiddleware = os.middleware(
@@ -28,7 +42,13 @@ const sentryMiddleware = os.middleware(
     try {
       return await next();
     } catch (error: unknown) {
-      Sentry.captureException(error);
+      const isExpectedError =
+        error instanceof ORPCError && EXPECTED_ORPC_CODES.has(error.code);
+
+      if (!isExpectedError) {
+        Sentry.captureException(error);
+      }
+
       throw error;
     }
   },

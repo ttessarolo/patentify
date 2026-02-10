@@ -13,6 +13,9 @@ import { client } from '~/lib/orpc';
 
 let realtimeInstance: Ably.Realtime | null = null;
 
+/** Flag per indicare che la connessione è in fase di chiusura intenzionale */
+let isClosing = false;
+
 /**
  * Ritorna (o crea) il singleton del client Ably Realtime.
  * Il client si autentica via token auth chiamando l'endpoint oRPC.
@@ -22,6 +25,15 @@ export function getAblyRealtime(): Ably.Realtime {
 
   realtimeInstance = new Ably.Realtime({
     authCallback: async (_params, callback) => {
+      // Non tentare auth se la connessione sta chiudendo
+      if (isClosing) {
+        callback(
+          new Ably.ErrorInfo('Connection closing', 80017, 400),
+          null,
+        );
+        return;
+      }
+
       try {
         const tokenRequest = await client.sfide.getAblyToken();
         callback(null, tokenRequest as Ably.TokenRequest);
@@ -36,12 +48,54 @@ export function getAblyRealtime(): Ably.Realtime {
 }
 
 /**
+ * Indica se il client Ably è in fase di chiusura intenzionale.
+ * Utile per sopprimere errori attesi durante il close.
+ */
+export function isAblyClosing(): boolean {
+  return isClosing;
+}
+
+/**
  * Disconnette e resetta il client Ably.
- * Da chiamare al logout dell'utente.
+ * Da chiamare al logout dell'utente o prima di un page reload.
+ *
+ * Gestisce gracefully le rejection interne di Ably durante
+ * il close evitando unhandled promise rejection.
  */
 export function disconnectAbly(): void {
   if (realtimeInstance) {
-    realtimeInstance.close();
+    isClosing = true;
+    const instance = realtimeInstance;
     realtimeInstance = null;
+
+    try {
+      instance.close();
+    } catch {
+      // Ignora errori sincroni dal close
+    }
+
+    // Reset del flag dopo un tick per permettere a eventuali
+    // promise pendenti di leggere isClosing = true
+    setTimeout(() => {
+      isClosing = false;
+    }, 0);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Cleanup automatici per evitare "Connection closed" unhandled rejection
+// ---------------------------------------------------------------------------
+
+if (typeof window !== 'undefined') {
+  // Disconnetti prima che la pagina si chiuda (reload, navigazione esterna)
+  window.addEventListener('beforeunload', () => {
+    disconnectAbly();
+  });
+}
+
+// Vite HMR: disconnetti quando il modulo viene rimpiazzato
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    disconnectAbly();
+  });
 }

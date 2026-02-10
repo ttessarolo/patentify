@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from '~/components/ui/alert-dialog';
 import { useAppStore } from '~/store';
+import { disconnectAbly } from '~/lib/ably-client';
 
 /**
  * Dialog che notifica l'utente della disponibilità di una nuova versione.
@@ -22,8 +23,11 @@ export function UpdateDialog(): JSX.Element {
   /**
    * Ricarica la pagina per ottenere l'ultima versione.
    * Lo stato Zustand viene preservato grazie al persist middleware.
+   * Disconnette Ably prima del reload per evitare unhandled rejection "Connection closed".
    */
   const handleUpdate = (): void => {
+    // Disconnetti Ably gracefully prima del reload
+    disconnectAbly();
     // Force reload per bypassare la cache del service worker/browser
     window.location.reload();
   };

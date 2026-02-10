@@ -12,7 +12,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import type { JSX } from 'react';
 import { useAuth } from '@clerk/tanstack-react-start';
-import { getAblyRealtime, disconnectAbly } from '~/lib/ably-client';
+import { getAblyRealtime, disconnectAbly, isAblyClosing } from '~/lib/ably-client';
 import { useActivityTracker } from '~/hooks/useActivityTracker';
 import type * as Ably from 'ably';
 
@@ -26,7 +26,7 @@ export function AblyPresenceManager(): JSX.Element | null {
 
   // Entra nella presence
   const enterPresence = useCallback((): void => {
-    if (!lobbyChannelRef.current || isPresenceEnteredRef.current) return;
+    if (!lobbyChannelRef.current || isPresenceEnteredRef.current || isAblyClosing()) return;
     isPresenceEnteredRef.current = true;
     lobbyChannelRef.current.presence.enter().catch(() => {
       isPresenceEnteredRef.current = false;
@@ -37,8 +37,11 @@ export function AblyPresenceManager(): JSX.Element | null {
   const leavePresence = useCallback((): void => {
     if (!lobbyChannelRef.current || !isPresenceEnteredRef.current) return;
     isPresenceEnteredRef.current = false;
+    // Non tentare leave se la connessione sta chiudendo — il server
+    // gestirà automaticamente il leave alla disconnessione
+    if (isAblyClosing()) return;
     lobbyChannelRef.current.presence.leave().catch(() => {
-      // Ignora errori al leave
+      // Ignora errori al leave (es. "Connection closed")
     });
   }, []);
 
