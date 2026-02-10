@@ -438,7 +438,8 @@ interface FullQuizResult {
 
 export async function getFullQuiz(quizId: number): Promise<FullQuizResult> {
   const quizResult = await sql`
-    SELECT id, quiz_type, status, promosso, created_at, completed_at
+    SELECT id::int, quiz_type, status, promosso,
+           created_at::text, completed_at::text
     FROM quiz
     WHERE id = ${quizId}
   `;

@@ -2,7 +2,11 @@ import { RPCHandler } from '@orpc/server/fetch';
 import { createFileRoute } from '@tanstack/react-router';
 import { appRouter } from '~/server/router';
 
-const handler = new RPCHandler(appRouter);
+const handler = new RPCHandler(appRouter, {
+  onError: ({ error }): void => {
+    console.error('[RPC Error]', error);
+  },
+});
 
 export const Route = createFileRoute('/api/rpc/$')({
   server: {
