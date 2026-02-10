@@ -19,6 +19,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from '~/components/ui/alert-dialog';
+import { Button } from '~/components/ui/button';
 import type { ChallengePhase } from '~/hooks/useChallengeFlow';
 
 /** Timeout attesa risposta: 30 secondi */
@@ -93,12 +94,15 @@ export function OutgoingChallengeDialog({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={onClose}>No</AlertDialogCancel>
-              <AlertDialogAction
+              {/* Button invece di AlertDialogAction per NON auto-chiudere
+                  il dialog al click — il flusso resta aperto fino alla
+                  risposta dell'avversario o annullamento esplicito. */}
+              <Button
                 onClick={onConfirmSend}
                 disabled={phase === 'sending'}
               >
                 {phase === 'sending' ? 'Invio...' : 'Si'}
-              </AlertDialogAction>
+              </Button>
             </AlertDialogFooter>
           </>
         );
@@ -197,7 +201,23 @@ export function OutgoingChallengeDialog({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={(o) => !o && onClose()}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) {
+          // Blocca la chiusura via Escape / click-outside durante fasi attive
+          // — solo i bottoni espliciti (Annulla, OK) devono chiudere il dialog.
+          if (
+            phase === 'sending' ||
+            phase === 'waiting_response' ||
+            phase === 'accepted'
+          ) {
+            return;
+          }
+          onClose();
+        }
+      }}
+    >
       <AlertDialogContent>{renderContent()}</AlertDialogContent>
     </AlertDialog>
   );
