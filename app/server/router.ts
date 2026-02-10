@@ -36,8 +36,8 @@ import {
 import {
   getClassificaQuiz,
   getClassificaRisposte,
-  addFriend,
-  removeFriend,
+  addFollower,
+  removeFollower,
 } from './procedures/classifiche';
 
 // Statistiche
@@ -69,6 +69,16 @@ import {
 // Spiegazione
 import { getSpiegazione } from './procedures/spiegazione';
 
+// Sfide
+import {
+  getAblyToken,
+  createSfida,
+  completeSfida,
+  abortSfida,
+  getSfideHistory,
+  getOnlineUsersDetails,
+} from './procedures/sfide';
+
 // Version
 import { getVersion } from './procedures/version';
 
@@ -99,8 +109,8 @@ export const appRouter = {
   classifiche: {
     quiz: getClassificaQuiz,
     risposte: getClassificaRisposte,
-    addFriend,
-    removeFriend,
+    addFollower,
+    removeFollower,
   },
   statistiche: {
     getQuizStats,
@@ -115,6 +125,14 @@ export const appRouter = {
     track,
     check,
     getDomandaUserStats,
+  },
+  sfide: {
+    getAblyToken,
+    create: createSfida,
+    complete: completeSfida,
+    abort: abortSfida,
+    history: getSfideHistory,
+    onlineUsersDetails: getOnlineUsersDetails,
   },
   skull: {
     add: addSkull,

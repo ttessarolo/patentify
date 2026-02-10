@@ -22,6 +22,8 @@ import { useStoreRehydration } from '~/store/hooks/useHydration';
 import { useVersionCheck } from '~/store/hooks/useVersionCheck';
 import { PWAInstallPrompt } from '~/components/pwa-install-prompt';
 import { UpdateDialog } from '~/components/update-dialog';
+import { AblyPresenceManager } from '~/components/sfide/AblyPresenceManager';
+import { IncomingChallengeDialog } from '~/components/sfide/IncomingChallengeDialog';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient({
@@ -178,6 +180,8 @@ function Providers({
         {children}
         <PWAInstallPrompt />
         <UpdateDialog />
+        <AblyPresenceManager />
+        <IncomingChallengeDialog />
         {import.meta.env.DEV && (
           <>
             <TanStackDevtools

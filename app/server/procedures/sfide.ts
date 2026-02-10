@@ -1,0 +1,152 @@
+/**
+ * Procedure oRPC per il dominio "sfide" (multiplayer challenges).
+ *
+ * Ogni procedura collega schema + middleware + service.
+ */
+
+import { authProcedure } from '../middleware/auth';
+import {
+  getAblyTokenOutputSchema,
+  createSfidaInputSchema,
+  createSfidaOutputSchema,
+  completeSfidaInputSchema,
+  completeSfidaOutputSchema,
+  abortSfidaInputSchema,
+  abortSfidaOutputSchema,
+  sfidaHistoryOutputSchema,
+  getOnlineUsersDetailsInputSchema,
+  getOnlineUsersDetailsOutputSchema,
+} from '../schemas/sfide';
+import * as sfideService from '../services/sfide.service';
+import { generateAblyToken } from '~/lib/ably';
+import type * as z from 'zod';
+
+// ============================================================
+// getAblyToken
+// ============================================================
+
+export const getAblyToken = authProcedure
+  .route({
+    method: 'POST',
+    path: '/sfide/ably-token',
+    summary: 'Genera un token Ably per il client autenticato',
+  })
+  .output(getAblyTokenOutputSchema)
+  .handler(
+    async ({
+      context,
+    }): Promise<z.infer<typeof getAblyTokenOutputSchema>> => {
+      const tokenRequest = await generateAblyToken(context.userId);
+      return tokenRequest as z.infer<typeof getAblyTokenOutputSchema>;
+    },
+  );
+
+// ============================================================
+// createSfida
+// ============================================================
+
+export const createSfida = authProcedure
+  .route({
+    method: 'POST',
+    path: '/sfide/create',
+    summary: 'Crea una nuova sfida multiplayer',
+  })
+  .input(createSfidaInputSchema)
+  .output(createSfidaOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof createSfidaOutputSchema>> => {
+      return sfideService.createSfida(context.userId, input.opponentId);
+    },
+  );
+
+// ============================================================
+// completeSfida
+// ============================================================
+
+export const completeSfida = authProcedure
+  .route({
+    method: 'POST',
+    path: '/sfide/complete',
+    summary: 'Segna il completamento della sfida per un giocatore',
+  })
+  .input(completeSfidaInputSchema)
+  .output(completeSfidaOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof completeSfidaOutputSchema>> => {
+      return sfideService.completeSfida(
+        input.sfida_id,
+        context.userId,
+        input.correct_count,
+      );
+    },
+  );
+
+// ============================================================
+// abortSfida
+// ============================================================
+
+export const abortSfida = authProcedure
+  .route({
+    method: 'POST',
+    path: '/sfide/abort',
+    summary: 'Abort della sfida per il giocatore corrente',
+  })
+  .input(abortSfidaInputSchema)
+  .output(abortSfidaOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof abortSfidaOutputSchema>> => {
+      return sfideService.abortSfidaForPlayer(input.sfida_id, context.userId);
+    },
+  );
+
+// ============================================================
+// getSfideHistory
+// ============================================================
+
+export const getSfideHistory = authProcedure
+  .route({
+    method: 'GET',
+    path: '/sfide/history',
+    summary: 'Ultime sfide dell\'utente',
+  })
+  .output(sfidaHistoryOutputSchema)
+  .handler(
+    async ({
+      context,
+    }): Promise<z.infer<typeof sfidaHistoryOutputSchema>> => {
+      return sfideService.getSfideHistory(context.userId, 5);
+    },
+  );
+
+// ============================================================
+// getOnlineUsersDetails
+// ============================================================
+
+export const getOnlineUsersDetails = authProcedure
+  .route({
+    method: 'POST',
+    path: '/sfide/online-users-details',
+    summary: 'Dettagli utenti online (da userId presence)',
+  })
+  .input(getOnlineUsersDetailsInputSchema)
+  .output(getOnlineUsersDetailsOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof getOnlineUsersDetailsOutputSchema>> => {
+      return sfideService.getOnlineUsersDetails(
+        context.userId,
+        input.userIds,
+      );
+    },
+  );

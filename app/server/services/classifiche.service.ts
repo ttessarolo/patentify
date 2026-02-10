@@ -1,12 +1,12 @@
 /**
- * Service per classifiche (leaderboard) e gestione amicizie.
+ * Service per classifiche (leaderboard) e gestione follower.
  */
 
 import { sql } from '~/lib/db';
 import { getPeriodFilter } from './helpers';
 
 type TimePeriod = 'oggi' | 'settimana' | 'mese' | 'tutti';
-type ClassificaScope = 'generale' | 'amici';
+type ClassificaScope = 'generale' | 'seguiti';
 
 // ============================================================
 // Tipi interni
@@ -20,7 +20,7 @@ interface ClassificaQuizRow {
   bocciato: number;
   promosso: number;
   totale_quiz: number;
-  is_friend: boolean;
+  is_following: boolean;
 }
 
 interface ClassificaRisposteRow {
@@ -33,7 +33,7 @@ interface ClassificaRisposteRow {
   risposte_errate: number;
   totale_domande_db: number;
   domande_uniche: number;
-  is_friend: boolean;
+  is_following: boolean;
 }
 
 // ============================================================
@@ -56,7 +56,7 @@ export async function getClassificaQuiz(
   const sortDirection = sortDir === 'asc' ? 'ASC' : 'DESC';
 
   const scopeFilter =
-    scope === 'amici'
+    scope === 'seguiti'
       ? sql`AND q.user_id IN (SELECT a.friend_id FROM amici a WHERE a.user_id = ${userId})`
       : sql``;
 
@@ -77,7 +77,7 @@ export async function getClassificaQuiz(
       END AS pct_promosso,
       CASE WHEN EXISTS (
         SELECT 1 FROM amici a WHERE a.user_id = ${userId} AND a.friend_id = u.id
-      ) THEN true ELSE false END AS is_friend
+      ) THEN true ELSE false END AS is_following
     FROM quiz q
     JOIN utente u ON u.id = q.user_id
     WHERE q.status = 'completed'
@@ -98,7 +98,7 @@ export async function getClassificaQuiz(
     bocciato_count: string;
     promosso_count: string;
     totale_quiz: string;
-    is_friend: boolean;
+    is_following: boolean;
   }[];
 
   const hasMore = rawRows.length > limit;
@@ -110,7 +110,7 @@ export async function getClassificaQuiz(
     bocciato: parseInt(row.bocciato_count, 10) || 0,
     promosso: parseInt(row.promosso_count, 10) || 0,
     totale_quiz: parseInt(row.totale_quiz, 10) || 0,
-    is_friend: row.is_friend,
+    is_following: row.is_following,
   }));
 
   return { rows, hasMore };
@@ -147,7 +147,7 @@ export async function getClassificaRisposte(
   const sortDirection = sortDir === 'asc' ? 'ASC' : 'DESC';
 
   const scopeFilter =
-    scope === 'amici'
+    scope === 'seguiti'
       ? sql`AND uda.user_id IN (SELECT a.friend_id FROM amici a WHERE a.user_id = ${userId})`
       : sql``;
 
@@ -181,7 +181,7 @@ export async function getClassificaRisposte(
       END AS pct_corrette,
       CASE WHEN EXISTS (
         SELECT 1 FROM amici a WHERE a.user_id = ${userId} AND a.friend_id = u.id
-      ) THEN true ELSE false END AS is_friend
+      ) THEN true ELSE false END AS is_following
     FROM user_domanda_attempt uda
     JOIN utente u ON u.id = uda.user_id
     WHERE uda.answered_at IS NOT NULL
@@ -203,7 +203,7 @@ export async function getClassificaRisposte(
     risposte_corrette: string;
     risposte_errate: string;
     domande_uniche: string;
-    is_friend: boolean;
+    is_following: boolean;
   }[];
 
   const hasMore = rawRows.length > limit;
@@ -219,27 +219,27 @@ export async function getClassificaRisposte(
       risposte_errate: parseInt(row.risposte_errate, 10) || 0,
       totale_domande_db: totaleDomandeDb,
       domande_uniche: parseInt(row.domande_uniche, 10) || 0,
-      is_friend: row.is_friend,
+      is_following: row.is_following,
     }));
 
   return { rows, hasMore };
 }
 
 // ============================================================
-// addFriend
+// addFollower
 // ============================================================
 
-export async function addFriend(
+export async function addFollower(
   userId: string,
-  friendId: string,
+  targetUserId: string,
 ): Promise<{ success: boolean }> {
-  if (friendId === userId) {
-    throw new Error('Non puoi aggiungere te stesso come amico');
+  if (targetUserId === userId) {
+    throw new Error('Non puoi seguire te stesso');
   }
 
   await sql`
     INSERT INTO amici (user_id, friend_id)
-    VALUES (${userId}, ${friendId})
+    VALUES (${userId}, ${targetUserId})
     ON CONFLICT (user_id, friend_id) DO NOTHING
   `;
 
@@ -247,16 +247,16 @@ export async function addFriend(
 }
 
 // ============================================================
-// removeFriend
+// removeFollower
 // ============================================================
 
-export async function removeFriend(
+export async function removeFollower(
   userId: string,
-  friendId: string,
+  targetUserId: string,
 ): Promise<{ success: boolean }> {
   await sql`
     DELETE FROM amici
-    WHERE user_id = ${userId} AND friend_id = ${friendId}
+    WHERE user_id = ${userId} AND friend_id = ${targetUserId}
   `;
 
   return { success: true };

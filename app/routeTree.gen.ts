@@ -21,18 +21,20 @@ import { Route as SignUpVerifyEmailAddressRouteImport } from './routes/sign-up/v
 import { Route as SignInSplatRouteImport } from './routes/sign-in/$'
 import { Route as MainStatisticheRouteImport } from './routes/main/statistiche'
 import { Route as MainSimulazioneQuizRouteImport } from './routes/main/simulazione-quiz'
-import { Route as MainSfideRouteImport } from './routes/main/sfide'
 import { Route as MainRivediQuizRouteImport } from './routes/main/rivedi-quiz'
 import { Route as MainEsercitazioneRouteImport } from './routes/main/esercitazione'
 import { Route as ApiDocsRouteImport } from './routes/api/docs'
+import { Route as MainSfideRouteRouteImport } from './routes/main/sfide/route'
 import { Route as MainHelpRouteRouteImport } from './routes/main/help/route'
 import { Route as MainErroriRicorrentiRouteRouteImport } from './routes/main/errori-ricorrenti/route'
 import { Route as MainConsigliETrucchiRouteRouteImport } from './routes/main/consigli-e-trucchi/route'
 import { Route as MainClassificheRouteRouteImport } from './routes/main/classifiche/route'
+import { Route as MainSfideIndexRouteImport } from './routes/main/sfide/index'
 import { Route as MainHelpIndexRouteImport } from './routes/main/help/index'
 import { Route as MainErroriRicorrentiIndexRouteImport } from './routes/main/errori-ricorrenti/index'
 import { Route as MainConsigliETrucchiIndexRouteImport } from './routes/main/consigli-e-trucchi/index'
 import { Route as MainClassificheIndexRouteImport } from './routes/main/classifiche/index'
+import { Route as MainSfideQuizRouteImport } from './routes/main/sfide/quiz'
 import { Route as MainErroriRicorrentiTutteCategorieRouteImport } from './routes/main/errori-ricorrenti/tutte-categorie'
 import { Route as MainErroriRicorrentiSkullSelezionateRouteImport } from './routes/main/errori-ricorrenti/skull-selezionate'
 import { Route as MainErroriRicorrentiMaggioriErroriRouteImport } from './routes/main/errori-ricorrenti/maggiori-errori'
@@ -107,11 +109,6 @@ const MainSimulazioneQuizRoute = MainSimulazioneQuizRouteImport.update({
   path: '/simulazione-quiz',
   getParentRoute: () => MainRouteRoute,
 } as any)
-const MainSfideRoute = MainSfideRouteImport.update({
-  id: '/sfide',
-  path: '/sfide',
-  getParentRoute: () => MainRouteRoute,
-} as any)
 const MainRivediQuizRoute = MainRivediQuizRouteImport.update({
   id: '/rivedi-quiz',
   path: '/rivedi-quiz',
@@ -126,6 +123,11 @@ const ApiDocsRoute = ApiDocsRouteImport.update({
   id: '/api/docs',
   path: '/api/docs',
   getParentRoute: () => rootRouteImport,
+} as any)
+const MainSfideRouteRoute = MainSfideRouteRouteImport.update({
+  id: '/sfide',
+  path: '/sfide',
+  getParentRoute: () => MainRouteRoute,
 } as any)
 const MainHelpRouteRoute = MainHelpRouteRouteImport.update({
   id: '/help',
@@ -149,6 +151,11 @@ const MainClassificheRouteRoute = MainClassificheRouteRouteImport.update({
   path: '/classifiche',
   getParentRoute: () => MainRouteRoute,
 } as any)
+const MainSfideIndexRoute = MainSfideIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => MainSfideRouteRoute,
+} as any)
 const MainHelpIndexRoute = MainHelpIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -170,6 +177,11 @@ const MainClassificheIndexRoute = MainClassificheIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => MainClassificheRouteRoute,
+} as any)
+const MainSfideQuizRoute = MainSfideQuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => MainSfideRouteRoute,
 } as any)
 const MainErroriRicorrentiTutteCategorieRoute =
   MainErroriRicorrentiTutteCategorieRouteImport.update({
@@ -249,10 +261,10 @@ export interface FileRoutesByFullPath {
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
   '/main/help': typeof MainHelpRouteRouteWithChildren
+  '/main/sfide': typeof MainSfideRouteRouteWithChildren
   '/api/docs': typeof ApiDocsRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
-  '/main/sfide': typeof MainSfideRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -272,10 +284,12 @@ export interface FileRoutesByFullPath {
   '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/sfide/quiz': typeof MainSfideQuizRoute
   '/main/classifiche/': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
   '/main/help/': typeof MainHelpIndexRoute
+  '/main/sfide/': typeof MainSfideIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -284,7 +298,6 @@ export interface FileRoutesByTo {
   '/api/docs': typeof ApiDocsRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
-  '/main/sfide': typeof MainSfideRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -304,10 +317,12 @@ export interface FileRoutesByTo {
   '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/sfide/quiz': typeof MainSfideQuizRoute
   '/main/classifiche': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiIndexRoute
   '/main/help': typeof MainHelpIndexRoute
+  '/main/sfide': typeof MainSfideIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -320,10 +335,10 @@ export interface FileRoutesById {
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiRouteRouteWithChildren
   '/main/errori-ricorrenti': typeof MainErroriRicorrentiRouteRouteWithChildren
   '/main/help': typeof MainHelpRouteRouteWithChildren
+  '/main/sfide': typeof MainSfideRouteRouteWithChildren
   '/api/docs': typeof ApiDocsRoute
   '/main/esercitazione': typeof MainEsercitazioneRoute
   '/main/rivedi-quiz': typeof MainRivediQuizRoute
-  '/main/sfide': typeof MainSfideRoute
   '/main/simulazione-quiz': typeof MainSimulazioneQuizRoute
   '/main/statistiche': typeof MainStatisticheRoute
   '/sign-in/$': typeof SignInSplatRoute
@@ -343,10 +358,12 @@ export interface FileRoutesById {
   '/main/errori-ricorrenti/maggiori-errori': typeof MainErroriRicorrentiMaggioriErroriRoute
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
+  '/main/sfide/quiz': typeof MainSfideQuizRoute
   '/main/classifiche/': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
   '/main/errori-ricorrenti/': typeof MainErroriRicorrentiIndexRoute
   '/main/help/': typeof MainHelpIndexRoute
+  '/main/sfide/': typeof MainSfideIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -360,10 +377,10 @@ export interface FileRouteTypes {
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
+    | '/main/sfide'
     | '/api/docs'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
-    | '/main/sfide'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -383,10 +400,12 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/maggiori-errori'
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/sfide/quiz'
     | '/main/classifiche/'
     | '/main/consigli-e-trucchi/'
     | '/main/errori-ricorrenti/'
     | '/main/help/'
+    | '/main/sfide/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -395,7 +414,6 @@ export interface FileRouteTypes {
     | '/api/docs'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
-    | '/main/sfide'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -415,10 +433,12 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/maggiori-errori'
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/sfide/quiz'
     | '/main/classifiche'
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
+    | '/main/sfide'
   id:
     | '__root__'
     | '/'
@@ -430,10 +450,10 @@ export interface FileRouteTypes {
     | '/main/consigli-e-trucchi'
     | '/main/errori-ricorrenti'
     | '/main/help'
+    | '/main/sfide'
     | '/api/docs'
     | '/main/esercitazione'
     | '/main/rivedi-quiz'
-    | '/main/sfide'
     | '/main/simulazione-quiz'
     | '/main/statistiche'
     | '/sign-in/$'
@@ -453,10 +473,12 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/maggiori-errori'
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
+    | '/main/sfide/quiz'
     | '/main/classifiche/'
     | '/main/consigli-e-trucchi/'
     | '/main/errori-ricorrenti/'
     | '/main/help/'
+    | '/main/sfide/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -559,13 +581,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainSimulazioneQuizRouteImport
       parentRoute: typeof MainRouteRoute
     }
-    '/main/sfide': {
-      id: '/main/sfide'
-      path: '/sfide'
-      fullPath: '/main/sfide'
-      preLoaderRoute: typeof MainSfideRouteImport
-      parentRoute: typeof MainRouteRoute
-    }
     '/main/rivedi-quiz': {
       id: '/main/rivedi-quiz'
       path: '/rivedi-quiz'
@@ -586,6 +601,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/docs'
       preLoaderRoute: typeof ApiDocsRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/main/sfide': {
+      id: '/main/sfide'
+      path: '/sfide'
+      fullPath: '/main/sfide'
+      preLoaderRoute: typeof MainSfideRouteRouteImport
+      parentRoute: typeof MainRouteRoute
     }
     '/main/help': {
       id: '/main/help'
@@ -615,6 +637,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainClassificheRouteRouteImport
       parentRoute: typeof MainRouteRoute
     }
+    '/main/sfide/': {
+      id: '/main/sfide/'
+      path: '/'
+      fullPath: '/main/sfide/'
+      preLoaderRoute: typeof MainSfideIndexRouteImport
+      parentRoute: typeof MainSfideRouteRoute
+    }
     '/main/help/': {
       id: '/main/help/'
       path: '/'
@@ -642,6 +671,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/main/classifiche/'
       preLoaderRoute: typeof MainClassificheIndexRouteImport
       parentRoute: typeof MainClassificheRouteRoute
+    }
+    '/main/sfide/quiz': {
+      id: '/main/sfide/quiz'
+      path: '/quiz'
+      fullPath: '/main/sfide/quiz'
+      preLoaderRoute: typeof MainSfideQuizRouteImport
+      parentRoute: typeof MainSfideRouteRoute
     }
     '/main/errori-ricorrenti/tutte-categorie': {
       id: '/main/errori-ricorrenti/tutte-categorie'
@@ -805,14 +841,28 @@ const MainHelpRouteRouteWithChildren = MainHelpRouteRoute._addFileChildren(
   MainHelpRouteRouteChildren,
 )
 
+interface MainSfideRouteRouteChildren {
+  MainSfideQuizRoute: typeof MainSfideQuizRoute
+  MainSfideIndexRoute: typeof MainSfideIndexRoute
+}
+
+const MainSfideRouteRouteChildren: MainSfideRouteRouteChildren = {
+  MainSfideQuizRoute: MainSfideQuizRoute,
+  MainSfideIndexRoute: MainSfideIndexRoute,
+}
+
+const MainSfideRouteRouteWithChildren = MainSfideRouteRoute._addFileChildren(
+  MainSfideRouteRouteChildren,
+)
+
 interface MainRouteRouteChildren {
   MainClassificheRouteRoute: typeof MainClassificheRouteRouteWithChildren
   MainConsigliETrucchiRouteRoute: typeof MainConsigliETrucchiRouteRouteWithChildren
   MainErroriRicorrentiRouteRoute: typeof MainErroriRicorrentiRouteRouteWithChildren
   MainHelpRouteRoute: typeof MainHelpRouteRouteWithChildren
+  MainSfideRouteRoute: typeof MainSfideRouteRouteWithChildren
   MainEsercitazioneRoute: typeof MainEsercitazioneRoute
   MainRivediQuizRoute: typeof MainRivediQuizRoute
-  MainSfideRoute: typeof MainSfideRoute
   MainSimulazioneQuizRoute: typeof MainSimulazioneQuizRoute
   MainStatisticheRoute: typeof MainStatisticheRoute
   MainIndexRoute: typeof MainIndexRoute
@@ -823,9 +873,9 @@ const MainRouteRouteChildren: MainRouteRouteChildren = {
   MainConsigliETrucchiRouteRoute: MainConsigliETrucchiRouteRouteWithChildren,
   MainErroriRicorrentiRouteRoute: MainErroriRicorrentiRouteRouteWithChildren,
   MainHelpRouteRoute: MainHelpRouteRouteWithChildren,
+  MainSfideRouteRoute: MainSfideRouteRouteWithChildren,
   MainEsercitazioneRoute: MainEsercitazioneRoute,
   MainRivediQuizRoute: MainRivediQuizRoute,
-  MainSfideRoute: MainSfideRoute,
   MainSimulazioneQuizRoute: MainSimulazioneQuizRoute,
   MainStatisticheRoute: MainStatisticheRoute,
   MainIndexRoute: MainIndexRoute,

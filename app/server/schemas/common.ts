@@ -20,7 +20,7 @@ export const timeGranularitySchema = z.enum(['hour', 'day', 'week', 'month']);
 
 export const sortDirectionSchema = z.enum(['asc', 'desc']);
 
-export const classificaScopeSchema = z.enum(['generale', 'amici']);
+export const classificaScopeSchema = z.enum(['generale', 'seguiti']);
 
 // ============================================================
 // Paginazione

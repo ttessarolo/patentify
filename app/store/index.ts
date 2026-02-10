@@ -26,6 +26,7 @@ import {
   classificheDefaults,
 } from './slices/filters';
 import { createQuizSlice } from './slices/quiz';
+import { createSfideSlice } from './slices/sfide';
 import { createVersionSlice, versionDefaults } from './slices/version';
 
 /**
@@ -49,6 +50,8 @@ export const useAppStore = create<AppState>()(
       ...createFiltersSlice(...args),
       // Quiz Slice
       ...createQuizSlice(...args),
+      // Sfide Slice
+      ...createSfideSlice(...args),
       // Version Slice
       ...createVersionSlice(...args),
     })),
@@ -65,6 +68,9 @@ export const useAppStore = create<AppState>()(
         classifiche: state.classifiche,
         activeQuiz: state.activeQuiz,
         preferences: state.preferences,
+        // Sfide state
+        activeSfida: state.activeSfida,
+        sfideShowOnlyFollowed: state.sfideShowOnlyFollowed,
         // Version state
         currentVersion: state.currentVersion,
       }),
@@ -99,6 +105,9 @@ export const useAppStore = create<AppState>()(
           esercitazione: persisted.esercitazione ?? currentState.esercitazione,
           activeQuiz: persisted.activeQuiz ?? currentState.activeQuiz,
           preferences: persisted.preferences ?? currentState.preferences,
+          // Sfide state
+          activeSfida: persisted.activeSfida ?? currentState.activeSfida,
+          sfideShowOnlyFollowed: persisted.sfideShowOnlyFollowed ?? currentState.sfideShowOnlyFollowed,
           // Deep merge per gli oggetti che hanno nested values
           erroriRicorrenti: mergedErroriRicorrenti,
           statistiche: mergedStatistiche,
@@ -120,9 +129,12 @@ export type {
   FiltersSlice,
   QuizSlice,
   VersionSlice,
+  SfideSlice,
   ActiveQuizState,
   QuizPreferences,
   QuizStatus,
+  ActiveSfidaState,
+  IncomingChallengeState,
   EsercitazioneFilters,
   ErroriRicorrentiFilters,
   StatisticheFilters,

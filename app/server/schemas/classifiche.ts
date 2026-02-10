@@ -13,7 +13,7 @@ const classificaQuizRowSchema = z.object({
   bocciato: z.number().int(),
   promosso: z.number().int(),
   totale_quiz: z.number().int(),
-  is_friend: z.boolean(),
+  is_following: z.boolean(),
 });
 
 const classificaRisposteRowSchema = z.object({
@@ -26,7 +26,7 @@ const classificaRisposteRowSchema = z.object({
   risposte_errate: z.number().int(),
   totale_domande_db: z.number().int(),
   domande_uniche: z.number().int(),
-  is_friend: z.boolean(),
+  is_following: z.boolean(),
 });
 
 // ============================================================
@@ -66,13 +66,13 @@ export const classificaRisposteOutputSchema = z.object({
 });
 
 // ============================================================
-// addFriend / removeFriend
+// addFollower / removeFollower
 // ============================================================
 
-export const friendActionInputSchema = z.object({
-  friendId: z.string(),
+export const followActionInputSchema = z.object({
+  targetUserId: z.string(),
 });
 
-export const friendActionOutputSchema = z.object({
+export const followActionOutputSchema = z.object({
   success: z.boolean(),
 });

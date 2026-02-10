@@ -101,13 +101,43 @@ export interface UserDomandaSkull {
   inserted_at: string;
 }
 
-/** Tabella public.amici - relazione amicizia unidirezionale */
+/** Tabella public.amici - relazione follow unidirezionale */
 export interface Amicizia {
-  /** ID Clerk dell'utente che ha aggiunto l'amico (FK a utente.id) */
+  /** ID Clerk dell'utente che segue (FK a utente.id) */
   user_id: string;
-  /** ID Clerk dell'amico aggiunto (FK a utente.id) */
+  /** ID Clerk dell'utente seguito (FK a utente.id) */
   friend_id: string;
   created_at: string;
+}
+
+/** Status ammessi per sfida (CHECK constraint) */
+export type SfidaStatus = 'in_progress' | 'completed' | 'aborted';
+
+/** Tabella public.sfide */
+export interface Sfida {
+  id: number;
+  created_at: string;
+  /** ID Clerk del player A (chi ha lanciato la sfida) */
+  player_a_id: string;
+  /** ID Clerk del player B (chi ha accettato la sfida) */
+  player_b_id: string;
+  /** ID quiz assegnato al player A */
+  quiz_id_a: number;
+  /** ID quiz assegnato al player B */
+  quiz_id_b: number;
+  /** ID Clerk del vincitore (null se non completata) */
+  winner_id: string | null;
+  status: SfidaStatus;
+  /** Risposte corrette player A */
+  player_a_correct: number;
+  /** Risposte corrette player B */
+  player_b_correct: number;
+  /** Se player A ha finito il quiz */
+  player_a_finished: boolean;
+  /** Se player B ha finito il quiz */
+  player_b_finished: boolean;
+  /** Timestamp inizio partita (condiviso per timer sincronizzato) */
+  game_started_at: string;
 }
 
 /** Periodo temporale per filtri */

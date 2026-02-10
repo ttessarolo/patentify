@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
-import { FriendAddIcon, FriendOnIcon } from '~/icons';
+import { StarOffIcon, StarOnIcon } from '~/icons';
 import { orpc } from '~/lib/orpc';
 
 interface UserCellProps {
@@ -13,21 +13,21 @@ interface UserCellProps {
   username: string | null;
   /** URL immagine profilo */
   imageUrl: string | null;
-  /** Se l'utente è amico */
-  isFriend: boolean;
+  /** Se l'utente è seguito */
+  isFollowing: boolean;
   /**
    * Layout variant:
-   * - 'default': bottone amicizia sotto il nome (desktop table)
-   * - 'header': bottone amicizia in alto a destra (mobile card header)
+   * - 'default': bottone follow sotto il nome (desktop table)
+   * - 'header': bottone follow in alto a destra (mobile card header)
    */
   layout?: 'default' | 'header';
 }
 
 /**
  * Cella "Utente" per le tabelle classifica.
- * Mostra avatar, nickname, nome completo e bottone amicizia.
+ * Mostra avatar, nickname, nome completo e bottone follow.
  *
- * In layout 'header' il bottone amicizia è posizionato in alto a destra
+ * In layout 'header' il bottone follow è posizionato in alto a destra
  * come badge, ideale per l'header delle card mobile.
  */
 export function UserCell({
@@ -35,24 +35,24 @@ export function UserCell({
   name,
   username,
   imageUrl,
-  isFriend,
+  isFollowing,
   layout = 'default',
 }: UserCellProps): JSX.Element {
   const { userId: currentUserId, isLoaded: isAuthLoaded } = useAuth();
   const queryClient = useQueryClient();
 
-  const friendMutation = useMutation({
+  const followMutation = useMutation({
     mutationFn: async (
       action: 'add' | 'remove'
     ): Promise<{ success: boolean }> => {
       if (action === 'add') {
-        return orpc.classifiche.addFriend.call({ friendId: userId });
+        return orpc.classifiche.addFollower.call({ targetUserId: userId });
       }
-      return orpc.classifiche.removeFriend.call({ friendId: userId });
+      return orpc.classifiche.removeFollower.call({ targetUserId: userId });
     },
     onSuccess: (): void => {
       // Invalida TUTTE le query classifiche (quiz + risposte, qualsiasi filtro)
-      // perché il flag is_friend cambia e lo scope 'amici' dipende dalla lista amici
+      // perché il flag is_following cambia e lo scope 'seguiti' dipende dalla lista follower
       void queryClient.invalidateQueries({
         queryKey: ['classifiche'],
       });
@@ -61,10 +61,10 @@ export function UserCell({
 
   const isOwnUser = currentUserId === userId;
 
-  const handleFriendToggle = (e: React.MouseEvent): void => {
+  const handleFollowToggle = (e: React.MouseEvent): void => {
     e.stopPropagation();
-    if (friendMutation.isPending || isOwnUser) return;
-    friendMutation.mutate(isFriend ? 'remove' : 'add');
+    if (followMutation.isPending || isOwnUser) return;
+    followMutation.mutate(isFollowing ? 'remove' : 'add');
   };
 
   // ---- Elementi condivisi ----
@@ -87,35 +87,35 @@ export function UserCell({
     </div>
   );
 
-  const showFriendButton = isAuthLoaded && !isOwnUser;
+  const showFollowButton = isAuthLoaded && !isOwnUser;
 
-  const friendButtonElement = showFriendButton ? (
+  const followButtonElement = showFollowButton ? (
     <button
       type="button"
-      onClick={handleFriendToggle}
-      disabled={friendMutation.isPending}
+      onClick={handleFollowToggle}
+      disabled={followMutation.isPending}
       className={`inline-flex w-fit shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors ${
-        isFriend
-          ? 'border border-green-500 text-white hover:bg-green-500/10'
-          : 'bg-muted text-muted-foreground hover:bg-muted/80'
-      } ${friendMutation.isPending ? 'opacity-50' : ''}`}
-      aria-label={isFriend ? 'Rimuovi amico' : 'Aggiungi amico'}
+        isFollowing
+          ? 'border border-yellow-400 text-yellow-400 hover:bg-yellow-400/10'
+          : 'bg-muted text-muted-foreground hover:text-yellow-400'
+      } ${followMutation.isPending ? 'opacity-50' : ''}`}
+      aria-label={isFollowing ? 'Smetti di seguire' : 'Segui'}
     >
-      {isFriend ? (
+      {isFollowing ? (
         <>
-          <FriendOnIcon className="h-3.5 w-3.5" />
-          <span>Amico</span>
+          <StarOnIcon className="h-3.5 w-3.5" />
+          <span>Seguito</span>
         </>
       ) : (
         <>
-          <FriendAddIcon className="h-3.5 w-3.5" />
-          <span>Aggiungi</span>
+          <StarOffIcon className="h-3.5 w-3.5" />
+          <span>Segui</span>
         </>
       )}
     </button>
   ) : null;
 
-  // ---- Layout 'header': bottone amicizia in alto a destra ----
+  // ---- Layout 'header': bottone follow in alto a destra ----
   if (layout === 'header') {
     return (
       <div className="flex items-start gap-3">
@@ -126,7 +126,7 @@ export function UserCell({
           </span>
           <span className="truncate text-xs text-muted-foreground">{name}</span>
         </div>
-        {friendButtonElement}
+        {followButtonElement}
       </div>
     );
   }
@@ -140,8 +140,8 @@ export function UserCell({
           {username || name}
         </span>
         <span className="truncate text-xs text-muted-foreground">{name}</span>
-        {friendButtonElement && (
-          <div className="mt-1">{friendButtonElement}</div>
+        {followButtonElement && (
+          <div className="mt-1">{followButtonElement}</div>
         )}
       </div>
     </div>

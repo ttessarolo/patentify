@@ -13,7 +13,7 @@ import {
 } from '~/components/errori-ricorrenti';
 import { ClassificheSwitch, MobileSortControl } from '~/components/classifiche';
 import { useAppStore } from '~/store';
-import { QuizIcon, WrongIcon, AllPeopleIcon, FriendsIcon } from '~/icons';
+import { QuizIcon, WrongIcon, AllPeopleIcon, StarOnIcon } from '~/icons';
 
 // Schema per i search params
 const searchSchema = z.object({
@@ -161,7 +161,7 @@ function ClassificheLayout(): JSX.Element {
             activeColor="teal"
           />
 
-          {/* Switch Generale / Amici */}
+          {/* Switch Generale / Seguiti */}
           <ClassificheSwitch
             options={[
               {
@@ -169,7 +169,7 @@ function ClassificheLayout(): JSX.Element {
                 label: 'Generale',
                 Icon: AllPeopleIcon,
               },
-              { value: 'amici' as const, label: 'Amici', Icon: FriendsIcon },
+              { value: 'seguiti' as const, label: 'Seguiti', Icon: StarOnIcon },
             ]}
             value={scope}
             onChange={setScope}

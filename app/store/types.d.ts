@@ -67,8 +67,8 @@ export interface ClassificheFilters {
   period: TimePeriod;
   /** Vista corrente: quiz o risposte */
   view: 'quiz' | 'risposte';
-  /** Scope: tutti gli utenti o solo amici */
-  scope: 'generale' | 'amici';
+  /** Scope: tutti gli utenti o solo seguiti */
+  scope: 'generale' | 'seguiti';
   /** Campo di ordinamento per la classifica quiz */
   quizSortField: 'promosso' | 'bocciato';
   /** Direzione ordinamento classifica quiz */
@@ -114,7 +114,7 @@ export interface FiltersSlice {
   setClassifichePeriod: (period: TimePeriod) => void;
   /** Aggiorna la vista classifiche (quiz/risposte) */
   setClassificheView: (view: ClassificheFilters['view']) => void;
-  /** Aggiorna lo scope classifiche (generale/amici) */
+  /** Aggiorna lo scope classifiche (generale/seguiti) */
   setClassificheScope: (scope: ClassificheFilters['scope']) => void;
   /** Aggiorna ordinamento classifica quiz */
   setClassificheQuizSort: (
@@ -223,6 +223,70 @@ export interface VersionSlice {
 }
 
 // ============================================================
+// Sfide Slice - Stato sfide multiplayer
+// ============================================================
+
+/**
+ * Stato di una sfida in arrivo (per il dialog globale).
+ */
+export interface IncomingChallengeState {
+  /** ID del canale Ably per rispondere */
+  challengeId: string;
+  /** ID Clerk dell'utente sfidante */
+  challengerId: string;
+  /** Nome/nickname dello sfidante */
+  challengerName: string;
+  /** URL immagine dello sfidante */
+  challengerImageUrl: string | null;
+  /** Timestamp di quando è arrivata la sfida */
+  receivedAt: number;
+}
+
+/**
+ * Stato della sfida attiva (durante il gioco).
+ */
+export interface ActiveSfidaState {
+  /** ID della sfida nel database */
+  sfidaId: number;
+  /** ID del quiz assegnato a questo player */
+  quizId: number;
+  /** ID Clerk dell'avversario */
+  opponentId: string;
+  /** Nome/nickname dell'avversario */
+  opponentName: string;
+  /** Timestamp ISO di inizio partita (condiviso) */
+  gameStartedAt: string;
+  /** Posizione corrente dell'avversario (da Ably presence) */
+  opponentPos: number;
+  /** Se l'avversario ha finito */
+  opponentFinished: boolean;
+}
+
+/**
+ * Slice per lo stato sfide multiplayer.
+ */
+export interface SfideSlice {
+  /** Sfida attiva (null se nessuna sfida in corso) */
+  activeSfida: ActiveSfidaState | null;
+  /** Sfida in arrivo (per il dialog globale) */
+  incomingChallenge: IncomingChallengeState | null;
+  /** Filtro: mostra solo utenti seguiti nella lista online */
+  sfideShowOnlyFollowed: boolean;
+  /** Inizia una nuova sfida */
+  startSfida: (sfida: ActiveSfidaState) => void;
+  /** Aggiorna il progresso dell'avversario */
+  updateOpponentProgress: (pos: number) => void;
+  /** Segna l'avversario come finito */
+  setOpponentFinished: () => void;
+  /** Termina la sfida e resetta lo stato */
+  endSfida: () => void;
+  /** Imposta una sfida in arrivo */
+  setIncomingChallenge: (challenge: IncomingChallengeState | null) => void;
+  /** Toggle filtro solo seguiti */
+  toggleSfideFollowedFilter: () => void;
+}
+
+// ============================================================
 // App State - Combinazione di tutti gli slices
 // ============================================================
 
@@ -230,7 +294,7 @@ export interface VersionSlice {
  * Stato globale dell'applicazione.
  * Combinazione di tutti gli slices.
  */
-export type AppState = UISlice & FiltersSlice & QuizSlice & VersionSlice;
+export type AppState = UISlice & FiltersSlice & QuizSlice & VersionSlice & SfideSlice;
 
 /**
  * Valori di default per lo stato iniziale.
@@ -252,5 +316,10 @@ export interface AppStateDefaults {
   version: {
     currentVersion: string | null;
     updateAvailable: boolean;
+  };
+  sfide: {
+    activeSfida: ActiveSfidaState | null;
+    incomingChallenge: IncomingChallengeState | null;
+    sfideShowOnlyFollowed: boolean;
   };
 }

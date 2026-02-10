@@ -4,8 +4,8 @@ import {
   classificaQuizOutputSchema,
   classificaRisposteInputSchema,
   classificaRisposteOutputSchema,
-  friendActionInputSchema,
-  friendActionOutputSchema,
+  followActionInputSchema,
+  followActionOutputSchema,
 } from '../schemas/classifiche';
 import * as classificheService from '../services/classifiche.service';
 import type * as z from 'zod';
@@ -60,30 +60,30 @@ export const getClassificaRisposte = authProcedure
     },
   );
 
-export const addFriend = authProcedure
+export const addFollower = authProcedure
   .route({
     method: 'POST',
-    path: '/classifiche/friend',
-    summary: 'Aggiungi un amico',
+    path: '/classifiche/follow',
+    summary: 'Segui un utente',
   })
-  .input(friendActionInputSchema)
-  .output(friendActionOutputSchema)
+  .input(followActionInputSchema)
+  .output(followActionOutputSchema)
   .handler(
     async ({ input, context }): Promise<{ success: boolean }> => {
-      return classificheService.addFriend(context.userId, input.friendId);
+      return classificheService.addFollower(context.userId, input.targetUserId);
     },
   );
 
-export const removeFriend = authProcedure
+export const removeFollower = authProcedure
   .route({
     method: 'DELETE',
-    path: '/classifiche/friend/{friendId}',
-    summary: 'Rimuovi un amico',
+    path: '/classifiche/follow/{targetUserId}',
+    summary: 'Smetti di seguire un utente',
   })
-  .input(friendActionInputSchema)
-  .output(friendActionOutputSchema)
+  .input(followActionInputSchema)
+  .output(followActionOutputSchema)
   .handler(
     async ({ input, context }): Promise<{ success: boolean }> => {
-      return classificheService.removeFriend(context.userId, input.friendId);
+      return classificheService.removeFollower(context.userId, input.targetUserId);
     },
   );

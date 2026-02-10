@@ -122,7 +122,7 @@ function ClassificaQuizPage(): JSX.Element {
               name={row.name}
               username={row.username}
               imageUrl={row.image_url}
-              isFriend={row.is_friend}
+              isFollowing={row.is_following}
             />
           );
         },
@@ -278,13 +278,13 @@ function ClassificaQuizPage(): JSX.Element {
                 key={row.user_id}
                 className="rounded-lg border border-border bg-card p-3"
               >
-                {/* Header: info utente + bottone amicizia a destra */}
+                {/* Header: info utente + bottone follow a destra */}
                 <UserCell
                   userId={row.user_id}
                   name={row.name}
                   username={row.username}
                   imageUrl={row.image_url}
-                  isFriend={row.is_friend}
+                  isFollowing={row.is_following}
                   layout="header"
                 />
 

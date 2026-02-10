@@ -1,6 +1,6 @@
 {
   "name": "patentify",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "type": "module",
   "description": "",
   "main": "index.js",
@@ -46,6 +46,7 @@
     "@tanstack/react-start": "^1.158.0",
     "@tanstack/react-table": "^8.21.3",
     "@ttessarolo/ttl-map-array": "^1.4.1",
+    "ably": "^2.17.1",
     "chart.js": "^4.5.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
