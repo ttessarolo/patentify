@@ -15,6 +15,8 @@ import {
   getSfidaResultOutputSchema,
   abortSfidaInputSchema,
   abortSfidaOutputSchema,
+  forfeitSfidaInputSchema,
+  forfeitSfidaOutputSchema,
   sfidaHistoryOutputSchema,
   getSfideHistoryAllInputSchema,
   getSfideHistoryAllOutputSchema,
@@ -135,6 +137,31 @@ export const abortSfida = authProcedure
       context,
     }): Promise<z.infer<typeof abortSfidaOutputSchema>> => {
       return sfideService.abortSfidaForPlayer(input.sfida_id, context.userId);
+    },
+  );
+
+// ============================================================
+// forfeitSfida
+// ============================================================
+
+export const forfeitSfida = authProcedure
+  .route({
+    method: 'POST',
+    path: '/sfide/forfeit',
+    summary: 'Forfeit della sfida (timeout o inattività). Il player perde, l\'avversario vince.',
+  })
+  .input(forfeitSfidaInputSchema)
+  .output(forfeitSfidaOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof forfeitSfidaOutputSchema>> => {
+      return sfideService.forfeitSfida(
+        input.sfida_id,
+        context.userId,
+        input.correct_count,
+      );
     },
   );
 

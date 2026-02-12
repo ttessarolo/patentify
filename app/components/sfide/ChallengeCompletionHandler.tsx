@@ -81,6 +81,9 @@ export function ChallengeCompletionHandler(): JSX.Element | null {
       channel.subscribe('player-finished', (): void => {
         handleOpponentFinished(sfidaId, opponentName);
       });
+      channel.subscribe('player-forfeited', (): void => {
+        handleOpponentFinished(sfidaId, opponentName);
+      });
     } catch {
       // Ably potrebbe non essere disponibile
     }

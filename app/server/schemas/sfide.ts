@@ -60,8 +60,8 @@ export const completeSfidaOutputSchema = z.object({
   success: z.boolean(),
   both_finished: z.boolean(),
   winner_id: z.string().nullable(),
-  player_a_correct: z.number().int(),
-  player_b_correct: z.number().int(),
+  my_correct: z.number().int(),
+  opponent_correct: z.number().int(),
   promosso: z.boolean().nullable(),
 });
 
@@ -94,6 +94,24 @@ export const abortSfidaInputSchema = z.object({
 
 export const abortSfidaOutputSchema = z.object({
   success: z.boolean(),
+});
+
+// ============================================================
+// forfeitSfida
+// ============================================================
+
+export const forfeitSfidaInputSchema = z.object({
+  sfida_id: z.number().int().positive(),
+  correct_count: z.number().int().min(0),
+});
+
+export const forfeitSfidaOutputSchema = z.object({
+  success: z.boolean(),
+  both_finished: z.boolean(),
+  winner_id: z.string().nullable(),
+  my_correct: z.number().int(),
+  opponent_correct: z.number().int(),
+  promosso: z.boolean().nullable(),
 });
 
 // ============================================================

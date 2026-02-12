@@ -120,6 +120,7 @@ export function MultiplayerQuiz({
     Array<{ domanda: Domanda; answerGiven: string }>
   >([]);
   const [abandonDialogOpen, setAbandonDialogOpen] = useState<boolean>(false);
+  const [opponentForfeited, setOpponentForfeited] = useState<boolean>(false);
 
   // Tempo iniziale trascorso dal game_started_at, calibrato con ably.time()
   // null = calibrazione in corso, number = calibrazione completata
@@ -207,7 +208,9 @@ export function MultiplayerQuiz({
   const completeSfidaMutation = useMutation(
     orpc.sfide.complete.mutationOptions()
   );
-  const abortSfidaMutation = useMutation(orpc.sfide.abort.mutationOptions());
+  const forfeitSfidaMutation = useMutation(
+    orpc.sfide.forfeit.mutationOptions()
+  );
 
   // ---- Ably game channel ----
   useEffect(() => {
@@ -244,6 +247,16 @@ export function MultiplayerQuiz({
 
     channel.subscribe('player-finished', handlePlayerFinished);
 
+    // Ascolta forfeit dell'avversario (timeout o inattività)
+    const handlePlayerForfeited = (msg: Ably.InboundMessage): void => {
+      const data = msg.data as { playerId?: string } | null;
+      if (data?.playerId && data.playerId !== userId) {
+        setOpponentForfeited(true);
+      }
+    };
+
+    channel.subscribe('player-forfeited', handlePlayerForfeited);
+
     // Sync iniziale della presenza avversario
     void (async (): Promise<void> => {
       try {
@@ -279,11 +292,40 @@ export function MultiplayerQuiz({
 
     inactivityTimerRef.current = setInterval(() => {
       if (Date.now() - lastActivityRef.current > INACTIVITY_TIMEOUT_MS) {
-        // Timeout inattivita — abort
+        // Timeout inattivita — forfeit (l'utente perde)
         if (!abortedRef.current) {
           abortedRef.current = true;
           setStatus('abandoned');
-          abortSfidaMutation.mutate({ sfida_id: sfidaId });
+          forfeitSfidaMutation.mutate(
+            { sfida_id: sfidaId, correct_count: correctCount },
+            {
+              onSuccess: async (data) => {
+                // Pubblica forfeit su Ably per notificare l'avversario
+                if (gameChannelRef.current) {
+                  try {
+                    await gameChannelRef.current.publish('player-forfeited', {
+                      playerId: userId,
+                    });
+                  } catch {
+                    // Ignora errori Ably
+                  }
+                }
+
+                const myWrong = questionCount - data.my_correct;
+                const promosso =
+                  sfidaType === 'full' ? myWrong <= MAX_ERRORS : false;
+                onComplete({
+                  correctCount: data.my_correct,
+                  wrongCount: myWrong,
+                  promosso,
+                  finalTotalSeconds: lastElapsedRef.current,
+                  wrongAnswers,
+                  opponentCorrect: data.opponent_correct,
+                  winnerId: data.winner_id,
+                });
+              },
+            },
+          );
         }
         if (inactivityTimerRef.current) {
           clearInterval(inactivityTimerRef.current);
@@ -296,7 +338,7 @@ export function MultiplayerQuiz({
         clearInterval(inactivityTimerRef.current);
       }
     };
-  }, [status, sfidaId, abortSfidaMutation]);
+  }, [status, sfidaId, forfeitSfidaMutation, correctCount, questionCount, sfidaType, userId, wrongAnswers, onComplete]);
 
   // Reset inactivity on user interaction
   const resetInactivity = useCallback((): void => {
@@ -312,8 +354,37 @@ export function MultiplayerQuiz({
     if (status !== 'playing' || abortedRef.current) return;
     abortedRef.current = true;
     setStatus('time_expired');
-    abortSfidaMutation.mutate({ sfida_id: sfidaId });
-  }, [status, sfidaId, abortSfidaMutation]);
+    forfeitSfidaMutation.mutate(
+      { sfida_id: sfidaId, correct_count: correctCount },
+      {
+        onSuccess: async (data) => {
+          // Pubblica forfeit su Ably per notificare l'avversario
+          if (gameChannelRef.current) {
+            try {
+              await gameChannelRef.current.publish('player-forfeited', {
+                playerId: userId,
+              });
+            } catch {
+              // Ignora errori Ably
+            }
+          }
+
+          const myWrong = questionCount - data.my_correct;
+          const promosso =
+            sfidaType === 'full' ? myWrong <= MAX_ERRORS : false;
+          onComplete({
+            correctCount: data.my_correct,
+            wrongCount: myWrong,
+            promosso,
+            finalTotalSeconds: lastElapsedRef.current,
+            wrongAnswers,
+            opponentCorrect: data.opponent_correct,
+            winnerId: data.winner_id,
+          });
+        },
+      },
+    );
+  }, [status, sfidaId, forfeitSfidaMutation, correctCount, questionCount, sfidaType, userId, wrongAnswers, onComplete]);
 
   // ---- Answer handler ----
   const handleAnswer = useCallback(
@@ -410,22 +481,13 @@ export function MultiplayerQuiz({
               }
 
               if (data.both_finished) {
-                // Determina opponentCorrect dal lato server:
-                // completeSfida ritorna player_a_correct e player_b_correct
-                // ma non sappiamo se siamo A o B. Usiamo la differenza.
-                const myServerCorrect = newCorrectCount;
-                const opponentServerCorrect =
-                  data.player_a_correct === myServerCorrect
-                    ? data.player_b_correct
-                    : data.player_a_correct;
-
                 onComplete({
                   correctCount: newCorrectCount,
                   wrongCount: newWrongCount,
                   promosso,
                   finalTotalSeconds: finalSeconds,
                   wrongAnswers: updatedWrongAnswers,
-                  opponentCorrect: opponentServerCorrect,
+                  opponentCorrect: data.opponent_correct,
                   winnerId: data.winner_id,
                 });
               }
@@ -542,14 +604,100 @@ export function MultiplayerQuiz({
     };
   }, [status, sfidaId, wrongAnswers, onComplete, sfidaType, questionCount]);
 
+  // ---- Quando l'avversario forfetta (timeout/inattività) mentre stiamo giocando ----
+  useEffect(() => {
+    if (!opponentForfeited) return;
+    // Se siamo già in uno stato terminale, ignora
+    if (status !== 'playing' && status !== 'waiting_opponent') return;
+
+    let cancelled = false;
+
+    void (async (): Promise<void> => {
+      try {
+        // La sfida è già completata dal server (forfeit dell'avversario).
+        // Recupera i risultati finali.
+        const result = await client.sfide.result({ sfida_id: sfidaId });
+        if (cancelled) return;
+
+        const myCorrect = result.my_correct;
+        const myWrong = questionCount - myCorrect;
+        const promosso = sfidaType === 'full' ? myWrong <= MAX_ERRORS : false;
+        onComplete({
+          correctCount: myCorrect,
+          wrongCount: myWrong,
+          promosso,
+          finalTotalSeconds: lastElapsedRef.current,
+          wrongAnswers,
+          opponentCorrect: result.opponent_correct,
+          winnerId: result.winner_id,
+        });
+      } catch {
+        if (cancelled) return;
+        // Fallback con dati locali
+        const promosso = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
+        onComplete({
+          correctCount,
+          wrongCount,
+          promosso,
+          finalTotalSeconds: lastElapsedRef.current,
+          wrongAnswers,
+          opponentCorrect: null,
+          winnerId: undefined,
+        });
+      }
+    })();
+
+    return (): void => {
+      cancelled = true;
+    };
+  }, [
+    opponentForfeited,
+    status,
+    sfidaId,
+    correctCount,
+    wrongCount,
+    wrongAnswers,
+    onComplete,
+    questionCount,
+    sfidaType,
+  ]);
+
   // ---- Abandon handler ----
   const handleConfirmAbandon = useCallback((): void => {
     if (abortedRef.current) return;
     abortedRef.current = true;
     setAbandonDialogOpen(false);
     setStatus('abandoned');
-    abortSfidaMutation.mutate({ sfida_id: sfidaId });
-  }, [sfidaId, abortSfidaMutation]);
+    forfeitSfidaMutation.mutate(
+      { sfida_id: sfidaId, correct_count: correctCount },
+      {
+        onSuccess: async (data) => {
+          if (gameChannelRef.current) {
+            try {
+              await gameChannelRef.current.publish('player-forfeited', {
+                playerId: userId,
+              });
+            } catch {
+              // Ignora errori Ably
+            }
+          }
+
+          const myWrong = questionCount - data.my_correct;
+          const promosso =
+            sfidaType === 'full' ? myWrong <= MAX_ERRORS : false;
+          onComplete({
+            correctCount: data.my_correct,
+            wrongCount: myWrong,
+            promosso,
+            finalTotalSeconds: lastElapsedRef.current,
+            wrongAnswers,
+            opponentCorrect: data.opponent_correct,
+            winnerId: data.winner_id,
+          });
+        },
+      },
+    );
+  }, [sfidaId, forfeitSfidaMutation, correctCount, questionCount, sfidaType, userId, wrongAnswers, onComplete]);
 
   const setPendingSfidaCompletion = useAppStore((s) => s.setPendingSfidaCompletion);
 
@@ -660,9 +808,24 @@ export function MultiplayerQuiz({
   }
 
   // ============================================================
-  // Render — Abbandonato / Time expired
+  // Render — Abbandonato / Time expired (transizione verso risultati)
   // ============================================================
   if (status === 'abandoned' || status === 'time_expired') {
+    // Se il forfeit mutation è in corso, mostra un indicatore di caricamento
+    if (forfeitSfidaMutation.isPending) {
+      return (
+        <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-4 md:py-16 text-center">
+          <h1 className="text-2xl font-bold text-orange-600">
+            {status === 'time_expired' ? 'Tempo Scaduto!' : 'Sfida Abbandonata'}
+          </h1>
+          <div className="animate-pulse text-muted-foreground">
+            Registrazione risultati...
+          </div>
+        </div>
+      );
+    }
+
+    // Fallback: mostra risultati parziali se il forfeit è fallito
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-4 md:py-16 text-center">
         <h1 className="text-2xl font-bold text-orange-600">

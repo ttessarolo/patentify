@@ -29,8 +29,8 @@ interface CompleteSfidaResult {
   success: boolean;
   both_finished: boolean;
   winner_id: string | null;
-  player_a_correct: number;
-  player_b_correct: number;
+  my_correct: number;
+  opponent_correct: number;
   /** Promosso/bocciato — solo per sfide full. null per altri tier. */
   promosso: boolean | null;
 }
@@ -367,18 +367,20 @@ export async function completeSfida(
     `;
   }
 
+  const winnerId = bothFinished
+    ? updatedA > updatedB
+      ? fresh.player_a_id
+      : updatedB > updatedA
+        ? fresh.player_b_id
+        : null
+    : null;
+
   return {
     success: true,
     both_finished: bothFinished,
-    winner_id: bothFinished
-      ? updatedA > updatedB
-        ? fresh.player_a_id
-        : updatedB > updatedA
-          ? fresh.player_b_id
-          : null
-      : null,
-    player_a_correct: updatedA,
-    player_b_correct: updatedB,
+    winner_id: winnerId,
+    my_correct: isPlayerA ? updatedA : updatedB,
+    opponent_correct: isPlayerA ? updatedB : updatedA,
     promosso,
   };
 }
@@ -646,6 +648,170 @@ export async function abortSfidaForPlayer(
   }
 
   return { success: true };
+}
+
+// ============================================================
+// forfeitSfida
+// ============================================================
+
+interface ForfeitSfidaResult {
+  success: boolean;
+  both_finished: boolean;
+  winner_id: string | null;
+  my_correct: number;
+  opponent_correct: number;
+  promosso: boolean | null;
+}
+
+/**
+ * Gestisce il forfeit (timeout o inattività) di un player nella sfida.
+ *
+ * Il player che ha forfettato perde automaticamente. L'avversario vince.
+ * Se l'avversario non ha ancora finito, il suo punteggio corrente viene
+ * calcolato dalle risposte registrate in user_domanda_attempt.
+ *
+ * Marca la sfida come completed con winner_id = opponentId.
+ */
+export async function forfeitSfida(
+  sfidaId: number,
+  playerId: string,
+  correctCount: number,
+): Promise<ForfeitSfidaResult> {
+  const sfidaResult = await sql`
+    SELECT player_a_id, player_b_id,
+           player_a_finished, player_b_finished,
+           player_a_correct, player_b_correct,
+           quiz_id_a, quiz_id_b,
+           status, sfida_type, question_count
+    FROM sfide
+    WHERE id = ${sfidaId}
+  `;
+
+  if (!sfidaResult || sfidaResult.length === 0) {
+    throw new Error('Sfida non trovata');
+  }
+
+  const sfida = sfidaResult[0] as {
+    player_a_id: string;
+    player_b_id: string;
+    player_a_finished: boolean;
+    player_b_finished: boolean;
+    player_a_correct: number;
+    player_b_correct: number;
+    quiz_id_a: number | null;
+    quiz_id_b: number | null;
+    status: string;
+    sfida_type: string;
+    question_count: number;
+  };
+
+  const isPlayerA = playerId === sfida.player_a_id;
+  const isPlayerB = playerId === sfida.player_b_id;
+  if (!isPlayerA && !isPlayerB) {
+    throw new Error('Utente non partecipante alla sfida');
+  }
+
+  if (sfida.status !== 'in_progress') {
+    throw new Error('Sfida non in corso');
+  }
+
+  const opponentId = isPlayerA ? sfida.player_b_id : sfida.player_a_id;
+
+  // 1. Marca il player come finished con il suo correctCount
+  if (isPlayerA) {
+    await sql`
+      UPDATE sfide
+      SET player_a_correct = ${correctCount}, player_a_finished = true
+      WHERE id = ${sfidaId}
+    `;
+  } else {
+    await sql`
+      UPDATE sfide
+      SET player_b_correct = ${correctCount}, player_b_finished = true
+      WHERE id = ${sfidaId}
+    `;
+  }
+
+  // 2. Se l'avversario non ha ancora finito, calcola il suo score corrente
+  //    dalle risposte registrate e marcalo come finished
+  const opponentAlreadyFinished = isPlayerA
+    ? sfida.player_b_finished
+    : sfida.player_a_finished;
+
+  let opponentCorrect: number;
+
+  if (opponentAlreadyFinished) {
+    opponentCorrect = Number(
+      isPlayerA ? sfida.player_b_correct : sfida.player_a_correct,
+    );
+  } else {
+    // Calcola il punteggio dell'avversario da user_domanda_attempt
+    const opponentScoreResult = await sql`
+      SELECT COUNT(*) as correct_count
+      FROM user_domanda_attempt
+      WHERE sfida_id = ${sfidaId}
+        AND user_id = ${opponentId}
+        AND is_correct = true
+        AND answered_at IS NOT NULL
+    `;
+    opponentCorrect = Number(opponentScoreResult[0]?.correct_count ?? 0);
+
+    // Marca l'avversario come finished con il punteggio calcolato
+    if (isPlayerA) {
+      await sql`
+        UPDATE sfide
+        SET player_b_correct = ${opponentCorrect}, player_b_finished = true
+        WHERE id = ${sfidaId}
+      `;
+    } else {
+      await sql`
+        UPDATE sfide
+        SET player_a_correct = ${opponentCorrect}, player_a_finished = true
+        WHERE id = ${sfidaId}
+      `;
+    }
+  }
+
+  // 3. L'avversario vince: imposta winner_id e status = completed
+  await sql`
+    UPDATE sfide
+    SET status = 'completed',
+        winner_id = ${opponentId}
+    WHERE id = ${sfidaId} AND status = 'in_progress'
+  `;
+
+  // 4. Segna il quiz del player come abandoned (solo per full quiz)
+  const myQuizId = isPlayerA ? sfida.quiz_id_a : sfida.quiz_id_b;
+  if (myQuizId) {
+    await sql`
+      UPDATE quiz SET status = 'abandoned', completed_at = NOW()
+      WHERE id = ${myQuizId} AND user_id = ${playerId}
+    `;
+  }
+
+  // 5. Elimina tentativi non risposti del player
+  if (myQuizId) {
+    await sql`
+      DELETE FROM user_domanda_attempt
+      WHERE quiz_id = ${myQuizId} AND user_id = ${playerId} AND answered_at IS NULL
+    `;
+  }
+
+  // Promosso/bocciato solo per sfide full
+  let promosso: boolean | null = null;
+  if (sfida.sfida_type === 'full') {
+    const wrongCount = Number(sfida.question_count) - correctCount;
+    promosso = wrongCount <= MAX_ERRORS;
+  }
+
+  return {
+    success: true,
+    both_finished: true,
+    winner_id: opponentId,
+    my_correct: correctCount,
+    opponent_correct: opponentCorrect,
+    promosso,
+  };
 }
 
 // ============================================================

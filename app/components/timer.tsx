@@ -46,6 +46,7 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
       cycleMode = true,
       className,
       style,
+      urgentThreshold = 10,
     },
     ref
   ) => {
@@ -136,6 +137,14 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
     // Formatta il tempo per la visualizzazione
     const formattedTime = formatSecondsToHHMMSS(displayValue);
 
+    // Urgenza: blinking rosso quando mancano <= urgentThreshold secondi (solo countdown)
+    const isUrgent =
+      isCountdownMode(mode) &&
+      !ended &&
+      urgentThreshold > 0 &&
+      displayValue > 0 &&
+      displayValue <= urgentThreshold;
+
     // Genera aria-label per accessibilità
     const ariaLabel = React.useMemo((): string => {
       const h = Math.floor(displayValue / 3600);
@@ -174,6 +183,7 @@ const Timer = React.forwardRef<HTMLDivElement, TimerProps>(
         className={cn(
           "font-['Press_Start_2P'] bg-transparent text-white select-none",
           cycleMode && 'cursor-pointer',
+          isUrgent && 'animate-timer-urgent text-red-500',
           className
         )}
         style={style}

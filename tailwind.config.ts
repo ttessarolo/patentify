@@ -51,6 +51,15 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
+      keyframes: {
+        'timer-urgent': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.3' },
+        },
+      },
+      animation: {
+        'timer-urgent': 'timer-urgent 0.8s ease-in-out infinite',
+      },
     },
   },
   plugins: [],

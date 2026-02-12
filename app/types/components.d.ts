@@ -42,4 +42,6 @@ export interface TimerProps {
   className?: string;
   /** Stile inline opzionale */
   style?: CSSProperties;
+  /** Soglia in secondi per attivare l'effetto urgenza (blinking rosso). Default: 10 */
+  urgentThreshold?: number;
 }
