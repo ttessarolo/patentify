@@ -60,6 +60,7 @@ export function useOnlineUsers(
 
     const handleConnected = (): void => {
       setIsConnected(true);
+      void syncPresence(); // Refresh lista dopo riconnessione (PWA risveglio, etc.)
     };
 
     const handleDisconnected = (): void => {
@@ -82,12 +83,21 @@ export function useOnlineUsers(
       setIsConnected(true);
     }
 
+    // visibilitychange — quando la PWA/tab torna visibile, refresh lista utenti online
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState === 'visible' && ably.connection.state === 'connected') {
+        void syncPresence();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return (): void => {
       channel.presence.unsubscribe('enter', handleEnter);
       channel.presence.unsubscribe('leave', handleLeave);
       ably.connection.off('connected', handleConnected);
       ably.connection.off('disconnected', handleDisconnected);
       ably.connection.off('closed', handleDisconnected);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       channelRef.current = null;
     };
   }, [enabled, syncPresence]);

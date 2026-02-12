@@ -79,6 +79,7 @@ import {
   getSfideHistory,
   getSfideHistoryAll,
   getOnlineUsersDetails,
+  getSfidaDomandaProcedure,
 } from './procedures/sfide';
 
 // Version
@@ -137,6 +138,7 @@ export const appRouter = {
     history: getSfideHistory,
     historyAll: getSfideHistoryAll,
     onlineUsersDetails: getOnlineUsersDetails,
+    getDomanda: getSfidaDomandaProcedure,
   },
   skull: {
     add: addSkull,

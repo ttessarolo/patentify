@@ -21,6 +21,8 @@ import {
 } from '~/components/ui/alert-dialog';
 import { Button } from '~/components/ui/button';
 import type { ChallengePhase } from '~/hooks/useChallengeFlow';
+import { SFIDA_TIERS } from '~/commons';
+import type { SfidaTier } from '~/commons';
 
 /** Timeout attesa risposta: 30 secondi */
 const WAIT_TIMEOUT_S = 30;
@@ -34,8 +36,14 @@ interface OutgoingChallengeDialogProps {
   targetName: string;
   /** Fase corrente della sfida */
   phase: ChallengePhase;
-  /** Callback per inviare la sfida */
-  onConfirmSend: () => void;
+  /** Callback per inviare la sfida con il tier selezionato */
+  onConfirmSend: (tier: SfidaTier) => void;
+}
+
+/** Formatta la durata in minuti o secondi per la UI */
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  return `${Math.floor(seconds / 60)} min`;
 }
 
 export function OutgoingChallengeDialog({
@@ -46,6 +54,7 @@ export function OutgoingChallengeDialog({
   onConfirmSend,
 }: OutgoingChallengeDialogProps): JSX.Element {
   const [countdown, setCountdown] = useState<number>(WAIT_TIMEOUT_S);
+  const [selectedTier, setSelectedTier] = useState<SfidaTier>('full');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const clearTimer = useCallback((): void => {
@@ -85,23 +94,41 @@ export function OutgoingChallengeDialog({
             <AlertDialogHeader>
               <AlertDialogTitle>Sfida</AlertDialogTitle>
               <AlertDialogDescription>
-                Vuoi sfidare{' '}
+                Scegli il tipo di sfida con{' '}
                 <span className="font-semibold text-foreground">
                   {targetName}
-                </span>{' '}
-                in un Quiz?
+                </span>
               </AlertDialogDescription>
             </AlertDialogHeader>
+            {/* Selezione tier */}
+            <div className="grid grid-cols-2 gap-2 py-2">
+              {(Object.entries(SFIDA_TIERS) as [SfidaTier, (typeof SFIDA_TIERS)[SfidaTier]][]).map(
+                ([key, config]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={(): void => setSelectedTier(key)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${
+                      selectedTier === key
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-card text-foreground hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{config.label}</div>
+                    <div className="mt-0.5 text-xs text-muted-foreground">
+                      {config.questions} domande · {formatDuration(config.durationSeconds)}
+                    </div>
+                  </button>
+                ),
+              )}
+            </div>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={onClose}>No</AlertDialogCancel>
-              {/* Button invece di AlertDialogAction per NON auto-chiudere
-                  il dialog al click — il flusso resta aperto fino alla
-                  risposta dell'avversario o annullamento esplicito. */}
+              <AlertDialogCancel onClick={onClose}>Annulla</AlertDialogCancel>
               <Button
-                onClick={onConfirmSend}
+                onClick={(): void => onConfirmSend(selectedTier)}
                 disabled={phase === 'sending'}
               >
-                {phase === 'sending' ? 'Invio...' : 'Si'}
+                {phase === 'sending' ? 'Invio...' : 'Sfida!'}
               </Button>
             </AlertDialogFooter>
           </>

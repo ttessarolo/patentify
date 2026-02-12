@@ -10,7 +10,7 @@
  */
 
 import type { JSX } from 'react';
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuth } from '@clerk/tanstack-react-start';
 import { Timer } from '~/components/timer';
@@ -32,7 +32,8 @@ import { orpc, client } from '~/lib/orpc';
 import { getAblyRealtime } from '~/lib/ably-client';
 import type { Domanda } from '~/types/db';
 import type { TimerTickPayload } from '~/types/components';
-import { QUIZ_SIZE, QUIZ_DURATION_SECONDS, MAX_ERRORS } from '~/commons';
+import { MAX_ERRORS } from '~/commons';
+import type { SfidaTier } from '~/commons';
 import type * as Ably from 'ably';
 
 // ============================================================
@@ -42,7 +43,7 @@ import type * as Ably from 'ably';
 export interface MultiplayerQuizProps {
   /** ID della sfida */
   sfidaId: number;
-  /** ID del quiz assegnato a questo player */
+  /** ID del quiz assegnato a questo player (0 per sfide non-full) */
   quizId: number;
   /** Nome/nickname dell'avversario */
   opponentName: string;
@@ -52,6 +53,12 @@ export interface MultiplayerQuizProps {
   onComplete: (result: MultiplayerQuizResult) => void;
   /** Callback per tornare alla pagina sfide */
   onBack: () => void;
+  /** Tipo di sfida */
+  sfidaType?: SfidaTier;
+  /** Numero di domande nella sfida */
+  questionCount?: number;
+  /** Durata in secondi */
+  durationSeconds?: number;
 }
 
 export interface MultiplayerQuizResult {
@@ -87,8 +94,14 @@ export function MultiplayerQuiz({
   gameStartedAt,
   onComplete,
   onBack,
+  sfidaType = 'full',
+  questionCount = 40,
+  durationSeconds = 1800,
 }: MultiplayerQuizProps): JSX.Element {
   const { userId } = useAuth();
+
+  // Determina se usare quiz_id o sfida_id per le domande
+  const isFullQuiz = sfidaType === 'full' && quizId > 0;
 
   // Store Zustand per stato avversario
   const opponentPos = useAppStore((s) => s.activeSfida?.opponentPos ?? 0);
@@ -108,41 +121,85 @@ export function MultiplayerQuiz({
   >([]);
   const [abandonDialogOpen, setAbandonDialogOpen] = useState<boolean>(false);
 
-  // Calcola tempo iniziale trascorso dal game_started_at
-  // Calcola tempo iniziale trascorso dal game_started_at in modo puro (senza Date.now)
-  // Ricalcolato solo su mount: va usato come valore iniziale (non aggiornato sui re-render)
-  const initialElapsed = useMemo((): number => {
-    const startedAtMs = new Date(gameStartedAt).getTime();
-    const nowAtMount =
-      typeof window !== 'undefined'
-        ? (window.performance.timing?.navigationStart ?? Date.now())
-        : Date.now();
-    const elapsedMs = nowAtMount - startedAtMs;
-    const elapsedSeconds = Math.floor(elapsedMs / 1000);
-    return Math.max(0, Math.min(elapsedSeconds, QUIZ_DURATION_SECONDS));
-    // La dipendenza vuota garantisce valutazione solo a mount per evitare side effects al re-render
-    // React lint segnala l'uso di Date.now ma qui va bene essendo solo per valore iniziale
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Tempo iniziale trascorso dal game_started_at, calibrato con ably.time()
+  // null = calibrazione in corso, number = calibrazione completata
+  const [initialElapsed, setInitialElapsed] = useState<number | null>(null);
 
   // Refs
-  const lastElapsedRef = useRef<number>(initialElapsed);
+  const lastElapsedRef = useRef<number>(0);
   const abortedRef = useRef<boolean>(false);
   const gameChannelRef = useRef<Ably.RealtimeChannel | null>(null);
-  const lastActivityRef = useRef<number>(Date.now());
+  const lastActivityRef = useRef<number>(0);
   const inactivityTimerRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   );
 
-  // Query per la domanda corrente
-  const domandaQuery = useQuery({
+  // Inizializza il timestamp di ultima attivita al mount
+  useEffect(() => {
+    lastActivityRef.current = Date.now();
+  }, []);
+
+  // Calibrazione clock via ably.time() al mount:
+  // Calcola l'offset tra il clock locale e il server Ably, poi determina
+  // il tempo reale trascorso da game_started_at. Fallback su Date.now() se fallisce.
+  useEffect(() => {
+    let cancelled = false;
+
+    const calibrate = async (): Promise<void> => {
+      const startedAtMs = new Date(gameStartedAt).getTime();
+
+      try {
+        const ably = getAblyRealtime();
+        const serverTimeMs = await ably.time();
+        if (cancelled) return;
+
+        const elapsedMs = serverTimeMs - startedAtMs;
+        const elapsedSeconds = Math.max(
+          0,
+          Math.min(Math.floor(elapsedMs / 1000), durationSeconds),
+        );
+        setInitialElapsed(elapsedSeconds);
+      } catch {
+        // Fallback: usa il clock locale se ably.time() fallisce
+        if (cancelled) return;
+        const elapsedMs = Date.now() - startedAtMs;
+        const elapsedSeconds = Math.max(
+          0,
+          Math.min(Math.floor(elapsedMs / 1000), durationSeconds),
+        );
+        setInitialElapsed(elapsedSeconds);
+      }
+    };
+
+    void calibrate();
+
+    return (): void => {
+      cancelled = true;
+    };
+  }, [gameStartedAt, durationSeconds]);
+
+
+  // Query per la domanda corrente — usa quiz.getDomanda per full, sfide.getDomanda per non-full
+  const domandaQueryFull = useQuery({
     ...orpc.quiz.getDomanda.queryOptions({
       input: { quiz_id: quizId, quiz_pos: currentPos },
     }),
-    enabled: status === 'playing' && currentPos <= QUIZ_SIZE,
+    enabled: isFullQuiz && status === 'playing' && currentPos <= questionCount,
     staleTime: Infinity,
     refetchOnWindowFocus: false,
   });
+
+  const domandaQuerySfida = useQuery({
+    ...orpc.sfide.getDomanda.queryOptions({
+      input: { sfida_id: sfidaId, quiz_pos: currentPos },
+    }),
+    enabled: !isFullQuiz && status === 'playing' && currentPos <= questionCount,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+  });
+
+  // Unifica le due query in un singolo oggetto
+  const domandaQuery = isFullQuiz ? domandaQueryFull : domandaQuerySfida;
 
   // Mutations
   const trackMutation = useMutation(orpc.attempt.track.mutationOptions());
@@ -294,21 +351,24 @@ export function MultiplayerQuiz({
 
       // Pubblica progresso su Ably
       if (gameChannelRef.current) {
-        const newPos = currentPos < QUIZ_SIZE ? currentPos + 1 : currentPos;
+        const newPos = currentPos < questionCount ? currentPos + 1 : currentPos;
         gameChannelRef.current.presence.update({ pos: newPos }).catch(() => {});
       }
 
-      if (currentPos < QUIZ_SIZE) {
+      if (currentPos < questionCount) {
         setCurrentPos(currentPos + 1);
       } else {
         // Quiz completato!
         const finalSeconds = lastElapsedRef.current;
-        const promosso = newWrongCount <= MAX_ERRORS;
+        // Promosso/bocciato solo per sfide full
+        const promosso = sfidaType === 'full' ? newWrongCount <= MAX_ERRORS : false;
 
         setStatus('waiting_opponent');
 
-        // Completa il quiz sul server
-        completeMutation.mutate({ quiz_id: quizId });
+        // Completa il quiz sul server (solo per full quiz)
+        if (isFullQuiz) {
+          completeMutation.mutate({ quiz_id: quizId });
+        }
 
         // Completa la sfida per questo player
         completeSfidaMutation.mutate(
@@ -320,7 +380,7 @@ export function MultiplayerQuiz({
               if (gameChannelRef.current) {
                 try {
                   await gameChannelRef.current.presence.update({
-                    pos: QUIZ_SIZE,
+                    pos: questionCount,
                     finished: true,
                   });
                   await gameChannelRef.current.publish('player-finished', {
@@ -371,6 +431,9 @@ export function MultiplayerQuiz({
       wrongAnswers,
       resetInactivity,
       onComplete,
+      isFullQuiz,
+      questionCount,
+      sfidaType,
     ]
   );
 
@@ -434,11 +497,11 @@ export function MultiplayerQuiz({
         const result = await client.sfide.result({ sfida_id: sfidaId });
         if (result.both_finished) {
           clearInterval(interval);
-          const promosso = wrongCount <= MAX_ERRORS;
+          const promossoValue = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
           onComplete({
             correctCount,
             wrongCount,
-            promosso,
+            promosso: promossoValue,
             finalTotalSeconds: lastElapsedRef.current,
             wrongAnswers,
             opponentCorrect: result.opponent_correct,
@@ -453,7 +516,7 @@ export function MultiplayerQuiz({
     return (): void => {
       clearInterval(interval);
     };
-  }, [status, sfidaId, correctCount, wrongCount, wrongAnswers, onComplete]);
+  }, [status, sfidaId, correctCount, wrongCount, wrongAnswers, onComplete, sfidaType]);
 
   // ---- Abandon handler ----
   const handleConfirmAbandon = useCallback((): void => {
@@ -464,34 +527,65 @@ export function MultiplayerQuiz({
     abortSfidaMutation.mutate({ sfida_id: sfidaId });
   }, [sfidaId, abortSfidaMutation]);
 
+  const setPendingSfidaCompletion = useAppStore((s) => s.setPendingSfidaCompletion);
+
   // Force leave waiting — tenta di recuperare dati reali dal server
   const handleForceLeaveWaiting = useCallback((): void => {
-    const promosso = wrongCount <= MAX_ERRORS;
+    const promossoValue = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
     const localResult: MultiplayerQuizResult = {
       correctCount,
       wrongCount,
-      promosso,
+      promosso: promossoValue,
       finalTotalSeconds: lastElapsedRef.current,
       wrongAnswers,
       opponentCorrect: null,
       winnerId: undefined,
     };
 
+    // Imposta pending completion nello store per la notifica globale
+    setPendingSfidaCompletion({
+      sfidaId,
+      opponentName,
+      sfidaType,
+      questionCount,
+      durationSeconds,
+    });
+
     // Tenta di ottenere i dati dal server (fire-and-forget con fallback)
     void (async (): Promise<void> => {
       try {
         const result = await client.sfide.result({ sfida_id: sfidaId });
-        onComplete({
-          ...localResult,
-          opponentCorrect: result.opponent_correct,
-          winnerId: result.winner_id,
-        });
+        if (result.both_finished) {
+          // L'avversario ha già finito, mostra risultati completi
+          setPendingSfidaCompletion(null);
+          onComplete({
+            ...localResult,
+            opponentCorrect: result.opponent_correct,
+            winnerId: result.winner_id,
+          });
+        } else {
+          // L'avversario non ha ancora finito, mostra risultati parziali
+          onComplete(localResult);
+        }
       } catch {
         // Se fallisce, usa i dati locali
         onComplete(localResult);
       }
     })();
-  }, [correctCount, wrongCount, wrongAnswers, sfidaId, onComplete]);
+  }, [correctCount, wrongCount, wrongAnswers, sfidaId, onComplete, opponentName, sfidaType, questionCount, durationSeconds, setPendingSfidaCompletion]);
+
+  // ============================================================
+  // Render — Calibrazione timer in corso
+  // ============================================================
+  if (initialElapsed === null) {
+    return (
+      <div className="mx-auto flex max-w-lg flex-col items-center gap-6 px-4 py-4 md:py-16 text-center">
+        <div className="animate-pulse text-muted-foreground">
+          Sincronizzazione timer...
+        </div>
+      </div>
+    );
+  }
 
   // ============================================================
   // Render — Attesa avversario
@@ -514,14 +608,14 @@ export function MultiplayerQuiz({
             >
               {opponentFinished
                 ? 'Completato'
-                : `Domanda ${opponentPos} / ${QUIZ_SIZE}`}
-            </span>
+                : `Domanda ${opponentPos} / ${questionCount}`}
+          </span>
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
               className={`h-full rounded-full transition-all duration-300 ${opponentFinished ? 'bg-green-500' : 'bg-primary'}`}
               style={{
-                width: `${opponentFinished ? 100 : (opponentPos / QUIZ_SIZE) * 100}%`,
+                width: `${opponentFinished ? 100 : (opponentPos / questionCount) * 100}%`,
               }}
             />
           </div>
@@ -532,7 +626,7 @@ export function MultiplayerQuiz({
           onClick={handleForceLeaveWaiting}
           className="mt-4"
         >
-          Non attendere e vedi i risultati
+          Vedi i tuoi risultati
         </Button>
       </div>
     );
@@ -579,7 +673,7 @@ export function MultiplayerQuiz({
         {/* Sinistra: posizione + bottone abbandona */}
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold">
-            {currentPos} / {QUIZ_SIZE}
+            {currentPos} / {questionCount}
           </span>
           <Button
             type="button"
@@ -593,7 +687,7 @@ export function MultiplayerQuiz({
 
         {/* Destra: Timer sincronizzato */}
         <Timer
-          seconds={QUIZ_DURATION_SECONDS}
+          seconds={durationSeconds}
           initialElapsed={initialElapsed}
           startMode="countdown"
           cycleMode={false}
@@ -612,21 +706,21 @@ export function MultiplayerQuiz({
           >
             {opponentFinished
               ? 'Completato'
-              : `Domanda ${opponentPos} / ${QUIZ_SIZE}`}
+              : `Domanda ${opponentPos} / ${questionCount}`}
           </span>
         </div>
         <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
           <div
             className={`h-full rounded-full transition-all duration-300 ${opponentFinished ? 'bg-green-500' : 'bg-primary'}`}
             style={{
-              width: `${opponentFinished ? 100 : (opponentPos / QUIZ_SIZE) * 100}%`,
+              width: `${opponentFinished ? 100 : (opponentPos / questionCount) * 100}%`,
             }}
           />
         </div>
       </div>
 
       {/* Domanda — container a dimensione fissa per evitare salti di layout */}
-      <div className="w-full min-h-[200px]">
+      <div className="w-full min-h-[350px]">
         {domandaQuery.isLoading && (
           <div className="py-8 text-center text-muted-foreground">
             Caricamento domanda...

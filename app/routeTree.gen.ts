@@ -35,6 +35,7 @@ import { Route as MainErroriRicorrentiIndexRouteImport } from './routes/main/err
 import { Route as MainConsigliETrucchiIndexRouteImport } from './routes/main/consigli-e-trucchi/index'
 import { Route as MainClassificheIndexRouteImport } from './routes/main/classifiche/index'
 import { Route as MainSfideStoricoRouteImport } from './routes/main/sfide/storico'
+import { Route as MainSfideRisultatiRouteImport } from './routes/main/sfide/risultati'
 import { Route as MainSfideQuizRouteImport } from './routes/main/sfide/quiz'
 import { Route as MainErroriRicorrentiTutteCategorieRouteImport } from './routes/main/errori-ricorrenti/tutte-categorie'
 import { Route as MainErroriRicorrentiSkullSelezionateRouteImport } from './routes/main/errori-ricorrenti/skull-selezionate'
@@ -184,6 +185,11 @@ const MainSfideStoricoRoute = MainSfideStoricoRouteImport.update({
   path: '/storico',
   getParentRoute: () => MainSfideRouteRoute,
 } as any)
+const MainSfideRisultatiRoute = MainSfideRisultatiRouteImport.update({
+  id: '/risultati',
+  path: '/risultati',
+  getParentRoute: () => MainSfideRouteRoute,
+} as any)
 const MainSfideQuizRoute = MainSfideQuizRouteImport.update({
   id: '/quiz',
   path: '/quiz',
@@ -291,6 +297,7 @@ export interface FileRoutesByFullPath {
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
   '/main/sfide/quiz': typeof MainSfideQuizRoute
+  '/main/sfide/risultati': typeof MainSfideRisultatiRoute
   '/main/sfide/storico': typeof MainSfideStoricoRoute
   '/main/classifiche/': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
@@ -325,6 +332,7 @@ export interface FileRoutesByTo {
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
   '/main/sfide/quiz': typeof MainSfideQuizRoute
+  '/main/sfide/risultati': typeof MainSfideRisultatiRoute
   '/main/sfide/storico': typeof MainSfideStoricoRoute
   '/main/classifiche': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi': typeof MainConsigliETrucchiIndexRoute
@@ -367,6 +375,7 @@ export interface FileRoutesById {
   '/main/errori-ricorrenti/skull-selezionate': typeof MainErroriRicorrentiSkullSelezionateRoute
   '/main/errori-ricorrenti/tutte-categorie': typeof MainErroriRicorrentiTutteCategorieRoute
   '/main/sfide/quiz': typeof MainSfideQuizRoute
+  '/main/sfide/risultati': typeof MainSfideRisultatiRoute
   '/main/sfide/storico': typeof MainSfideStoricoRoute
   '/main/classifiche/': typeof MainClassificheIndexRoute
   '/main/consigli-e-trucchi/': typeof MainConsigliETrucchiIndexRoute
@@ -410,6 +419,7 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
     | '/main/sfide/quiz'
+    | '/main/sfide/risultati'
     | '/main/sfide/storico'
     | '/main/classifiche/'
     | '/main/consigli-e-trucchi/'
@@ -444,6 +454,7 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
     | '/main/sfide/quiz'
+    | '/main/sfide/risultati'
     | '/main/sfide/storico'
     | '/main/classifiche'
     | '/main/consigli-e-trucchi'
@@ -485,6 +496,7 @@ export interface FileRouteTypes {
     | '/main/errori-ricorrenti/skull-selezionate'
     | '/main/errori-ricorrenti/tutte-categorie'
     | '/main/sfide/quiz'
+    | '/main/sfide/risultati'
     | '/main/sfide/storico'
     | '/main/classifiche/'
     | '/main/consigli-e-trucchi/'
@@ -691,6 +703,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MainSfideStoricoRouteImport
       parentRoute: typeof MainSfideRouteRoute
     }
+    '/main/sfide/risultati': {
+      id: '/main/sfide/risultati'
+      path: '/risultati'
+      fullPath: '/main/sfide/risultati'
+      preLoaderRoute: typeof MainSfideRisultatiRouteImport
+      parentRoute: typeof MainSfideRouteRoute
+    }
     '/main/sfide/quiz': {
       id: '/main/sfide/quiz'
       path: '/quiz'
@@ -862,12 +881,14 @@ const MainHelpRouteRouteWithChildren = MainHelpRouteRoute._addFileChildren(
 
 interface MainSfideRouteRouteChildren {
   MainSfideQuizRoute: typeof MainSfideQuizRoute
+  MainSfideRisultatiRoute: typeof MainSfideRisultatiRoute
   MainSfideStoricoRoute: typeof MainSfideStoricoRoute
   MainSfideIndexRoute: typeof MainSfideIndexRoute
 }
 
 const MainSfideRouteRouteChildren: MainSfideRouteRouteChildren = {
   MainSfideQuizRoute: MainSfideQuizRoute,
+  MainSfideRisultatiRoute: MainSfideRisultatiRoute,
   MainSfideStoricoRoute: MainSfideStoricoRoute,
   MainSfideIndexRoute: MainSfideIndexRoute,
 }

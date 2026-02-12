@@ -12,6 +12,7 @@ import type * as Ably from 'ably';
 import { getAblyRealtime } from '~/lib/ably-client';
 import { client } from '~/lib/orpc';
 import { useAppStore } from '~/store';
+import type { SfidaTier } from '~/commons';
 
 /** Timeout per la risposta alla sfida: 30 secondi */
 const CHALLENGE_TIMEOUT_MS = 30_000;
@@ -35,6 +36,8 @@ interface ChallengeRequestMessage {
   challengerId: string;
   challengerName: string;
   challengerImageUrl: string | null;
+  /** Tipo di sfida selezionato dal challenger */
+  tier: SfidaTier;
 }
 
 interface ChallengeResponseMessage {
@@ -59,6 +62,7 @@ interface UseChallengeFlowReturn {
     targetUserId: string,
     myName: string,
     myImageUrl: string | null,
+    tier: SfidaTier,
   ) => void;
   /** Rispondi a una sfida in arrivo */
   respondToChallenge: (accept: boolean) => void;
@@ -67,9 +71,12 @@ interface UseChallengeFlowReturn {
   /** Dati della sfida creata (dopo accettazione) */
   sfidaData: {
     sfidaId: number;
-    quizIdA: number;
-    quizIdB: number;
+    quizIdA: number | null;
+    quizIdB: number | null;
     gameStartedAt: string;
+    sfidaType: SfidaTier;
+    questionCount: number;
+    durationSeconds: number;
   } | null;
 }
 
@@ -81,9 +88,12 @@ export function useChallengeFlow(
   const [phase, setPhase] = useState<ChallengePhase>('idle');
   const [sfidaData, setSfidaData] = useState<{
     sfidaId: number;
-    quizIdA: number;
-    quizIdB: number;
+    quizIdA: number | null;
+    quizIdB: number | null;
     gameStartedAt: string;
+    sfidaType: SfidaTier;
+    questionCount: number;
+    durationSeconds: number;
   } | null>(null);
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -100,23 +110,29 @@ export function useChallengeFlow(
     }
   }, []);
 
+  // Ref per il tier pendente (usato nella risposta)
+  const pendingTierRef = useRef<SfidaTier>('full');
+
   // ---- Invio sfida ----
   const sendChallenge = useCallback(
     (
       targetUserId: string,
       myName: string,
       myImageUrl: string | null,
+      tier: SfidaTier,
     ): void => {
       if (!userId) return;
 
       const challengeId = `${userId}-${targetUserId}-${Date.now()}`;
       pendingChallengeIdRef.current = challengeId;
+      pendingTierRef.current = tier;
       setPhase('sending');
 
       console.log(
-        '[ChallengeFlow] Invio sfida — challengeId=%s, target=%s',
+        '[ChallengeFlow] Invio sfida — challengeId=%s, target=%s, tier=%s',
         challengeId,
         targetUserId,
+        tier,
       );
 
       const ably = getAblyRealtime();
@@ -128,6 +144,7 @@ export function useChallengeFlow(
         challengerId: userId,
         challengerName: myName,
         challengerImageUrl: myImageUrl,
+        tier,
       };
 
       targetChannel
@@ -252,6 +269,7 @@ export function useChallengeFlow(
         challengerName: data.challengerName,
         challengerImageUrl: data.challengerImageUrl,
         receivedAt: Date.now(),
+        tier: data.tier ?? 'full',
       });
     };
 
@@ -283,17 +301,20 @@ export function useChallengeFlow(
       if (data.accepted) {
         // Crea la sfida sul server
         setPhase('accepted');
+        const tier = pendingTierRef.current;
         void (async (): Promise<void> => {
           try {
             console.log(
-              '[ChallengeFlow] Creazione sfida su server — opponentId=%s',
+              '[ChallengeFlow] Creazione sfida su server — opponentId=%s, tier=%s',
               data.responderId,
+              tier,
             );
             const result = await client.sfide.create({
               opponentId: data.responderId,
+              tier,
             });
             console.log(
-              '[ChallengeFlow] Sfida creata — sfidaId=%d, quizA=%d, quizB=%d',
+              '[ChallengeFlow] Sfida creata — sfidaId=%d, quizA=%s, quizB=%s',
               result.sfida_id,
               result.quiz_id_a,
               result.quiz_id_b,
@@ -303,6 +324,9 @@ export function useChallengeFlow(
               quizIdA: result.quiz_id_a,
               quizIdB: result.quiz_id_b,
               gameStartedAt: result.game_started_at,
+              sfidaType: result.sfida_type,
+              questionCount: result.question_count,
+              durationSeconds: result.duration_seconds,
             });
 
             const gameStartPayload = {
@@ -312,6 +336,9 @@ export function useChallengeFlow(
               gameStartedAt: result.game_started_at,
               playerAId: userId,
               playerBId: data.responderId,
+              sfidaType: result.sfida_type,
+              questionCount: result.question_count,
+              durationSeconds: result.duration_seconds,
             };
 
             // Pubblica game-start sul canale della sfida

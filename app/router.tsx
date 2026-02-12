@@ -27,6 +27,9 @@ export function getRouter() {
         'Failed to fetch',
         'NetworkError',
         'Load failed',
+        // Ably: emissione asincrona durante disconnect intenzionale (close tab, reload).
+        // Vedi PATENTIFY-B — non azionabile, parte del ciclo di vita normale.
+        'Connection closed',
       ],
 
       // Cattura solo errori da script del proprio dominio

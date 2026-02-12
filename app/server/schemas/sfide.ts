@@ -12,6 +12,8 @@ import * as z from 'zod';
 
 export const sfidaStatusSchema = z.enum(['in_progress', 'completed', 'aborted']);
 
+export const sfidaTierSchema = z.enum(['seed', 'medium', 'half_quiz', 'full']);
+
 // ============================================================
 // getAblyToken
 // ============================================================
@@ -32,13 +34,17 @@ export const getAblyTokenOutputSchema = z.object({
 
 export const createSfidaInputSchema = z.object({
   opponentId: z.string().min(1),
+  tier: sfidaTierSchema.default('full'),
 });
 
 export const createSfidaOutputSchema = z.object({
   sfida_id: z.number().int(),
-  quiz_id_a: z.number().int(),
-  quiz_id_b: z.number().int(),
+  quiz_id_a: z.number().int().nullable(),
+  quiz_id_b: z.number().int().nullable(),
   game_started_at: z.string(),
+  sfida_type: sfidaTierSchema,
+  question_count: z.number().int(),
+  duration_seconds: z.number().int(),
 });
 
 // ============================================================
@@ -56,7 +62,7 @@ export const completeSfidaOutputSchema = z.object({
   winner_id: z.string().nullable(),
   player_a_correct: z.number().int(),
   player_b_correct: z.number().int(),
-  promosso: z.boolean(),
+  promosso: z.boolean().nullable(),
 });
 
 // ============================================================
@@ -73,6 +79,9 @@ export const getSfidaResultOutputSchema = z.object({
   opponent_correct: z.number().int(),
   both_finished: z.boolean(),
   status: z.string(),
+  sfida_type: sfidaTierSchema,
+  question_count: z.number().int(),
+  duration_seconds: z.number().int(),
 });
 
 // ============================================================
@@ -120,6 +129,17 @@ export const getSfideHistoryAllInputSchema = z.object({
 });
 
 export const getSfideHistoryAllOutputSchema = sfidaHistoryOutputSchema;
+
+// ============================================================
+// getSfidaDomanda
+// ============================================================
+
+export const getSfidaDomandaInputSchema = z.object({
+  sfida_id: z.number().int().positive(),
+  quiz_pos: z.number().int().positive(),
+});
+
+// Output riusa lo stesso schema di getQuizDomanda (definito in quiz schemas)
 
 // ============================================================
 // getOnlineUsersDetails

@@ -10,6 +10,7 @@ import type {
   ActiveSfidaState,
   IncomingChallengeState,
   PendingRematchState,
+  PendingSfidaCompletionState,
 } from '../types';
 
 /**
@@ -25,6 +26,8 @@ export const createSfideSlice: StateCreator<
   incomingChallenge: null,
   pendingRematch: null,
   sfideShowOnlyFollowed: false,
+  waitingForGameStart: false,
+  pendingSfidaCompletion: null,
 
   startSfida: (sfida: ActiveSfidaState): void => {
     set((state) => {
@@ -73,6 +76,20 @@ export const createSfideSlice: StateCreator<
   toggleSfideFollowedFilter: (): void => {
     set((state) => {
       state.sfideShowOnlyFollowed = !state.sfideShowOnlyFollowed;
+    });
+  },
+
+  setWaitingForGameStart: (v: boolean): void => {
+    set((state) => {
+      state.waitingForGameStart = v;
+    });
+  },
+
+  setPendingSfidaCompletion: (
+    data: PendingSfidaCompletionState | null,
+  ): void => {
+    set((state) => {
+      state.pendingSfidaCompletion = data;
     });
   },
 });

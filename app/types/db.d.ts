@@ -90,6 +90,8 @@ export interface UserDomandaAttempt {
   answered_at: string | null;
   answer_given: string | null;
   is_correct: boolean | null;
+  /** ID sfida (FK a sfide.id), per sfide non-full senza quiz */
+  sfida_id: number | null;
 }
 
 /** Tabella public.user_domanda_skull */
@@ -113,6 +115,9 @@ export interface Amicizia {
 /** Status ammessi per sfida (CHECK constraint) */
 export type SfidaStatus = 'in_progress' | 'completed' | 'aborted';
 
+/** Tipo di sfida (tier) — importato da commons per coerenza */
+export type { SfidaTier } from '~/commons';
+
 /** Tabella public.sfide */
 export interface Sfida {
   id: number;
@@ -121,10 +126,10 @@ export interface Sfida {
   player_a_id: string;
   /** ID Clerk del player B (chi ha accettato la sfida) */
   player_b_id: string;
-  /** ID quiz assegnato al player A */
-  quiz_id_a: number;
-  /** ID quiz assegnato al player B */
-  quiz_id_b: number;
+  /** ID quiz assegnato al player A (null per sfide non-full) */
+  quiz_id_a: number | null;
+  /** ID quiz assegnato al player B (null per sfide non-full) */
+  quiz_id_b: number | null;
   /** ID Clerk del vincitore (null se non completata) */
   winner_id: string | null;
   status: SfidaStatus;
@@ -138,6 +143,12 @@ export interface Sfida {
   player_b_finished: boolean;
   /** Timestamp inizio partita (condiviso per timer sincronizzato) */
   game_started_at: string;
+  /** Tipo di sfida (seed, medium, half_quiz, full) */
+  sfida_type: import('~/commons').SfidaTier;
+  /** Numero di domande nella sfida */
+  question_count: number;
+  /** Durata della sfida in secondi */
+  duration_seconds: number;
 }
 
 /** Periodo temporale per filtri */

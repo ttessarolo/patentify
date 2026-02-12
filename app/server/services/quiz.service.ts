@@ -317,6 +317,69 @@ export async function getQuizDomanda(
 }
 
 // ============================================================
+// getSfidaDomanda
+// ============================================================
+
+/**
+ * Recupera una domanda di una sfida non-full (senza quiz_id).
+ * Cerca in user_domanda_attempt per sfida_id + quiz_pos.
+ */
+export async function getSfidaDomanda(
+  userId: string,
+  sfidaId: number,
+  quizPos: number,
+): Promise<{ domanda: DomandaRow; domanda_id: number }> {
+  // Verifica che la sfida sia in_progress e l'utente sia partecipante
+  const sfidaCheck = await sql`
+    SELECT id FROM sfide
+    WHERE id = ${sfidaId}
+      AND status = 'in_progress'
+      AND (player_a_id = ${userId} OR player_b_id = ${userId})
+  `;
+  if (!sfidaCheck || sfidaCheck.length === 0) {
+    throw new Error('Sfida non trovata o non in corso');
+  }
+
+  const result = await sql`
+    SELECT 
+      uda.domanda_id,
+      d.id, d.ire_plus, d.domanda, d.risposta,
+      d.ambiguita, d.ambiguita_triggers,
+      d.difficolta, d.difficolta_fattori,
+      d.titolo_quesito, d.id_quesito, d.ire, d.immagine_path
+    FROM user_domanda_attempt uda
+    JOIN domande d ON d.id = uda.domanda_id
+    WHERE uda.sfida_id = ${sfidaId}
+      AND uda.quiz_pos = ${quizPos}
+      AND uda.user_id = ${userId}
+  `;
+
+  if (!result || result.length === 0) {
+    throw new Error(`Domanda non trovata per sfida ${sfidaId} pos ${quizPos}`);
+  }
+
+  const row = result[0] as DomandaRow & { domanda_id: number };
+
+  return {
+    domanda: {
+      id: row.id,
+      ire_plus: row.ire_plus,
+      domanda: row.domanda,
+      risposta: row.risposta,
+      ambiguita: row.ambiguita,
+      ambiguita_triggers: row.ambiguita_triggers,
+      difficolta: row.difficolta,
+      difficolta_fattori: row.difficolta_fattori,
+      titolo_quesito: row.titolo_quesito,
+      id_quesito: row.id_quesito,
+      ire: row.ire,
+      immagine_path: row.immagine_path,
+    },
+    domanda_id: row.domanda_id,
+  };
+}
+
+// ============================================================
 // abortQuiz
 // ============================================================
 

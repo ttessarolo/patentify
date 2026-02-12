@@ -7,7 +7,8 @@
 
 import { sql } from '~/lib/db';
 import { generateQuiz } from './quiz.service';
-import { QUIZ_SIZE, MAX_ERRORS } from '~/commons';
+import { MAX_ERRORS, SFIDA_TIERS } from '~/commons';
+import type { SfidaTier } from '~/commons';
 import type { SfidaStatus } from '~/types/db';
 
 // ============================================================
@@ -16,9 +17,12 @@ import type { SfidaStatus } from '~/types/db';
 
 interface CreateSfidaResult {
   sfida_id: number;
-  quiz_id_a: number;
-  quiz_id_b: number;
+  quiz_id_a: number | null;
+  quiz_id_b: number | null;
   game_started_at: string;
+  sfida_type: SfidaTier;
+  question_count: number;
+  duration_seconds: number;
 }
 
 interface CompleteSfidaResult {
@@ -27,7 +31,8 @@ interface CompleteSfidaResult {
   winner_id: string | null;
   player_a_correct: number;
   player_b_correct: number;
-  promosso: boolean;
+  /** Promosso/bocciato — solo per sfide full. null per altri tier. */
+  promosso: boolean | null;
 }
 
 interface SfidaHistoryRow {
@@ -58,12 +63,31 @@ interface OnlineUserDetail {
 
 /**
  * Crea una nuova sfida multiplayer.
- * Genera un quiz standard per entrambi i giocatori (stesse domande)
- * e inserisce il record nella tabella sfide.
+ *
+ * - **full**: crea 2 quiz nel DB (40 domande, 30 minuti) — stesse domande per entrambi.
+ * - **seed / medium / half_quiz**: genera N domande random senza creare entry in `quiz`.
+ *   Le domande sono collegate direttamente alla sfida tramite `sfida_id`.
  */
 export async function createSfida(
   playerAId: string,
   playerBId: string,
+  tier: SfidaTier = 'full',
+): Promise<CreateSfidaResult> {
+  if (tier === 'full') {
+    return createSfidaFull(playerAId, playerBId, SFIDA_TIERS.full);
+  }
+
+  const tierConfig = SFIDA_TIERS[tier];
+  return createSfidaNonFull(playerAId, playerBId, tier, tierConfig);
+}
+
+/**
+ * Crea una sfida Full (40 domande) — crea quiz nel DB per entrambi i player.
+ */
+async function createSfidaFull(
+  playerAId: string,
+  playerBId: string,
+  tierConfig: (typeof SFIDA_TIERS)['full'],
 ): Promise<CreateSfidaResult> {
   // 1. Genera quiz per player A (standard, no boost)
   const quizA = await generateQuiz(playerAId, 'standard', false, false);
@@ -121,19 +145,119 @@ export async function createSfida(
 
   // 4. Crea record sfida
   const sfidaResult = await sql`
-    INSERT INTO sfide (player_a_id, player_b_id, quiz_id_a, quiz_id_b)
-    VALUES (${playerAId}, ${playerBId}, ${quizA.quiz_id}, ${quizBId})
+    INSERT INTO sfide (
+      player_a_id, player_b_id, quiz_id_a, quiz_id_b,
+      sfida_type, question_count, duration_seconds
+    )
+    VALUES (
+      ${playerAId}, ${playerBId}, ${quizA.quiz_id}, ${quizBId},
+      ${'full'}, ${tierConfig.questions}, ${tierConfig.durationSeconds}
+    )
     RETURNING id, game_started_at::text
   `;
 
   const sfida = sfidaResult[0] as { id: number | string; game_started_at: string };
+  const sfidaId = Number(sfida.id);
+
+  // Collega anche gli attempt alla sfida (per coerenza)
+  void sql`
+    UPDATE user_domanda_attempt SET sfida_id = ${sfidaId}
+    WHERE quiz_id IN (${quizA.quiz_id}, ${quizBId})
+  `;
 
   return {
-    sfida_id: Number(sfida.id),
+    sfida_id: sfidaId,
     quiz_id_a: quizA.quiz_id,
     quiz_id_b: quizBId,
     game_started_at: sfida.game_started_at,
+    sfida_type: 'full',
+    question_count: tierConfig.questions,
+    duration_seconds: tierConfig.durationSeconds,
   };
+}
+
+/**
+ * Crea una sfida non-Full (seed/medium/half_quiz).
+ * NON crea entry nella tabella `quiz`. Le domande vengono associate
+ * direttamente alla sfida tramite `sfida_id` in `user_domanda_attempt`.
+ */
+async function createSfidaNonFull(
+  playerAId: string,
+  playerBId: string,
+  tier: SfidaTier,
+  tierConfig: { label: string; questions: number; durationSeconds: number },
+): Promise<CreateSfidaResult> {
+  const questionCount = tierConfig.questions;
+
+  // 1. Seleziona N domande random
+  const domande = await selectRandomDomande(questionCount);
+
+  // 2. Crea record sfida (senza quiz_id)
+  const sfidaResult = await sql`
+    INSERT INTO sfide (
+      player_a_id, player_b_id, quiz_id_a, quiz_id_b,
+      sfida_type, question_count, duration_seconds
+    )
+    VALUES (
+      ${playerAId}, ${playerBId}, ${null}, ${null},
+      ${tier}, ${questionCount}, ${tierConfig.durationSeconds}
+    )
+    RETURNING id, game_started_at::text
+  `;
+
+  const sfida = sfidaResult[0] as { id: number | string; game_started_at: string };
+  const sfidaId = Number(sfida.id);
+
+  // 3. Inserisci le stesse domande per entrambi i player (collegate alla sfida)
+  for (let i = 0; i < domande.length; i++) {
+    const domandaId = domande[i];
+    const pos = i + 1;
+
+    // Player A
+    await sql`
+      INSERT INTO user_domanda_attempt (
+        user_id, domanda_id, quiz_id, quiz_pos, sfida_id,
+        answered_at, answer_given, is_correct
+      ) VALUES (
+        ${playerAId}, ${domandaId}, ${null}, ${pos}, ${sfidaId},
+        ${null}, ${null}, ${null}
+      )
+    `;
+
+    // Player B
+    await sql`
+      INSERT INTO user_domanda_attempt (
+        user_id, domanda_id, quiz_id, quiz_pos, sfida_id,
+        answered_at, answer_given, is_correct
+      ) VALUES (
+        ${playerBId}, ${domandaId}, ${null}, ${pos}, ${sfidaId},
+        ${null}, ${null}, ${null}
+      )
+    `;
+  }
+
+  return {
+    sfida_id: sfidaId,
+    quiz_id_a: null,
+    quiz_id_b: null,
+    game_started_at: sfida.game_started_at,
+    sfida_type: tier,
+    question_count: questionCount,
+    duration_seconds: tierConfig.durationSeconds,
+  };
+}
+
+/**
+ * Seleziona N domande random dal pool totale.
+ * Usato per sfide non-full (nessun vincolo obbligatorio su segnali/precedenze).
+ */
+async function selectRandomDomande(count: number): Promise<number[]> {
+  const result = await sql`
+    SELECT id FROM domande
+    ORDER BY RANDOM()
+    LIMIT ${count}
+  `;
+  return (result as { id: number }[]).map((r) => r.id);
 }
 
 // ============================================================
@@ -152,7 +276,8 @@ export async function completeSfida(
   // Identifica se il player è A o B
   const sfidaResult = await sql`
     SELECT player_a_id, player_b_id, player_a_finished, player_b_finished,
-           player_a_correct, player_b_correct, status
+           player_a_correct, player_b_correct, status,
+           sfida_type, question_count
     FROM sfide
     WHERE id = ${sfidaId}
   `;
@@ -169,6 +294,8 @@ export async function completeSfida(
     player_a_correct: number;
     player_b_correct: number;
     status: string;
+    sfida_type: string;
+    question_count: number;
   };
 
   if (sfida.status !== 'in_progress') {
@@ -216,8 +343,12 @@ export async function completeSfida(
   const updatedB = Number(fresh.player_b_correct);
   const bothFinished = fresh.player_a_finished && fresh.player_b_finished;
 
-  const wrongCount = QUIZ_SIZE - correctCount;
-  const promosso = wrongCount <= MAX_ERRORS;
+  // Promosso/bocciato solo per sfide full
+  let promosso: boolean | null = null;
+  if (sfida.sfida_type === 'full') {
+    const wrongCount = sfida.question_count - correctCount;
+    promosso = wrongCount <= MAX_ERRORS;
+  }
 
   if (bothFinished) {
     // Determina il vincitore
@@ -261,6 +392,9 @@ interface SfidaResultData {
   opponent_correct: number;
   both_finished: boolean;
   status: string;
+  sfida_type: SfidaTier;
+  question_count: number;
+  duration_seconds: number;
 }
 
 /**
@@ -275,7 +409,8 @@ export async function getSfidaResult(
     SELECT player_a_id, player_b_id,
            player_a_correct, player_b_correct,
            player_a_finished, player_b_finished,
-           winner_id, status
+           winner_id, status,
+           sfida_type, question_count, duration_seconds
     FROM sfide
     WHERE id = ${sfidaId}
   `;
@@ -293,6 +428,9 @@ export async function getSfidaResult(
     player_b_finished: boolean;
     winner_id: string | null;
     status: string;
+    sfida_type: string;
+    question_count: number;
+    duration_seconds: number;
   };
 
   const isPlayerA = playerId === sfida.player_a_id;
@@ -320,6 +458,9 @@ export async function getSfidaResult(
     opponent_correct: isPlayerA ? sfida.player_b_correct : sfida.player_a_correct,
     both_finished: bothFinished,
     status: sfida.status,
+    sfida_type: sfida.sfida_type as SfidaTier,
+    question_count: Number(sfida.question_count),
+    duration_seconds: Number(sfida.duration_seconds),
   };
 }
 

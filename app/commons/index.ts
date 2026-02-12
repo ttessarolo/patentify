@@ -30,6 +30,21 @@ export const MIN_PRECEDENZE = 3; // TODO: rimettere a 3 per produzione
 export const MAX_ERRORS = 4;
 
 // ============================================================
+// Sfide - Tier configurazione
+// ============================================================
+
+/** Configurazione dei tier per le sfide multiplayer */
+export const SFIDA_TIERS = {
+  seed: { label: 'Speed', questions: 5, durationSeconds: 60 },
+  medium: { label: 'Medium', questions: 10, durationSeconds: 300 },
+  half_quiz: { label: 'Half Quiz', questions: 20, durationSeconds: 900 },
+  full: { label: 'Full Quiz', questions: 40, durationSeconds: 1800 },
+} as const;
+
+/** Tipo di sfida (tier) */
+export type SfidaTier = keyof typeof SFIDA_TIERS;
+
+// ============================================================
 // Utility per indicatori metriche (ire, difficolta, ambiguita)
 // ============================================================
 

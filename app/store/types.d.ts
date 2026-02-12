@@ -4,6 +4,7 @@
  */
 
 import type { QuizType, TimePeriod, Domanda } from '~/types/db';
+import type { SfidaTier } from '~/commons';
 
 // ============================================================
 // UI Slice - Stato UI (sezioni collapsible)
@@ -240,6 +241,8 @@ export interface IncomingChallengeState {
   challengerImageUrl: string | null;
   /** Timestamp di quando è arrivata la sfida */
   receivedAt: number;
+  /** Tipo di sfida scelto dal challenger */
+  tier: SfidaTier;
 }
 
 /**
@@ -275,6 +278,22 @@ export interface PendingRematchState {
   opponentName: string;
 }
 
+/**
+ * Dati per una sfida in attesa di completamento dall'avversario.
+ */
+export interface PendingSfidaCompletionState {
+  /** ID della sfida */
+  sfidaId: number;
+  /** Nome dell'avversario */
+  opponentName: string;
+  /** Tipo di sfida */
+  sfidaType: SfidaTier;
+  /** Numero domande nella sfida */
+  questionCount: number;
+  /** Durata della sfida */
+  durationSeconds: number;
+}
+
 export interface SfideSlice {
   /** Sfida attiva (null se nessuna sfida in corso) */
   activeSfida: ActiveSfidaState | null;
@@ -284,6 +303,10 @@ export interface SfideSlice {
   pendingRematch: PendingRematchState | null;
   /** Filtro: mostra solo utenti seguiti nella lista online */
   sfideShowOnlyFollowed: boolean;
+  /** Overlay "Generazione del Quiz in corso..." per chi accetta sfida */
+  waitingForGameStart: boolean;
+  /** Sfida in attesa di completamento dall'avversario (per notifica globale) */
+  pendingSfidaCompletion: PendingSfidaCompletionState | null;
   /** Inizia una nuova sfida */
   startSfida: (sfida: ActiveSfidaState) => void;
   /** Aggiorna il progresso dell'avversario */
@@ -298,6 +321,10 @@ export interface SfideSlice {
   setPendingRematch: (rematch: PendingRematchState | null) => void;
   /** Toggle filtro solo seguiti */
   toggleSfideFollowedFilter: () => void;
+  /** Set overlay waiting for game start */
+  setWaitingForGameStart: (v: boolean) => void;
+  /** Set/clear pending sfida completion */
+  setPendingSfidaCompletion: (data: PendingSfidaCompletionState | null) => void;
 }
 
 // ============================================================
@@ -336,5 +363,7 @@ export interface AppStateDefaults {
     incomingChallenge: IncomingChallengeState | null;
     pendingRematch: PendingRematchState | null;
     sfideShowOnlyFollowed: boolean;
+    waitingForGameStart: boolean;
+    pendingSfidaCompletion: PendingSfidaCompletionState | null;
   };
 }

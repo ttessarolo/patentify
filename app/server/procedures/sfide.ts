@@ -20,8 +20,11 @@ import {
   getSfideHistoryAllOutputSchema,
   getOnlineUsersDetailsInputSchema,
   getOnlineUsersDetailsOutputSchema,
+  getSfidaDomandaInputSchema,
 } from '../schemas/sfide';
+import { getQuizDomandaOutputSchema } from '../schemas/quiz';
 import * as sfideService from '../services/sfide.service';
+import { getSfidaDomanda } from '../services/quiz.service';
 import { generateAblyToken } from '~/lib/ably';
 import type * as z from 'zod';
 
@@ -62,7 +65,7 @@ export const createSfida = authProcedure
       input,
       context,
     }): Promise<z.infer<typeof createSfidaOutputSchema>> => {
-      return sfideService.createSfida(context.userId, input.opponentId);
+      return sfideService.createSfida(context.userId, input.opponentId, input.tier);
     },
   );
 
@@ -194,5 +197,26 @@ export const getOnlineUsersDetails = authProcedure
         context.userId,
         input.userIds,
       );
+    },
+  );
+
+// ============================================================
+// getSfidaDomanda
+// ============================================================
+
+export const getSfidaDomandaProcedure = authProcedure
+  .route({
+    method: 'GET',
+    path: '/sfide/domanda',
+    summary: 'Recupera una domanda di una sfida non-full (per sfida_id)',
+  })
+  .input(getSfidaDomandaInputSchema)
+  .output(getQuizDomandaOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof getQuizDomandaOutputSchema>> => {
+      return getSfidaDomanda(context.userId, input.sfida_id, input.quiz_pos);
     },
   );

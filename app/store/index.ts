@@ -135,6 +135,8 @@ export type {
   QuizStatus,
   ActiveSfidaState,
   IncomingChallengeState,
+  PendingSfidaCompletionState,
+  PendingRematchState,
   EsercitazioneFilters,
   ErroriRicorrentiFilters,
   StatisticheFilters,

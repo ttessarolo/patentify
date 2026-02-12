@@ -21,6 +21,7 @@ import {
 } from '~/components/ui/alert-dialog';
 import { useAppStore } from '~/store';
 import { useChallengeFlow } from '~/hooks/useChallengeFlow';
+import { SFIDA_TIERS } from '~/commons';
 
 /** Timeout sfida: 30 secondi */
 const CHALLENGE_TIMEOUT_S = 30;
@@ -84,10 +85,13 @@ export function IncomingChallengeDialog(): JSX.Element | null {
     return clearTimer;
   }, [incomingChallenge, respondToChallenge, clearTimer]);
 
+  const setWaitingForGameStart = useAppStore((s) => s.setWaitingForGameStart);
+
   const handleAccept = useCallback((): void => {
     clearTimer();
+    setWaitingForGameStart(true);
     respondToChallenge(true);
-  }, [respondToChallenge, clearTimer]);
+  }, [respondToChallenge, clearTimer, setWaitingForGameStart]);
 
   const handleReject = useCallback((): void => {
     clearTimer();
@@ -114,7 +118,15 @@ export function IncomingChallengeDialog(): JSX.Element | null {
             <span className="font-semibold text-foreground">
               {incomingChallenge.challengerName}
             </span>{' '}
-            ti vuole sfidare ad un quiz. Accetti?
+            ti vuole sfidare:{' '}
+            <span className="font-semibold text-primary">
+              {SFIDA_TIERS[incomingChallenge.tier]?.label ?? 'Full Quiz'}
+            </span>{' '}
+            ({SFIDA_TIERS[incomingChallenge.tier]?.questions ?? 40} domande,{' '}
+            {((SFIDA_TIERS[incomingChallenge.tier]?.durationSeconds ?? 1800) < 60)
+              ? `${SFIDA_TIERS[incomingChallenge.tier]?.durationSeconds ?? 1800}s`
+              : `${Math.floor((SFIDA_TIERS[incomingChallenge.tier]?.durationSeconds ?? 1800) / 60)} min`}
+            ). Accetti?
           </AlertDialogDescription>
           <div className="mt-2 text-center">
             <span className="text-2xl font-bold tabular-nums text-primary">

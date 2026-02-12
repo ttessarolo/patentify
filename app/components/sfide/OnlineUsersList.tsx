@@ -17,6 +17,7 @@ import { Button } from '~/components/ui/button';
 import { StarOnIcon, StarOffIcon } from '~/icons';
 import { useAppStore } from '~/store';
 import { orpc } from '~/lib/orpc';
+import type { SfidaTier } from '~/commons';
 
 export function OnlineUsersList(): JSX.Element {
   const { userId } = useAuth();
@@ -70,13 +71,16 @@ export function OnlineUsersList(): JSX.Element {
     [],
   );
 
-  const handleConfirmSend = useCallback((): void => {
-    if (!challengeTarget) return;
-    const myName =
-      clerkUser?.username ?? clerkUser?.fullName ?? 'Utente';
-    const myImageUrl = clerkUser?.imageUrl ?? null;
-    sendChallenge(challengeTarget.userId, myName, myImageUrl);
-  }, [challengeTarget, clerkUser, sendChallenge]);
+  const handleConfirmSend = useCallback(
+    (tier: SfidaTier): void => {
+      if (!challengeTarget) return;
+      const myName =
+        clerkUser?.username ?? clerkUser?.fullName ?? 'Utente';
+      const myImageUrl = clerkUser?.imageUrl ?? null;
+      sendChallenge(challengeTarget.userId, myName, myImageUrl, tier);
+    },
+    [challengeTarget, clerkUser, sendChallenge],
+  );
 
   const handleCloseDialog = useCallback((): void => {
     setChallengeTarget(null);
@@ -90,12 +94,12 @@ export function OnlineUsersList(): JSX.Element {
     const myName = clerkUser.username ?? clerkUser.fullName ?? 'Utente';
     const myImageUrl = clerkUser.imageUrl ?? null;
 
-    // Imposta il target e invia la sfida
+    // Imposta il target e invia la sfida (rematch usa 'full' come default)
     setChallengeTarget({
       userId: pendingRematch.opponentId,
       name: pendingRematch.opponentName,
     });
-    sendChallenge(pendingRematch.opponentId, myName, myImageUrl);
+    sendChallenge(pendingRematch.opponentId, myName, myImageUrl, 'full');
 
     // Consuma il rematch
     setPendingRematch(null);

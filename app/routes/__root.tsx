@@ -25,6 +25,9 @@ import { UpdateDialog } from '~/components/update-dialog';
 import { AblyPresenceManager } from '~/components/sfide/AblyPresenceManager';
 import { IncomingChallengeDialog } from '~/components/sfide/IncomingChallengeDialog';
 import { ChallengeGameStartHandler } from '~/components/sfide/ChallengeGameStartHandler';
+import { WaitingForGameOverlay } from '~/components/sfide/WaitingForGameOverlay';
+import { ChallengeCompletionHandler } from '~/components/sfide/ChallengeCompletionHandler';
+import { Toaster } from '~/components/ui/sonner';
 import '~/styles/globals.css';
 
 const queryClient = new QueryClient({
@@ -184,6 +187,9 @@ function Providers({
         <AblyPresenceManager />
         <IncomingChallengeDialog />
         <ChallengeGameStartHandler />
+        <WaitingForGameOverlay />
+        <ChallengeCompletionHandler />
+        <Toaster position="top-center" richColors />
         {import.meta.env.DEV && (
           <>
             <TanStackDevtools
