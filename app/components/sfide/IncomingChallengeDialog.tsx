@@ -21,7 +21,7 @@ import {
 } from '~/components/ui/alert-dialog';
 import { useAppStore } from '~/store';
 import { useChallengeFlow } from '~/hooks/useChallengeFlow';
-import { SFIDA_TIERS } from '~/commons';
+import { SFIDA_TIERS, getSfidaTierPillClasses } from '~/commons';
 
 /** Timeout sfida: 30 secondi */
 const CHALLENGE_TIMEOUT_S = 30;
@@ -119,7 +119,9 @@ export function IncomingChallengeDialog(): JSX.Element | null {
               {incomingChallenge.challengerName}
             </span>{' '}
             ti vuole sfidare:{' '}
-            <span className="font-semibold text-primary">
+            <span
+              className={`inline-flex rounded-full px-2 py-0.5 text-sm font-semibold ${getSfidaTierPillClasses(incomingChallenge.tier)}`}
+            >
               {SFIDA_TIERS[incomingChallenge.tier]?.label ?? 'Full Quiz'}
             </span>{' '}
             ({SFIDA_TIERS[incomingChallenge.tier]?.questions ?? 40} domande,{' '}

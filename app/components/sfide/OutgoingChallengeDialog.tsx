@@ -21,7 +21,11 @@ import {
 } from '~/components/ui/alert-dialog';
 import { Button } from '~/components/ui/button';
 import type { ChallengePhase } from '~/hooks/useChallengeFlow';
-import { SFIDA_TIERS } from '~/commons';
+import {
+  SFIDA_TIERS,
+  getSfidaTierPillClasses,
+  getSfidaTierBoxClasses,
+} from '~/commons';
 import type { SfidaTier } from '~/commons';
 
 /** Timeout attesa risposta: 30 secondi */
@@ -108,15 +112,22 @@ export function OutgoingChallengeDialog({
                     key={key}
                     type="button"
                     onClick={(): void => setSelectedTier(key)}
-                    className={`rounded-lg border p-3 text-left transition-colors ${
+                    className={`rounded-lg border-2 p-3 text-left transition-colors ${
                       selectedTier === key
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-border bg-card text-foreground hover:border-primary/50'
+                        ? `ring-2 ring-foreground/20 ${getSfidaTierPillClasses(key)} border-transparent`
+                        : `bg-card ${getSfidaTierBoxClasses(key)}`
                     }`}
                   >
-                    <div className="text-sm font-semibold">{config.label}</div>
-                    <div className="mt-0.5 text-xs text-muted-foreground">
-                      {config.questions} domande · {formatDuration(config.durationSeconds)}
+                    <div
+                      className={`text-sm font-semibold ${
+                        selectedTier === key ? '' : 'text-foreground'
+                      }`}
+                    >
+                      {config.label}
+                    </div>
+                    <div className="mt-0.5 text-xs opacity-90">
+                      {config.questions} domande ·{' '}
+                      {formatDuration(config.durationSeconds)}
                     </div>
                   </button>
                 ),

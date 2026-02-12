@@ -14,6 +14,8 @@ export interface TrackAttemptInput {
   answer_given: string;
   quiz_id?: number;
   quiz_pos?: number;
+  /** Per sfide non-full (Speed, Medium, Half): sfida_id al posto di quiz_id */
+  sfida_id?: number;
 }
 
 export interface TrackAttemptOutput {
@@ -26,19 +28,53 @@ export async function trackAttempt(
   userId: string,
   input: TrackAttemptInput,
 ): Promise<TrackAttemptOutput> {
-  const { domanda_id, answer_given, quiz_id, quiz_pos } = input;
+  const { domanda_id, answer_given, quiz_id, quiz_pos, sfida_id } = input;
 
-  // Validazione: quiz_id e quiz_pos devono essere entrambi presenti o entrambi assenti
-  if ((quiz_id !== undefined) !== (quiz_pos !== undefined)) {
-    throw new Error(
-      'quiz_id e quiz_pos devono essere entrambi presenti o entrambi assenti',
-    );
+  // Validazione: (quiz_id E quiz_pos) OPPURE (sfida_id E quiz_pos) per UPDATE, oppure nessuno per INSERT
+  const hasQuiz = quiz_id !== undefined && quiz_pos !== undefined;
+  const hasSfida = sfida_id !== undefined && quiz_pos !== undefined;
+  if (hasQuiz && hasSfida) {
+    throw new Error('Fornire quiz_id O sfida_id, non entrambi');
+  }
+  if (quiz_id !== undefined && quiz_pos === undefined) {
+    throw new Error('quiz_pos richiesto quando quiz_id è fornito');
+  }
+  if (quiz_pos !== undefined && quiz_id === undefined && sfida_id === undefined) {
+    throw new Error('quiz_pos richiede quiz_id o sfida_id');
   }
 
   const is_correct = await verifyAnswer(domanda_id, answer_given);
   const now = new Date().toISOString();
 
-  // Se quiz_id e quiz_pos sono forniti, fa UPDATE della riga esistente
+  // Se sfida_id e quiz_pos sono forniti (sfide non-full), fa UPDATE per sfida_id
+  if (sfida_id !== undefined && quiz_pos !== undefined) {
+    const existingRow = await sql`
+      SELECT id FROM user_domanda_attempt
+      WHERE sfida_id = ${sfida_id}
+        AND quiz_pos = ${quiz_pos}
+        AND user_id = ${userId}
+        AND domanda_id = ${domanda_id}
+    `;
+
+    if (!existingRow || existingRow.length === 0) {
+      throw new Error('Tentativo sfida non trovato');
+    }
+
+    const attempt_id = Number((existingRow[0] as { id: number | string }).id);
+
+    await sql`
+      UPDATE user_domanda_attempt
+      SET
+        answered_at = ${now},
+        answer_given = ${answer_given},
+        is_correct = ${is_correct}
+      WHERE id = ${attempt_id}
+    `;
+
+    return { success: true, is_correct, attempt_id };
+  }
+
+  // Se quiz_id e quiz_pos sono forniti (quiz full), fa UPDATE per quiz_id
   if (quiz_id !== undefined && quiz_pos !== undefined) {
     const existingRow = await sql`
       SELECT id FROM user_domanda_attempt
@@ -56,7 +92,7 @@ export async function trackAttempt(
 
     await sql`
       UPDATE user_domanda_attempt
-      SET 
+      SET
         answered_at = ${now},
         answer_given = ${answer_given},
         is_correct = ${is_correct}
@@ -66,7 +102,7 @@ export async function trackAttempt(
     return { success: true, is_correct, attempt_id };
   }
 
-  // Altrimenti fa INSERT (esercitazione libera)
+  // Nessun quiz_id/sfida_id: INSERT (esercitazione libera)
   const result = await sql`
     INSERT INTO user_domanda_attempt (
       user_id, domanda_id, quiz_id, quiz_pos,

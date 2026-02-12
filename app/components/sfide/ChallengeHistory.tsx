@@ -11,6 +11,8 @@ import { useAuth } from '@clerk/tanstack-react-start';
 import { useNavigate, Link } from '@tanstack/react-router';
 import { orpc } from '~/lib/orpc';
 import { Button } from '~/components/ui/button';
+import { SFIDA_TIERS, getSfidaTierPillClasses } from '~/commons';
+import type { SfidaTier } from '~/commons';
 
 export function ChallengeHistory(): JSX.Element {
   const { userId } = useAuth();
@@ -25,12 +27,19 @@ export function ChallengeHistory(): JSX.Element {
   const sfide = historyQuery.data?.sfide ?? [];
 
   const handleRowClick = useCallback(
-    (quizId: number | null): void => {
-      if (quizId == null) return;
-      void navigate({
-        to: '/main/rivedi-quiz',
-        search: { quizId, back: 'sfide' as const },
-      });
+    (quizId: number | null, sfidaId: number, status: string): void => {
+      if (status !== 'completed') return;
+      if (quizId != null) {
+        void navigate({
+          to: '/main/rivedi-quiz',
+          search: { quizId, back: 'sfide' as const },
+        });
+      } else {
+        void navigate({
+          to: '/main/rivedi-sfida',
+          search: { sfidaId },
+        });
+      }
     },
     [navigate],
   );
@@ -80,8 +89,10 @@ export function ChallengeHistory(): JSX.Element {
                 },
               );
 
-              const isClickable =
-                sfida.status === 'completed' && sfida.my_quiz_id != null;
+              const isClickable = sfida.status === 'completed';
+              const sfidaTypeLabel =
+                SFIDA_TIERS[sfida.sfida_type as SfidaTier]?.label ??
+                sfida.sfida_type;
 
               return (
                 <div
@@ -91,7 +102,12 @@ export function ChallengeHistory(): JSX.Element {
                   tabIndex={isClickable ? 0 : undefined}
                   onClick={
                     isClickable
-                      ? (): void => handleRowClick(sfida.my_quiz_id)
+                      ? (): void =>
+                          handleRowClick(
+                            sfida.my_quiz_id,
+                            sfida.sfida_id,
+                            sfida.status
+                          )
                       : undefined
                   }
                   onKeyDown={
@@ -99,7 +115,11 @@ export function ChallengeHistory(): JSX.Element {
                       ? (e): void => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
-                            handleRowClick(sfida.my_quiz_id);
+                            handleRowClick(
+                              sfida.my_quiz_id,
+                              sfida.sfida_id,
+                              sfida.status
+                            );
                           }
                         }
                       : undefined
@@ -131,8 +151,15 @@ export function ChallengeHistory(): JSX.Element {
                     <span className="truncate text-sm font-medium">
                       {sfida.opponent_username ?? sfida.opponent_name}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                       {dateStr}
+                      {sfidaTypeLabel && (
+                        <span
+                          className={`shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${getSfidaTierPillClasses(sfida.sfida_type)}`}
+                        >
+                          {sfidaTypeLabel}
+                        </span>
+                      )}
                     </span>
                   </div>
 

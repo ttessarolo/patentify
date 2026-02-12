@@ -102,6 +102,7 @@ export const abortSfidaOutputSchema = z.object({
 
 export const sfidaHistoryRowSchema = z.object({
   sfida_id: z.number().int(),
+  sfida_type: sfidaTierSchema,
   created_at: z.string(),
   opponent_id: z.string(),
   opponent_name: z.string(),
@@ -129,6 +130,41 @@ export const getSfideHistoryAllInputSchema = z.object({
 });
 
 export const getSfideHistoryAllOutputSchema = sfidaHistoryOutputSchema;
+
+// ============================================================
+// getFullSfida
+// ============================================================
+
+export const getFullSfidaInputSchema = z.object({
+  sfida_id: z.number().int().positive(),
+});
+
+const sfidaDomandaWithAnswerSchema = z.object({
+  quiz_pos: z.number().int(),
+  domanda: z.object({
+    id: z.number().int(),
+    ire_plus: z.number().nullable(),
+    domanda: z.string().nullable(),
+    risposta: z.string().nullable(),
+    ambiguita: z.number().nullable(),
+    ambiguita_triggers: z.string().nullable(),
+    difficolta: z.number().nullable(),
+    difficolta_fattori: z.string().nullable(),
+    titolo_quesito: z.string().nullable(),
+    id_quesito: z.string().nullable(),
+    ire: z.number().nullable(),
+    immagine_path: z.string().nullable(),
+  }),
+  answer_given: z.string().nullable(),
+  is_correct: z.boolean().nullable(),
+});
+
+export const getFullSfidaOutputSchema = z.object({
+  sfida_id: z.number().int(),
+  sfida_type: sfidaTierSchema,
+  question_count: z.number().int(),
+  domande: z.array(sfidaDomandaWithAnswerSchema),
+});
 
 // ============================================================
 // getSfidaDomanda

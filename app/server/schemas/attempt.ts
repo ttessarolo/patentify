@@ -9,6 +9,8 @@ export const trackAttemptInputSchema = z.object({
   answer_given: z.string(),
   quiz_id: z.number().int().positive().optional(),
   quiz_pos: z.number().int().min(1).max(40).optional(),
+  /** Per sfide non-full: sfida_id al posto di quiz_id */
+  sfida_id: z.number().int().positive().optional(),
 });
 
 export const trackAttemptOutputSchema = z.object({

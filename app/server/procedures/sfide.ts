@@ -21,6 +21,8 @@ import {
   getOnlineUsersDetailsInputSchema,
   getOnlineUsersDetailsOutputSchema,
   getSfidaDomandaInputSchema,
+  getFullSfidaInputSchema,
+  getFullSfidaOutputSchema,
 } from '../schemas/sfide';
 import { getQuizDomandaOutputSchema } from '../schemas/quiz';
 import * as sfideService from '../services/sfide.service';
@@ -197,6 +199,27 @@ export const getOnlineUsersDetails = authProcedure
         context.userId,
         input.userIds,
       );
+    },
+  );
+
+// ============================================================
+// getFullSfida
+// ============================================================
+
+export const getFullSfidaProcedure = authProcedure
+  .route({
+    method: 'GET',
+    path: '/sfide/full',
+    summary: 'Recupera domande e risposte di una sfida completata (non-full)',
+  })
+  .input(getFullSfidaInputSchema)
+  .output(getFullSfidaOutputSchema)
+  .handler(
+    async ({
+      input,
+      context,
+    }): Promise<z.infer<typeof getFullSfidaOutputSchema>> => {
+      return sfideService.getFullSfida(input.sfida_id, context.userId);
     },
   );
 

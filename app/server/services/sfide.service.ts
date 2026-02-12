@@ -37,6 +37,7 @@ interface CompleteSfidaResult {
 
 interface SfidaHistoryRow {
   sfida_id: number;
+  sfida_type: SfidaTier;
   created_at: string;
   opponent_id: string;
   opponent_name: string;
@@ -465,6 +466,129 @@ export async function getSfidaResult(
 }
 
 // ============================================================
+// getFullSfida
+// ============================================================
+
+interface SfidaDomandaWithAnswer {
+  quiz_pos: number;
+  domanda: {
+    id: number;
+    ire_plus: number | null;
+    domanda: string | null;
+    risposta: string | null;
+    ambiguita: number | null;
+    ambiguita_triggers: string | null;
+    difficolta: number | null;
+    difficolta_fattori: string | null;
+    titolo_quesito: string | null;
+    id_quesito: string | null;
+    ire: number | null;
+    immagine_path: string | null;
+  };
+  answer_given: string | null;
+  is_correct: boolean | null;
+}
+
+interface FullSfidaResult {
+  sfida_id: number;
+  sfida_type: SfidaTier;
+  question_count: number;
+  domande: SfidaDomandaWithAnswer[];
+}
+
+/**
+ * Ritorna le domande con risposte per una sfida completata (non-full).
+ * Le sfide full hanno quiz_id e usano quiz.getFull; le sfide non-full
+ * usano questa funzione.
+ */
+export async function getFullSfida(
+  sfidaId: number,
+  userId: string,
+): Promise<FullSfidaResult> {
+  const sfidaResult = await sql`
+    SELECT sfida_type, question_count, player_a_id, player_b_id
+    FROM sfide
+    WHERE id = ${sfidaId}
+  `;
+
+  if (!sfidaResult || sfidaResult.length === 0) {
+    throw new Error('Sfida non trovata');
+  }
+
+  const sfida = sfidaResult[0] as {
+    sfida_type: string;
+    question_count: number;
+    player_a_id: string;
+    player_b_id: string;
+  };
+
+  const isParticipant =
+    userId === sfida.player_a_id || userId === sfida.player_b_id;
+  if (!isParticipant) {
+    throw new Error('Utente non partecipante alla sfida');
+  }
+
+  const domandeResult = await sql`
+    SELECT
+      uda.quiz_pos, uda.answer_given, uda.is_correct,
+      d.id, d.ire_plus, d.domanda, d.risposta,
+      d.ambiguita, d.ambiguita_triggers,
+      d.difficolta, d.difficolta_fattori,
+      d.titolo_quesito, d.id_quesito, d.ire, d.immagine_path
+    FROM user_domanda_attempt uda
+    JOIN domande d ON d.id = uda.domanda_id
+    WHERE uda.sfida_id = ${sfidaId} AND uda.user_id = ${userId}
+      AND uda.answered_at IS NOT NULL
+    ORDER BY uda.quiz_pos ASC
+  `;
+
+  const domande: SfidaDomandaWithAnswer[] = (
+    domandeResult as Array<{
+      quiz_pos: number;
+      answer_given: string | null;
+      is_correct: boolean | null;
+      id: number;
+      ire_plus: number | null;
+      domanda: string | null;
+      risposta: string | null;
+      ambiguita: number | null;
+      ambiguita_triggers: string | null;
+      difficolta: number | null;
+      difficolta_fattori: string | null;
+      titolo_quesito: string | null;
+      id_quesito: string | null;
+      ire: number | null;
+      immagine_path: string | null;
+    }>
+  ).map((row) => ({
+    quiz_pos: row.quiz_pos,
+    answer_given: row.answer_given,
+    is_correct: row.is_correct,
+    domanda: {
+      id: row.id,
+      ire_plus: row.ire_plus,
+      domanda: row.domanda,
+      risposta: row.risposta,
+      ambiguita: row.ambiguita,
+      ambiguita_triggers: row.ambiguita_triggers,
+      difficolta: row.difficolta,
+      difficolta_fattori: row.difficolta_fattori,
+      titolo_quesito: row.titolo_quesito,
+      id_quesito: row.id_quesito,
+      ire: row.ire,
+      immagine_path: row.immagine_path,
+    },
+  }));
+
+  return {
+    sfida_id: sfidaId,
+    sfida_type: sfida.sfida_type as SfidaTier,
+    question_count: Number(sfida.question_count),
+    domande,
+  };
+}
+
+// ============================================================
 // abortSfidaForPlayer
 // ============================================================
 
@@ -538,6 +662,7 @@ export async function getSfideHistory(
   const result = await sql`
     SELECT
       s.id as sfida_id,
+      s.sfida_type,
       s.created_at::text,
       s.winner_id,
       s.status,
@@ -578,19 +703,22 @@ export async function getSfideHistory(
   `;
 
   return {
-    sfide: (result as SfidaHistoryRow[]).map((row) => ({
-      sfida_id: Number(row.sfida_id),
-      created_at: row.created_at,
-      opponent_id: row.opponent_id,
-      opponent_name: row.opponent_name,
-      opponent_username: row.opponent_username,
-      opponent_image_url: row.opponent_image_url,
-      winner_id: row.winner_id,
-      status: row.status as SfidaStatus,
-      my_correct: Number(row.my_correct),
-      opponent_correct: Number(row.opponent_correct),
-      my_quiz_id: row.my_quiz_id != null ? Number(row.my_quiz_id) : null,
-    })),
+    sfide: (result as (SfidaHistoryRow & { sfida_type: string })[]).map(
+      (row) => ({
+        sfida_id: Number(row.sfida_id),
+        sfida_type: row.sfida_type as SfidaTier,
+        created_at: row.created_at,
+        opponent_id: row.opponent_id,
+        opponent_name: row.opponent_name,
+        opponent_username: row.opponent_username,
+        opponent_image_url: row.opponent_image_url,
+        winner_id: row.winner_id,
+        status: row.status as SfidaStatus,
+        my_correct: Number(row.my_correct),
+        opponent_correct: Number(row.opponent_correct),
+        my_quiz_id: row.my_quiz_id != null ? Number(row.my_quiz_id) : null,
+      }),
+    ),
   };
 }
 
@@ -617,6 +745,7 @@ export async function getSfideHistoryAll(
   const result = await sql`
     SELECT
       s.id as sfida_id,
+      s.sfida_type,
       s.created_at::text,
       s.winner_id,
       s.status,
@@ -657,19 +786,22 @@ export async function getSfideHistoryAll(
   `;
 
   return {
-    sfide: (result as SfidaHistoryRow[]).map((row) => ({
-      sfida_id: Number(row.sfida_id),
-      created_at: row.created_at,
-      opponent_id: row.opponent_id,
-      opponent_name: row.opponent_name,
-      opponent_username: row.opponent_username,
-      opponent_image_url: row.opponent_image_url,
-      winner_id: row.winner_id,
-      status: row.status as SfidaStatus,
-      my_correct: Number(row.my_correct),
-      opponent_correct: Number(row.opponent_correct),
-      my_quiz_id: row.my_quiz_id != null ? Number(row.my_quiz_id) : null,
-    })),
+    sfide: (result as (SfidaHistoryRow & { sfida_type: string })[]).map(
+      (row) => ({
+        sfida_id: Number(row.sfida_id),
+        sfida_type: row.sfida_type as SfidaTier,
+        created_at: row.created_at,
+        opponent_id: row.opponent_id,
+        opponent_name: row.opponent_name,
+        opponent_username: row.opponent_username,
+        opponent_image_url: row.opponent_image_url,
+        winner_id: row.winner_id,
+        status: row.status as SfidaStatus,
+        my_correct: Number(row.my_correct),
+        opponent_correct: Number(row.opponent_correct),
+        my_quiz_id: row.my_quiz_id != null ? Number(row.my_quiz_id) : null,
+      }),
+    ),
   };
 }
 

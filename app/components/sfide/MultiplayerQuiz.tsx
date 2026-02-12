@@ -325,12 +325,21 @@ export function MultiplayerQuiz({
       let newWrongCount = wrongCount;
 
       try {
-        const result = await trackMutation.mutateAsync({
-          domanda_id: domandaId,
-          answer_given: answerGiven,
-          quiz_id: quizId,
-          quiz_pos: currentPos,
-        });
+        const result = await trackMutation.mutateAsync(
+          isFullQuiz
+            ? {
+                domanda_id: domandaId,
+                answer_given: answerGiven,
+                quiz_id: quizId,
+                quiz_pos: currentPos,
+              }
+            : {
+                domanda_id: domandaId,
+                answer_given: answerGiven,
+                sfida_id: sfidaId,
+                quiz_pos: currentPos,
+              }
+        );
 
         if (result.is_correct) {
           newCorrectCount = correctCount + 1;
@@ -348,6 +357,15 @@ export function MultiplayerQuiz({
       } catch (error) {
         console.error('Errore nel tracciamento risposta:', error);
       }
+
+      // Accumula wrongAnswers aggiornato per onComplete (evita stale closure)
+      const updatedWrongAnswers =
+        !domandaQuery.data || newWrongCount === wrongCount
+          ? wrongAnswers
+          : [
+              ...wrongAnswers,
+              { domanda: domandaQuery.data.domanda, answerGiven },
+            ];
 
       // Pubblica progresso su Ably
       if (gameChannelRef.current) {
@@ -406,7 +424,7 @@ export function MultiplayerQuiz({
                   wrongCount: newWrongCount,
                   promosso,
                   finalTotalSeconds: finalSeconds,
-                  wrongAnswers,
+                  wrongAnswers: updatedWrongAnswers,
                   opponentCorrect: opponentServerCorrect,
                   winnerId: data.winner_id,
                 });
@@ -445,14 +463,16 @@ export function MultiplayerQuiz({
 
     void (async (): Promise<void> => {
       try {
-        // Recupera i dati reali dal server
+        // Recupera i dati reali dal server (source of truth per avoidare stale closure)
         const result = await client.sfide.result({ sfida_id: sfidaId });
         if (cancelled) return;
 
-        const promosso = wrongCount <= MAX_ERRORS;
+        const myCorrect = result.my_correct;
+        const myWrong = questionCount - myCorrect;
+        const promosso = sfidaType === 'full' ? myWrong <= MAX_ERRORS : false;
         onComplete({
-          correctCount,
-          wrongCount,
+          correctCount: myCorrect,
+          wrongCount: myWrong,
           promosso,
           finalTotalSeconds: lastElapsedRef.current,
           wrongAnswers,
@@ -462,7 +482,7 @@ export function MultiplayerQuiz({
       } catch {
         if (cancelled) return;
         // Fallback: mostra risultati con dati locali se la chiamata fallisce
-        const promosso = wrongCount <= MAX_ERRORS;
+        const promosso = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
         onComplete({
           correctCount,
           wrongCount,
@@ -486,6 +506,8 @@ export function MultiplayerQuiz({
     wrongCount,
     wrongAnswers,
     onComplete,
+    questionCount,
+    sfidaType,
   ]);
 
   // ---- Polling fallback: verifica server ogni 4s quando in attesa avversario ----
@@ -497,10 +519,12 @@ export function MultiplayerQuiz({
         const result = await client.sfide.result({ sfida_id: sfidaId });
         if (result.both_finished) {
           clearInterval(interval);
-          const promossoValue = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
+          const myCorrect = result.my_correct;
+          const myWrong = questionCount - myCorrect;
+          const promossoValue = sfidaType === 'full' ? myWrong <= MAX_ERRORS : false;
           onComplete({
-            correctCount,
-            wrongCount,
+            correctCount: myCorrect,
+            wrongCount: myWrong,
             promosso: promossoValue,
             finalTotalSeconds: lastElapsedRef.current,
             wrongAnswers,
@@ -516,7 +540,7 @@ export function MultiplayerQuiz({
     return (): void => {
       clearInterval(interval);
     };
-  }, [status, sfidaId, correctCount, wrongCount, wrongAnswers, onComplete, sfidaType]);
+  }, [status, sfidaId, wrongAnswers, onComplete, sfidaType, questionCount]);
 
   // ---- Abandon handler ----
   const handleConfirmAbandon = useCallback((): void => {
@@ -556,19 +580,22 @@ export function MultiplayerQuiz({
       try {
         const result = await client.sfide.result({ sfida_id: sfidaId });
         if (result.both_finished) {
-          // L'avversario ha già finito, mostra risultati completi
           setPendingSfidaCompletion(null);
+          const myCorrect = result.my_correct;
+          const myWrong = questionCount - myCorrect;
           onComplete({
-            ...localResult,
+            correctCount: myCorrect,
+            wrongCount: myWrong,
+            promosso: sfidaType === 'full' ? myWrong <= MAX_ERRORS : false,
+            finalTotalSeconds: lastElapsedRef.current,
+            wrongAnswers,
             opponentCorrect: result.opponent_correct,
             winnerId: result.winner_id,
           });
         } else {
-          // L'avversario non ha ancora finito, mostra risultati parziali
           onComplete(localResult);
         }
       } catch {
-        // Se fallisce, usa i dati locali
         onComplete(localResult);
       }
     })();
@@ -667,9 +694,12 @@ export function MultiplayerQuiz({
   // Render — Quiz in corso
   // ============================================================
   return (
-    <div className="mx-auto max-w-2xl px-4 py-4" onClick={resetInactivity}>
-      {/* Header */}
-      <div className="mb-4 flex items-center justify-between rounded-lg bg-card p-3 shadow-sm">
+    <div
+      className="mx-auto w-full max-w-2xl px-4 py-4"
+      onClick={resetInactivity}
+    >
+      {/* Header — dimensione fissa orizzontale (non si restringe durante loading) */}
+      <div className="mb-4 flex shrink-0 items-center justify-between rounded-lg bg-card p-3 shadow-sm">
         {/* Sinistra: posizione + bottone abbandona */}
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold">
@@ -697,8 +727,8 @@ export function MultiplayerQuiz({
         />
       </div>
 
-      {/* Barra progresso avversario */}
-      <div className="mb-4 rounded-lg border border-border bg-card/50 px-3 py-2">
+      {/* Barra progresso avversario — dimensione fissa (non si restringe durante loading) */}
+      <div className="mb-4 shrink-0 rounded-lg border border-border bg-card/50 px-3 py-2">
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">{opponentName}:</span>
           <span
