@@ -94,6 +94,7 @@ export const completeSfida = authProcedure
         input.sfida_id,
         context.userId,
         input.correct_count,
+        input.elapsed_seconds,
       );
     },
   );
@@ -161,6 +162,7 @@ export const forfeitSfida = authProcedure
         input.sfida_id,
         context.userId,
         input.correct_count,
+        input.elapsed_seconds,
       );
     },
   );

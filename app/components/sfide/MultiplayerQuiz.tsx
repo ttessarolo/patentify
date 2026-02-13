@@ -71,6 +71,8 @@ export interface MultiplayerQuizResult {
   opponentCorrect: number | null;
   /** ID del vincitore (dal server, undefined se non disponibile) */
   winnerId: string | null | undefined;
+  /** Tempo impiegato dall'avversario in secondi (dal server, null se non disponibile) */
+  opponentTotalSeconds: number | null;
 }
 
 /** Timeout inattivita durante la sfida: 2 minuti */
@@ -297,7 +299,7 @@ export function MultiplayerQuiz({
           abortedRef.current = true;
           setStatus('abandoned');
           forfeitSfidaMutation.mutate(
-            { sfida_id: sfidaId, correct_count: correctCount },
+            { sfida_id: sfidaId, correct_count: correctCount, elapsed_seconds: lastElapsedRef.current },
             {
               onSuccess: async (data) => {
                 // Pubblica forfeit su Ably per notificare l'avversario
@@ -322,6 +324,7 @@ export function MultiplayerQuiz({
                   wrongAnswers,
                   opponentCorrect: data.opponent_correct,
                   winnerId: data.winner_id,
+                  opponentTotalSeconds: data.opponent_elapsed_seconds,
                 });
               },
             },
@@ -355,7 +358,7 @@ export function MultiplayerQuiz({
     abortedRef.current = true;
     setStatus('time_expired');
     forfeitSfidaMutation.mutate(
-      { sfida_id: sfidaId, correct_count: correctCount },
+      { sfida_id: sfidaId, correct_count: correctCount, elapsed_seconds: lastElapsedRef.current },
       {
         onSuccess: async (data) => {
           // Pubblica forfeit su Ably per notificare l'avversario
@@ -380,6 +383,7 @@ export function MultiplayerQuiz({
             wrongAnswers,
             opponentCorrect: data.opponent_correct,
             winnerId: data.winner_id,
+            opponentTotalSeconds: data.opponent_elapsed_seconds,
           });
         },
       },
@@ -461,7 +465,7 @@ export function MultiplayerQuiz({
 
         // Completa la sfida per questo player
         completeSfidaMutation.mutate(
-          { sfida_id: sfidaId, correct_count: newCorrectCount },
+          { sfida_id: sfidaId, correct_count: newCorrectCount, elapsed_seconds: finalSeconds },
           {
             onSuccess: async (data) => {
               // Pubblica finish su Ably — AWAIT per evitare race condition
@@ -489,6 +493,7 @@ export function MultiplayerQuiz({
                   wrongAnswers: updatedWrongAnswers,
                   opponentCorrect: data.opponent_correct,
                   winnerId: data.winner_id,
+                  opponentTotalSeconds: data.opponent_elapsed_seconds,
                 });
               }
             },
@@ -536,10 +541,11 @@ export function MultiplayerQuiz({
           correctCount: myCorrect,
           wrongCount: myWrong,
           promosso,
-          finalTotalSeconds: lastElapsedRef.current,
+          finalTotalSeconds: result.my_elapsed_seconds ?? lastElapsedRef.current,
           wrongAnswers,
           opponentCorrect: result.opponent_correct,
           winnerId: result.winner_id,
+          opponentTotalSeconds: result.opponent_elapsed_seconds,
         });
       } catch {
         if (cancelled) return;
@@ -553,6 +559,7 @@ export function MultiplayerQuiz({
           wrongAnswers,
           opponentCorrect: null,
           winnerId: undefined,
+          opponentTotalSeconds: null,
         });
       }
     })();
@@ -588,10 +595,11 @@ export function MultiplayerQuiz({
             correctCount: myCorrect,
             wrongCount: myWrong,
             promosso: promossoValue,
-            finalTotalSeconds: lastElapsedRef.current,
+            finalTotalSeconds: result.my_elapsed_seconds ?? lastElapsedRef.current,
             wrongAnswers,
             opponentCorrect: result.opponent_correct,
             winnerId: result.winner_id,
+            opponentTotalSeconds: result.opponent_elapsed_seconds,
           });
         }
       } catch {
@@ -626,10 +634,11 @@ export function MultiplayerQuiz({
           correctCount: myCorrect,
           wrongCount: myWrong,
           promosso,
-          finalTotalSeconds: lastElapsedRef.current,
+          finalTotalSeconds: result.my_elapsed_seconds ?? lastElapsedRef.current,
           wrongAnswers,
           opponentCorrect: result.opponent_correct,
           winnerId: result.winner_id,
+          opponentTotalSeconds: result.opponent_elapsed_seconds,
         });
       } catch {
         if (cancelled) return;
@@ -643,6 +652,7 @@ export function MultiplayerQuiz({
           wrongAnswers,
           opponentCorrect: null,
           winnerId: undefined,
+          opponentTotalSeconds: null,
         });
       }
     })();
@@ -669,7 +679,7 @@ export function MultiplayerQuiz({
     setAbandonDialogOpen(false);
     setStatus('abandoned');
     forfeitSfidaMutation.mutate(
-      { sfida_id: sfidaId, correct_count: correctCount },
+      { sfida_id: sfidaId, correct_count: correctCount, elapsed_seconds: lastElapsedRef.current },
       {
         onSuccess: async (data) => {
           if (gameChannelRef.current) {
@@ -693,6 +703,7 @@ export function MultiplayerQuiz({
             wrongAnswers,
             opponentCorrect: data.opponent_correct,
             winnerId: data.winner_id,
+            opponentTotalSeconds: data.opponent_elapsed_seconds,
           });
         },
       },
@@ -712,6 +723,7 @@ export function MultiplayerQuiz({
       wrongAnswers,
       opponentCorrect: null,
       winnerId: undefined,
+      opponentTotalSeconds: null,
     };
 
     // Imposta pending completion nello store per la notifica globale
@@ -735,10 +747,11 @@ export function MultiplayerQuiz({
             correctCount: myCorrect,
             wrongCount: myWrong,
             promosso: sfidaType === 'full' ? myWrong <= MAX_ERRORS : false,
-            finalTotalSeconds: lastElapsedRef.current,
+            finalTotalSeconds: result.my_elapsed_seconds ?? lastElapsedRef.current,
             wrongAnswers,
             opponentCorrect: result.opponent_correct,
             winnerId: result.winner_id,
+            opponentTotalSeconds: result.opponent_elapsed_seconds,
           });
         } else {
           onComplete(localResult);

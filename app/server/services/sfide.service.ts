@@ -33,6 +33,8 @@ interface CompleteSfidaResult {
   opponent_correct: number;
   /** Promosso/bocciato — solo per sfide full. null per altri tier. */
   promosso: boolean | null;
+  /** Tempo impiegato dall'avversario in secondi (null se non ha ancora finito) */
+  opponent_elapsed_seconds: number | null;
 }
 
 interface SfidaHistoryRow {
@@ -273,6 +275,7 @@ export async function completeSfida(
   sfidaId: number,
   playerId: string,
   correctCount: number,
+  elapsedSeconds: number,
 ): Promise<CompleteSfidaResult> {
   // Identifica se il player è A o B
   const sfidaResult = await sql`
@@ -309,17 +312,19 @@ export async function completeSfida(
     throw new Error('Utente non partecipante alla sfida');
   }
 
-  // Aggiorna il conteggio e il flag finished per il player
+  // Aggiorna il conteggio, il flag finished e il tempo impiegato per il player
   if (isPlayerA) {
     await sql`
       UPDATE sfide
-      SET player_a_correct = ${correctCount}, player_a_finished = true
+      SET player_a_correct = ${correctCount}, player_a_finished = true,
+          player_a_elapsed_seconds = ${elapsedSeconds}
       WHERE id = ${sfidaId}
     `;
   } else {
     await sql`
       UPDATE sfide
-      SET player_b_correct = ${correctCount}, player_b_finished = true
+      SET player_b_correct = ${correctCount}, player_b_finished = true,
+          player_b_elapsed_seconds = ${elapsedSeconds}
       WHERE id = ${sfidaId}
     `;
   }
@@ -328,7 +333,8 @@ export async function completeSfida(
   const freshResult = await sql`
     SELECT player_a_finished, player_b_finished,
            player_a_correct, player_b_correct,
-           player_a_id, player_b_id
+           player_a_id, player_b_id,
+           player_a_elapsed_seconds, player_b_elapsed_seconds
     FROM sfide WHERE id = ${sfidaId}
   `;
   const fresh = freshResult[0] as {
@@ -338,6 +344,8 @@ export async function completeSfida(
     player_b_correct: number;
     player_a_id: string;
     player_b_id: string;
+    player_a_elapsed_seconds: number | null;
+    player_b_elapsed_seconds: number | null;
   };
 
   const updatedA = Number(fresh.player_a_correct);
@@ -375,6 +383,11 @@ export async function completeSfida(
         : null
     : null;
 
+  // Tempo impiegato dall'avversario (null se non ha ancora finito)
+  const opponentElapsedSeconds = isPlayerA
+    ? fresh.player_b_elapsed_seconds != null ? Number(fresh.player_b_elapsed_seconds) : null
+    : fresh.player_a_elapsed_seconds != null ? Number(fresh.player_a_elapsed_seconds) : null;
+
   return {
     success: true,
     both_finished: bothFinished,
@@ -382,6 +395,7 @@ export async function completeSfida(
     my_correct: isPlayerA ? updatedA : updatedB,
     opponent_correct: isPlayerA ? updatedB : updatedA,
     promosso,
+    opponent_elapsed_seconds: opponentElapsedSeconds,
   };
 }
 
@@ -398,6 +412,8 @@ interface SfidaResultData {
   sfida_type: SfidaTier;
   question_count: number;
   duration_seconds: number;
+  my_elapsed_seconds: number | null;
+  opponent_elapsed_seconds: number | null;
 }
 
 /**
@@ -412,6 +428,7 @@ export async function getSfidaResult(
     SELECT player_a_id, player_b_id,
            player_a_correct, player_b_correct,
            player_a_finished, player_b_finished,
+           player_a_elapsed_seconds, player_b_elapsed_seconds,
            winner_id, status,
            sfida_type, question_count, duration_seconds
     FROM sfide
@@ -429,6 +446,8 @@ export async function getSfidaResult(
     player_b_correct: number;
     player_a_finished: boolean;
     player_b_finished: boolean;
+    player_a_elapsed_seconds: number | null;
+    player_b_elapsed_seconds: number | null;
     winner_id: string | null;
     status: string;
     sfida_type: string;
@@ -464,6 +483,12 @@ export async function getSfidaResult(
     sfida_type: sfida.sfida_type as SfidaTier,
     question_count: Number(sfida.question_count),
     duration_seconds: Number(sfida.duration_seconds),
+    my_elapsed_seconds: isPlayerA
+      ? sfida.player_a_elapsed_seconds != null ? Number(sfida.player_a_elapsed_seconds) : null
+      : sfida.player_b_elapsed_seconds != null ? Number(sfida.player_b_elapsed_seconds) : null,
+    opponent_elapsed_seconds: isPlayerA
+      ? sfida.player_b_elapsed_seconds != null ? Number(sfida.player_b_elapsed_seconds) : null
+      : sfida.player_a_elapsed_seconds != null ? Number(sfida.player_a_elapsed_seconds) : null,
   };
 }
 
@@ -661,6 +686,7 @@ interface ForfeitSfidaResult {
   my_correct: number;
   opponent_correct: number;
   promosso: boolean | null;
+  opponent_elapsed_seconds: number | null;
 }
 
 /**
@@ -676,11 +702,13 @@ export async function forfeitSfida(
   sfidaId: number,
   playerId: string,
   correctCount: number,
+  elapsedSeconds: number,
 ): Promise<ForfeitSfidaResult> {
   const sfidaResult = await sql`
     SELECT player_a_id, player_b_id,
            player_a_finished, player_b_finished,
            player_a_correct, player_b_correct,
+           player_a_elapsed_seconds, player_b_elapsed_seconds,
            quiz_id_a, quiz_id_b,
            status, sfida_type, question_count
     FROM sfide
@@ -698,6 +726,8 @@ export async function forfeitSfida(
     player_b_finished: boolean;
     player_a_correct: number;
     player_b_correct: number;
+    player_a_elapsed_seconds: number | null;
+    player_b_elapsed_seconds: number | null;
     quiz_id_a: number | null;
     quiz_id_b: number | null;
     status: string;
@@ -717,17 +747,19 @@ export async function forfeitSfida(
 
   const opponentId = isPlayerA ? sfida.player_b_id : sfida.player_a_id;
 
-  // 1. Marca il player come finished con il suo correctCount
+  // 1. Marca il player come finished con il suo correctCount e tempo
   if (isPlayerA) {
     await sql`
       UPDATE sfide
-      SET player_a_correct = ${correctCount}, player_a_finished = true
+      SET player_a_correct = ${correctCount}, player_a_finished = true,
+          player_a_elapsed_seconds = ${elapsedSeconds}
       WHERE id = ${sfidaId}
     `;
   } else {
     await sql`
       UPDATE sfide
-      SET player_b_correct = ${correctCount}, player_b_finished = true
+      SET player_b_correct = ${correctCount}, player_b_finished = true,
+          player_b_elapsed_seconds = ${elapsedSeconds}
       WHERE id = ${sfidaId}
     `;
   }
@@ -804,6 +836,11 @@ export async function forfeitSfida(
     promosso = wrongCount <= MAX_ERRORS;
   }
 
+  // Tempo dell'avversario (se aveva già finito prima del forfeit)
+  const opponentElapsedSeconds = isPlayerA
+    ? sfida.player_b_elapsed_seconds != null ? Number(sfida.player_b_elapsed_seconds) : null
+    : sfida.player_a_elapsed_seconds != null ? Number(sfida.player_a_elapsed_seconds) : null;
+
   return {
     success: true,
     both_finished: true,
@@ -811,6 +848,7 @@ export async function forfeitSfida(
     my_correct: correctCount,
     opponent_correct: opponentCorrect,
     promosso,
+    opponent_elapsed_seconds: opponentElapsedSeconds,
   };
 }
 

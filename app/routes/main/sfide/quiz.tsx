@@ -97,6 +97,7 @@ function SfidaQuizPage(): JSX.Element {
         sfidaType={sfidaType as SfidaTier}
         challengeStillInProgress={challengeStillInProgress}
         questionCount={questionCount}
+        opponentTotalSeconds={result.opponentTotalSeconds}
       />
     );
   }

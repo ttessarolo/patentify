@@ -37,6 +37,8 @@ interface ChallengeResultsProps {
   challengeStillInProgress?: boolean;
   /** Numero totale di domande nella sfida */
   questionCount?: number;
+  /** Tempo impiegato dall'avversario in secondi (dal server, null se non disponibile) */
+  opponentTotalSeconds?: number | null;
 }
 
 export function ChallengeResults({
@@ -52,6 +54,7 @@ export function ChallengeResults({
   sfidaType = 'full',
   challengeStillInProgress = false,
   questionCount = 40,
+  opponentTotalSeconds = null,
 }: ChallengeResultsProps): JSX.Element {
   // Safeguard: se winnerId è null ma i punteggi sono diversi,
   // determina il vincitore dai punteggi (fallback per race condition server)
@@ -202,7 +205,11 @@ export function ChallengeResults({
             <TimelapseIcon className="h-4 w-4 text-blue-500" />
             <span className="text-xs text-muted-foreground">Tempo</span>
           </div>
-          <span className="text-sm font-medium text-muted-foreground">-</span>
+          <span className="text-sm font-medium">
+            {opponentTotalSeconds != null
+              ? formatSecondsToHHMMSS(opponentTotalSeconds)
+              : '-'}
+          </span>
         </div>
       </div>
 

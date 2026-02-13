@@ -243,6 +243,7 @@ function ErroriRicorrentiIndex(): JSX.Element {
             linkText="Vedi Tutte"
             period={period}
             userId={userId}
+            showSelectionGlow={true}
           />
         </SectionReveal>
       </div>
@@ -260,6 +261,7 @@ interface DomandeContentProps {
   linkText: string;
   period: TimePeriod;
   userId: string | null | undefined;
+  showSelectionGlow?: boolean;
 }
 
 function DomandeContent({
@@ -268,6 +270,7 @@ function DomandeContent({
   linkText,
   period,
   userId,
+  showSelectionGlow = false,
 }: DomandeContentProps): JSX.Element {
   // Handler vuoto per readOnly mode
   const handleAnswer = (): void => {
@@ -294,6 +297,7 @@ function DomandeContent({
             readOnly={true}
             initialAnswer={d.ultima_risposta ?? undefined}
             userId={userId}
+            showSelectionGlow={showSelectionGlow}
           />
         ))}
       </div>

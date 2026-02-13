@@ -1,4 +1,4 @@
-import type { JSX } from 'react';
+import type { CSSProperties, JSX } from 'react';
 import { useCallback, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Card, CardContent } from '~/components/ui/card';
@@ -55,6 +55,13 @@ export interface DomandaCardProps {
    * Se fornita, la card mostra subito il feedback visivo verde/rosso.
    */
   initialAnswer?: string;
+  /**
+   * Se true, mostra un ring colorato + glow evidente sul bottone selezionato
+   * per evidenziare la risposta dell'utente (verde se corretta, rosso se sbagliata).
+   * Se false, mostra un ring grigio neutro (default per contesti statistici come Errori Ricorrenti).
+   * Default: true.
+   */
+  showSelectionGlow?: boolean;
 }
 
 const IMAGE_PREFIX_PATH = import.meta.env.VITE_IMAGE_PREFIX_PATH ?? '';
@@ -84,6 +91,7 @@ export function DomandaCard({
   learning = true,
   readOnly = false,
   initialAnswer,
+  showSelectionGlow = true,
 }: DomandaCardProps): JSX.Element {
   // Calcola se iniziare in stato "già risposta" (per modalità readOnly con initialAnswer)
   const isPreAnswered = readOnly && initialAnswer != null;
@@ -257,17 +265,39 @@ export function DomandaCard({
       (isCorrect && selectedAnswer === buttonValue) ||
       (!isCorrect && selectedAnswer !== buttonValue);
 
-    // Aggiungi ring per evidenziare il bottone cliccato dall'utente
-    const isSelected = selectedAnswer === buttonValue;
-    const selectedRing = isSelected
-      ? 'ring-2 ring-white dark:ring-gray-300 ring-offset-1'
-      : '';
+    // Override disabled:opacity-50 del Button per mantenere i colori visibili
+    const opacityOverride = 'disabled:opacity-100';
 
     if (isThisButtonCorrect) {
-      return `border-2 border-green-500 bg-green-500/20 text-green-700 dark:text-green-400 ${selectedRing}`;
+      return `border-2 border-green-500 bg-green-500/20 text-green-700 dark:text-green-400 ${opacityOverride}`;
     } else {
-      return `border-2 border-red-500 bg-red-500/20 text-red-700 dark:text-red-400 ${selectedRing}`;
+      return `border-2 border-red-500 bg-red-500/20 text-red-700 dark:text-red-400 ${opacityOverride}`;
     }
+  };
+
+  // Stile inline per il box-shadow (ring + glow) sul bottone selezionato dall'utente
+  const getButtonGlowStyle = (buttonValue: string): CSSProperties => {
+    if (!answered || isCorrect === null || selectedAnswer !== buttonValue) {
+      return {};
+    }
+
+    // Glow solo se l'utente ha risposto correttamente e showSelectionGlow è attivo
+    if (showSelectionGlow && isCorrect) {
+      // Colore del glow basato sul valore della risposta: verde=Vero, rosso=Falso
+      const isVero = selectedAnswer === 'Vero';
+      const ringColor = isVero ? '#22c55e' : '#ef4444';
+      const glowRgba = isVero
+        ? 'rgba(34, 197, 94, 0.6)'
+        : 'rgba(239, 68, 68, 0.6)';
+      return {
+        boxShadow: `0 0 0 1px var(--background, #fff), 0 0 0 3px ${ringColor}, 0 0 20px 6px ${glowRgba}`,
+      };
+    }
+
+    // Ring grigio neutro per risposta sbagliata o contesti statistici
+    return {
+      boxShadow: '0 0 0 1px var(--background, #fff), 0 0 0 3px rgba(156, 163, 175, 0.6)',
+    };
   };
 
   return (
@@ -507,6 +537,7 @@ export function DomandaCard({
           <Button
             variant={getButtonVariant('Vero')}
             className={`flex-1 ${getButtonClasses('Vero')}`}
+            style={getButtonGlowStyle('Vero')}
             disabled={answered || readOnly}
             onClick={(): void => {
               void handleAnswer('Vero');
@@ -538,6 +569,7 @@ export function DomandaCard({
           <Button
             variant={getButtonVariant('Falso')}
             className={`flex-1 ${getButtonClasses('Falso')}`}
+            style={getButtonGlowStyle('Falso')}
             disabled={answered || readOnly}
             onClick={(): void => {
               void handleAnswer('Falso');

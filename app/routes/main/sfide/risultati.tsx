@@ -82,10 +82,11 @@ function SfidaRisultatiPage(): JSX.Element {
         correctCount: data.my_correct,
         wrongCount: data.question_count - data.my_correct,
         promosso: data.sfida_type === 'full' ? data.my_correct >= (data.question_count - 4) : false,
-        finalTotalSeconds: 0,
+        finalTotalSeconds: data.my_elapsed_seconds ?? 0,
         wrongAnswers: [],
         opponentCorrect: data.opponent_correct,
         winnerId: data.winner_id ?? undefined,
+        opponentTotalSeconds: data.opponent_elapsed_seconds,
       }}
       myName={myName}
       opponentName="Avversario"
@@ -98,6 +99,7 @@ function SfidaRisultatiPage(): JSX.Element {
       sfidaType={data.sfida_type as SfidaTier}
       challengeStillInProgress={!data.both_finished}
       questionCount={data.question_count}
+      opponentTotalSeconds={data.opponent_elapsed_seconds}
     />
   );
 }

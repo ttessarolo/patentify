@@ -89,6 +89,7 @@ function SkullSelezionatePage(): JSX.Element {
               readOnly={true}
               initialAnswer={domanda.ultima_risposta ?? undefined}
               userId={userId}
+              showSelectionGlow={false}
             />
           ))}
 

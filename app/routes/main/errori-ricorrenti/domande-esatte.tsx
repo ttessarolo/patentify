@@ -91,6 +91,7 @@ function DomandeEsattePage(): JSX.Element {
                 readOnly={true}
                 initialAnswer={domanda.ultima_risposta ?? undefined}
                 userId={userId}
+                showSelectionGlow={true}
               />
             </div>
           ))}

@@ -54,6 +54,7 @@ export const createSfidaOutputSchema = z.object({
 export const completeSfidaInputSchema = z.object({
   sfida_id: z.number().int().positive(),
   correct_count: z.number().int().min(0),
+  elapsed_seconds: z.number().int().min(0),
 });
 
 export const completeSfidaOutputSchema = z.object({
@@ -63,6 +64,7 @@ export const completeSfidaOutputSchema = z.object({
   my_correct: z.number().int(),
   opponent_correct: z.number().int(),
   promosso: z.boolean().nullable(),
+  opponent_elapsed_seconds: z.number().int().nullable(),
 });
 
 // ============================================================
@@ -82,6 +84,8 @@ export const getSfidaResultOutputSchema = z.object({
   sfida_type: sfidaTierSchema,
   question_count: z.number().int(),
   duration_seconds: z.number().int(),
+  my_elapsed_seconds: z.number().int().nullable(),
+  opponent_elapsed_seconds: z.number().int().nullable(),
 });
 
 // ============================================================
@@ -103,6 +107,7 @@ export const abortSfidaOutputSchema = z.object({
 export const forfeitSfidaInputSchema = z.object({
   sfida_id: z.number().int().positive(),
   correct_count: z.number().int().min(0),
+  elapsed_seconds: z.number().int().min(0),
 });
 
 export const forfeitSfidaOutputSchema = z.object({
@@ -112,6 +117,7 @@ export const forfeitSfidaOutputSchema = z.object({
   my_correct: z.number().int(),
   opponent_correct: z.number().int(),
   promosso: z.boolean().nullable(),
+  opponent_elapsed_seconds: z.number().int().nullable(),
 });
 
 // ============================================================
