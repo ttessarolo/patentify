@@ -58,11 +58,18 @@ function SfidaQuizPage(): JSX.Element {
   }, [navigate, endSfida]);
 
   const handleReviewQuiz = useCallback((): void => {
-    void navigate({
-      to: '/main/rivedi-quiz',
-      search: { quizId, back: 'sfide' as const },
-    });
-  }, [navigate, quizId]);
+    if (quizId > 0) {
+      void navigate({
+        to: '/main/rivedi-quiz',
+        search: { quizId, back: 'sfide' as const },
+      });
+    } else {
+      void navigate({
+        to: '/main/rivedi-sfida',
+        search: { sfidaId },
+      });
+    }
+  }, [navigate, quizId, sfidaId]);
 
   const handleRematch = useCallback((): void => {
     if (!opponentId) return;
@@ -98,6 +105,7 @@ function SfidaQuizPage(): JSX.Element {
         challengeStillInProgress={challengeStillInProgress}
         questionCount={questionCount}
         opponentTotalSeconds={result.opponentTotalSeconds}
+        reviewButtonLabel={quizId > 0 ? 'Rivedi Quiz' : 'Rivedi Sfida'}
       />
     );
   }

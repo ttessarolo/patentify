@@ -39,6 +39,8 @@ interface ChallengeResultsProps {
   questionCount?: number;
   /** Tempo impiegato dall'avversario in secondi (dal server, null se non disponibile) */
   opponentTotalSeconds?: number | null;
+  /** Label del bottone di review (default "Rivedi Quiz") */
+  reviewButtonLabel?: string;
 }
 
 export function ChallengeResults({
@@ -55,6 +57,7 @@ export function ChallengeResults({
   challengeStillInProgress = false,
   questionCount = 40,
   opponentTotalSeconds = null,
+  reviewButtonLabel = 'Rivedi Quiz',
 }: ChallengeResultsProps): JSX.Element {
   // Safeguard: se winnerId è null ma i punteggi sono diversi,
   // determina il vincitore dai punteggi (fallback per race condition server)
@@ -223,7 +226,7 @@ export function ChallengeResults({
           onClick={onReviewQuiz}
           className="w-full"
         >
-          Rivedi Quiz
+          {reviewButtonLabel}
         </Button>
         <Button
           variant="ghost"

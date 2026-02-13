@@ -136,6 +136,10 @@ export function MultiplayerQuiz({
   const inactivityTimerRef = useRef<ReturnType<typeof setInterval> | null>(
     null
   );
+  /** Punteggi finali salvati subito prima di entrare in waiting_opponent.
+   *  Evita stale closure nei fallback dove correctCount/wrongCount da useState
+   *  potrebbero essere obsoleti. */
+  const lastScoresRef = useRef<{ correct: number; wrong: number } | null>(null);
 
   // Inizializza il timestamp di ultima attivita al mount
   useEffect(() => {
@@ -456,6 +460,9 @@ export function MultiplayerQuiz({
         // Promosso/bocciato solo per sfide full
         const promosso = sfidaType === 'full' ? newWrongCount <= MAX_ERRORS : false;
 
+        // Salva punteggi finali nel ref prima di entrare in attesa
+        lastScoresRef.current = { correct: newCorrectCount, wrong: newWrongCount };
+
         setStatus('waiting_opponent');
 
         // Completa il quiz sul server (solo per full quiz)
@@ -550,10 +557,12 @@ export function MultiplayerQuiz({
       } catch {
         if (cancelled) return;
         // Fallback: mostra risultati con dati locali se la chiamata fallisce
-        const promosso = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
+        // Usa lastScoresRef per evitare stale closure
+        const scores = lastScoresRef.current ?? { correct: correctCount, wrong: wrongCount };
+        const promosso = sfidaType === 'full' ? scores.wrong <= MAX_ERRORS : false;
         onComplete({
-          correctCount,
-          wrongCount,
+          correctCount: scores.correct,
+          wrongCount: scores.wrong,
           promosso,
           finalTotalSeconds: lastElapsedRef.current,
           wrongAnswers,
@@ -642,11 +651,12 @@ export function MultiplayerQuiz({
         });
       } catch {
         if (cancelled) return;
-        // Fallback con dati locali
-        const promosso = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
+        // Fallback con dati locali — usa lastScoresRef per evitare stale closure
+        const scores = lastScoresRef.current ?? { correct: correctCount, wrong: wrongCount };
+        const promosso = sfidaType === 'full' ? scores.wrong <= MAX_ERRORS : false;
         onComplete({
-          correctCount,
-          wrongCount,
+          correctCount: scores.correct,
+          wrongCount: scores.wrong,
           promosso,
           finalTotalSeconds: lastElapsedRef.current,
           wrongAnswers,
@@ -714,10 +724,12 @@ export function MultiplayerQuiz({
 
   // Force leave waiting — tenta di recuperare dati reali dal server
   const handleForceLeaveWaiting = useCallback((): void => {
-    const promossoValue = sfidaType === 'full' ? wrongCount <= MAX_ERRORS : false;
+    // Usa lastScoresRef per evitare stale closure su correctCount/wrongCount
+    const scores = lastScoresRef.current ?? { correct: correctCount, wrong: wrongCount };
+    const promossoValue = sfidaType === 'full' ? scores.wrong <= MAX_ERRORS : false;
     const localResult: MultiplayerQuizResult = {
-      correctCount,
-      wrongCount,
+      correctCount: scores.correct,
+      wrongCount: scores.wrong,
       promosso: promossoValue,
       finalTotalSeconds: lastElapsedRef.current,
       wrongAnswers,

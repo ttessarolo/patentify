@@ -42,9 +42,11 @@ function SfidaRisultatiPage(): JSX.Element {
   }, [navigate]);
 
   const handleReviewQuiz = useCallback((): void => {
-    // Per la review del quiz, torniamo alle sfide per ora
-    void navigate({ to: '/main/sfide' });
-  }, [navigate]);
+    void navigate({
+      to: '/main/rivedi-sfida',
+      search: { sfidaId },
+    });
+  }, [navigate, sfidaId]);
 
   const handleRematch = useCallback((): void => {
     void navigate({ to: '/main/sfide' });
@@ -100,6 +102,7 @@ function SfidaRisultatiPage(): JSX.Element {
       challengeStillInProgress={!data.both_finished}
       questionCount={data.question_count}
       opponentTotalSeconds={data.opponent_elapsed_seconds}
+      reviewButtonLabel={data.sfida_type === 'full' ? 'Rivedi Quiz' : 'Rivedi Sfida'}
     />
   );
 }

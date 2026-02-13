@@ -71,8 +71,27 @@ function NotFoundComponent(): JSX.Element {
   );
 }
 
+function RootErrorComponent({ error }: { error: unknown }): JSX.Element {
+  const message =
+    error instanceof Error ? error.message : 'Si è verificato un errore imprevisto.';
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
+      <h1 className="text-2xl font-semibold text-red-500">Errore</h1>
+      <p className="max-w-md text-center text-muted-foreground">{message}</p>
+      <a
+        href="/"
+        className="text-primary underline underline-offset-4 hover:no-underline"
+      >
+        Torna alla home
+      </a>
+    </div>
+  );
+}
+
 export const Route = createRootRoute({
   notFoundComponent: NotFoundComponent,
+  errorComponent: RootErrorComponent,
   head: () => ({
     meta: [
       {
