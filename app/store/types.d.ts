@@ -48,8 +48,8 @@ export type ErroriRicorrentiChartType = 'pie' | 'bar';
  */
 export interface ErroriRicorrentiFilters {
   period: TimePeriod;
-  /** Tipo di grafico selezionato (default: 'pie') */
-  chartType: ErroriRicorrentiChartType;
+  /** Tipo di grafico: null = virgin (default responsivo pie mobile / bar desktop), altrimenti scelta utente */
+  chartType: ErroriRicorrentiChartType | null;
 }
 
 /**
@@ -57,8 +57,8 @@ export interface ErroriRicorrentiFilters {
  */
 export interface StatisticheFilters {
   period: TimePeriod;
-  /** Tipo di grafico selezionato (default: 'pie') */
-  chartType: ErroriRicorrentiChartType;
+  /** Tipo di grafico: null = virgin (default responsivo pie mobile / bar desktop), altrimenti scelta utente */
+  chartType: ErroriRicorrentiChartType | null;
 }
 
 /**
@@ -103,14 +103,14 @@ export interface FiltersSlice {
   setErroriRicorrentiPeriod: (period: TimePeriod) => void;
   /** Aggiorna il tipo di grafico errori ricorrenti */
   setErroriRicorrentiChartType: (chartType: ErroriRicorrentiChartType) => void;
-  /** Toggle del tipo di grafico errori ricorrenti */
-  toggleErroriRicorrentiChartType: () => void;
+  /** Toggle del tipo di grafico errori ricorrenti (passa il tipo corrente effettivo per gestire stato virgin) */
+  toggleErroriRicorrentiChartType: (currentEffective: 'pie' | 'bar') => void;
   /** Aggiorna il periodo statistiche */
   setStatistichePeriod: (period: TimePeriod) => void;
   /** Aggiorna il tipo di grafico statistiche */
   setStatisticheChartType: (chartType: ErroriRicorrentiChartType) => void;
-  /** Toggle del tipo di grafico statistiche */
-  toggleStatisticheChartType: () => void;
+  /** Toggle del tipo di grafico statistiche (passa il tipo corrente effettivo per gestire stato virgin) */
+  toggleStatisticheChartType: (currentEffective: 'pie' | 'bar') => void;
   /** Aggiorna il periodo classifiche */
   setClassifichePeriod: (period: TimePeriod) => void;
   /** Aggiorna la vista classifiche (quiz/risposte) */

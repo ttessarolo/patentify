@@ -27,18 +27,20 @@ export const esercitazioneDefaults: EsercitazioneFilters = {
 
 /**
  * Valori default per i filtri errori ricorrenti.
+ * chartType: null = stato virgin → default responsivo (pie mobile, bar desktop)
  */
 export const erroriRicorrentiDefaults = {
   period: 'tutti' as TimePeriod,
-  chartType: 'pie' as ErroriRicorrentiChartType,
+  chartType: null as ErroriRicorrentiChartType | null,
 };
 
 /**
  * Valori default per i filtri statistiche quiz.
+ * chartType: null = stato virgin → default responsivo (pie mobile, bar desktop)
  */
 export const statisticheDefaults = {
   period: 'tutti' as TimePeriod,
-  chartType: 'pie' as ErroriRicorrentiChartType,
+  chartType: null as ErroriRicorrentiChartType | null,
 };
 
 /**
@@ -95,10 +97,10 @@ export const createFiltersSlice: StateCreator<
     });
   },
 
-  toggleErroriRicorrentiChartType: (): void => {
+  toggleErroriRicorrentiChartType: (currentEffective: 'pie' | 'bar'): void => {
     set((state) => {
       state.erroriRicorrenti.chartType =
-        state.erroriRicorrenti.chartType === 'pie' ? 'bar' : 'pie';
+        currentEffective === 'pie' ? 'bar' : 'pie';
     });
   },
 
@@ -114,10 +116,10 @@ export const createFiltersSlice: StateCreator<
     });
   },
 
-  toggleStatisticheChartType: (): void => {
+  toggleStatisticheChartType: (currentEffective: 'pie' | 'bar'): void => {
     set((state) => {
       state.statistiche.chartType =
-        state.statistiche.chartType === 'pie' ? 'bar' : 'pie';
+        currentEffective === 'pie' ? 'bar' : 'pie';
     });
   },
 

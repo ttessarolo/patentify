@@ -14,6 +14,7 @@ import { Pill } from '~/components/ui/pill';
 import { QuizIcon, CorrectIcon, WrongIcon } from '~/icons';
 import { useAppStore } from '~/store';
 import { client, orpc } from '~/lib/orpc';
+import { useIsMobile } from '~/hooks/useIsMobile';
 import type { TimePeriod } from '~/types/db';
 
 type QuizStatsResult = Awaited<
@@ -71,17 +72,22 @@ export function QuizStatsSection({
   // Stato persistente per toggle tra Pie e Bar (dallo store Zustand - sezione statistiche)
   const chartType = useAppStore((s) => s.statistiche.chartType);
   const toggleChartType = useAppStore((s) => s.toggleStatisticheChartType);
+  const isMobile = useIsMobile();
+
+  // Default responsivo: pie su mobile, bar su desktop (solo quando stato virgin)
+  const effectiveChartType =
+    chartType ?? (isMobile ? 'pie' : 'bar');
 
   // Query per timeline (lazy, attivata solo quando chartType === 'bar')
   const timelineQuery = useQuery({
     ...orpc.statistiche.getQuizTimeline.queryOptions({ input: { period } }),
     staleTime: 2 * 60 * 1000,
-    enabled: chartType === 'bar',
+    enabled: effectiveChartType === 'bar',
   });
 
   // Handler per toggle del grafico (usa lo store per persistenza)
   const handleChartToggle = (): void => {
-    toggleChartType();
+    toggleChartType(effectiveChartType);
   };
 
   if (isLoading) {
@@ -208,7 +214,7 @@ export function QuizStatsSection({
         {/* Click per toggle tra Pie e Bar */}
         <div
           className={`order-1 cursor-pointer sm:order-2 sm:mx-0 ${
-            chartType === 'pie' ? 'mx-auto' : 'w-full sm:w-auto'
+            effectiveChartType === 'pie' ? 'mx-auto' : 'w-full sm:w-auto'
           }`}
           onClick={handleChartToggle}
           onKeyDown={(e): void => {
@@ -218,9 +224,9 @@ export function QuizStatsSection({
           }}
           role="button"
           tabIndex={0}
-          aria-label={`Clicca per ${chartType === 'pie' ? 'vedere la timeline' : 'tornare al grafico circolare'}`}
+          aria-label={`Clicca per ${effectiveChartType === 'pie' ? 'vedere la timeline' : 'tornare al grafico circolare'}`}
         >
-          {chartType === 'pie' ? (
+          {effectiveChartType === 'pie' ? (
             <div className="mx-auto h-32 w-32 transition-opacity hover:opacity-80 sm:h-40 sm:w-40">
               <Doughnut data={chartData} options={chartOptions} />
             </div>
