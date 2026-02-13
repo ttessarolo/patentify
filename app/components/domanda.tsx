@@ -282,13 +282,10 @@ export function DomandaCard({
     }
 
     // Glow solo se l'utente ha risposto correttamente e showSelectionGlow è attivo
+    // Glow sempre verde per indicare "risposta corretta", indipendentemente da Vero/Falso
     if (showSelectionGlow && isCorrect) {
-      // Colore del glow basato sul valore della risposta: verde=Vero, rosso=Falso
-      const isVero = selectedAnswer === 'Vero';
-      const ringColor = isVero ? '#22c55e' : '#ef4444';
-      const glowRgba = isVero
-        ? 'rgba(34, 197, 94, 0.6)'
-        : 'rgba(239, 68, 68, 0.6)';
+      const ringColor = '#22c55e';
+      const glowRgba = 'rgba(34, 197, 94, 0.6)';
       return {
         boxShadow: `0 0 0 1px var(--background, #fff), 0 0 0 3px ${ringColor}, 0 0 20px 6px ${glowRgba}`,
       };
