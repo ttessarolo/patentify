@@ -29,6 +29,10 @@ export default defineConfig({
       '~': path.resolve(__dirname, './app'),
       '@': path.resolve(__dirname, '.'),
       // Più specifico prima: with-selector resta dal pacchetto reale (pre-bundled)
+      'use-sync-external-store/shim/with-selector': path.resolve(
+        __dirname,
+        'node_modules/use-sync-external-store/shim/with-selector.js'
+      ),
       'use-sync-external-store/shim/with-selector.js': path.resolve(
         __dirname,
         'node_modules/use-sync-external-store/shim/with-selector.js'
