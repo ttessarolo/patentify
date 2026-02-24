@@ -43,9 +43,7 @@ function HelpIndex(): JSX.Element {
       <header id="top" className="space-y-4 pb-1 pt-8 md:pt-12">
         <h1 className="text-center text-2xl font-bold sm:text-left">Help</h1>
         <p className="text-sm text-muted-foreground md:text-base">
-          Qui trovi una guida pratica a tutte le sezioni principali. Ogni blocco
-          ha un link diretto, cosi puoi arrivare subito al punto anche da un
-          bottone <strong>[?]</strong>.
+          Qui trovi una guida pratica a tutte le sezioni principali.
         </p>
       </header>
 
@@ -62,7 +60,10 @@ function HelpIndex(): JSX.Element {
               <span className="w-6 shrink-0 text-xs font-bold text-primary">
                 {String(index + 1).padStart(2, '0')}
               </span>
-              <a href={item.href} className="hover:text-primary hover:underline">
+              <a
+                href={item.href}
+                className="hover:text-primary hover:underline"
+              >
                 {item.label}
               </a>
             </li>
@@ -84,9 +85,10 @@ function HelpIndex(): JSX.Element {
           </p>
           <p className="text-sm text-muted-foreground">
             Nota rapida: i concetti di <strong>Ambiguita</strong>,{' '}
-            <strong>Difficolta</strong> e <strong>IRE+</strong> seguono la stessa
-            logica spiegata in &quot;Consigli e Trucchi&quot;, ma qui trovi la
-            versione operativa: cosa vedi e cosa succede quando tocchi/clicchi.
+            <strong>Difficolta</strong> e <strong>IRE+</strong> seguono la
+            stessa logica spiegata in &quot;Consigli e Trucchi&quot;, ma qui
+            trovi la versione operativa: cosa vedi e cosa succede quando
+            tocchi/clicchi.
           </p>
 
           <div className="space-y-3 md:hidden">
@@ -319,8 +321,12 @@ function HelpIndex(): JSX.Element {
             <table className="min-w-[880px] w-full text-left text-sm">
               <thead className="bg-muted text-foreground">
                 <tr>
-                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Icona</th>
-                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Nome</th>
+                  <th className="px-4 py-3 text-xs uppercase tracking-wide">
+                    Icona
+                  </th>
+                  <th className="px-4 py-3 text-xs uppercase tracking-wide">
+                    Nome
+                  </th>
                   <th className="px-4 py-3 text-xs uppercase tracking-wide">
                     Significato pratico
                   </th>
@@ -396,7 +402,9 @@ function HelpIndex(): JSX.Element {
                   <td className="px-4 py-3">
                     <RandomIcon className="h-5 w-5 text-emerald-500" />
                   </td>
-                  <td className="px-4 py-3 font-medium">Esercitazione casuale</td>
+                  <td className="px-4 py-3 font-medium">
+                    Esercitazione casuale
+                  </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     Mischia le domande invece di seguire un ordine fisso.
                   </td>
@@ -468,8 +476,9 @@ function HelpIndex(): JSX.Element {
             Esercitazione Libera
           </h2>
           <p>
-            E la modalita perfetta per allenarti mirato: scegli filtri, rispondi,
-            vedi subito se sei corretto e capisci dove stai migliorando.
+            E la modalita perfetta per allenarti mirato: scegli filtri,
+            rispondi, vedi subito se sei corretto e capisci dove stai
+            migliorando.
           </p>
           <ul className="grid gap-2 text-sm text-muted-foreground">
             <li>
@@ -477,8 +486,8 @@ function HelpIndex(): JSX.Element {
               difficolta, ambito.
             </li>
             <li>
-              <strong>Pannello filtri collassabile:</strong> tap su
-              &quot;Filtra Domande&quot; per aprire/chiudere.
+              <strong>Pannello filtri collassabile:</strong> tap su &quot;Filtra
+              Domande&quot; per aprire/chiudere.
             </li>
             <li>
               <strong>Pill contatore:</strong> mostra quanti filtri sono attivi.
@@ -492,12 +501,13 @@ function HelpIndex(): JSX.Element {
               appare un pulsante flottante per tornare in alto ai filtri.
             </li>
             <li>
-              <strong>Carica Altre:</strong> paginazione progressiva da 10 in 10.
+              <strong>Carica Altre:</strong> paginazione progressiva da 10 in
+              10.
             </li>
           </ul>
           <p className="text-sm text-muted-foreground">
-            Click importanti: toccando IRE/Ambiguita/Difficolta nella card domanda
-            apri i dettagli; toccando Skull la salvi in Focus Skull.
+            Click importanti: toccando IRE/Ambiguita/Difficolta nella card
+            domanda apri i dettagli; toccando Skull la salvi in Focus Skull.
           </p>
         </section>
 
@@ -532,8 +542,8 @@ function HelpIndex(): JSX.Element {
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            Click chiave: su &quot;Rivedi Quiz Completo&quot; apri tutte le domande
-            del tentativo, anche in modalita di sola revisione.
+            Click chiave: su &quot;Rivedi Quiz Completo&quot; apri tutte le
+            domande del tentativo, anche in modalita di sola revisione.
           </p>
         </section>
 
@@ -572,8 +582,9 @@ function HelpIndex(): JSX.Element {
             </li>
           </ul>
           <p className="text-sm text-muted-foreground">
-            Insight utile: qui i dati non sono solo numeri; ogni numero ha sempre
-            un click successivo che ti porta all&apos;allenamento pratico.
+            Insight utile: qui i dati non sono solo numeri; ogni numero ha
+            sempre un click successivo che ti porta all&apos;allenamento
+            pratico.
           </p>
         </section>
 
@@ -655,9 +666,15 @@ function HelpIndex(): JSX.Element {
             <table className="min-w-[740px] w-full text-left text-sm">
               <thead className="bg-muted text-foreground">
                 <tr>
-                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Elemento</th>
-                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Cosa mostra</th>
-                  <th className="px-4 py-3 text-xs uppercase tracking-wide">Interazione</th>
+                  <th className="px-4 py-3 text-xs uppercase tracking-wide">
+                    Elemento
+                  </th>
+                  <th className="px-4 py-3 text-xs uppercase tracking-wide">
+                    Cosa mostra
+                  </th>
+                  <th className="px-4 py-3 text-xs uppercase tracking-wide">
+                    Interazione
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -738,8 +755,8 @@ function HelpIndex(): JSX.Element {
           </h2>
           <p>
             In Sfide giochi 1v1 in tempo reale. E la parte piu competitiva
-            dell&apos;app: online users, invito, timer condiviso e risultato testa
-            a testa.
+            dell&apos;app: online users, invito, timer condiviso e risultato
+            testa a testa.
           </p>
 
           <div className="grid gap-3 text-sm">
@@ -764,8 +781,8 @@ function HelpIndex(): JSX.Element {
               start comune + barra avanzamento avversario in real-time.
             </div>
             <div className="rounded-lg border border-border bg-card p-4">
-              <strong>Risultati:</strong> vittoria/sconfitta/pareggio,
-              confronto punteggi e tempi, rematch, revisione e storico.
+              <strong>Risultati:</strong> vittoria/sconfitta/pareggio, confronto
+              punteggi e tempi, rematch, revisione e storico.
             </div>
           </div>
 
@@ -781,13 +798,16 @@ function HelpIndex(): JSX.Element {
             Ultimo consiglio
           </h2>
           <p>
-            Se una sezione ti sembra &quot;troppo tecnica&quot;, parti sempre da due
-            domande: <strong>cosa posso cliccare?</strong> e{' '}
+            Se una sezione ti sembra &quot;troppo tecnica&quot;, parti sempre da
+            due domande: <strong>cosa posso cliccare?</strong> e{' '}
             <strong>cosa succede dopo?</strong>. In Patentify quasi tutto e
             pensato per portarti dal dato all&apos;allenamento in 1-2 tap.
           </p>
           <p className="text-sm">
-            <a href="#top" className="text-muted-foreground hover:text-primary hover:underline">
+            <a
+              href="#top"
+              className="text-muted-foreground hover:text-primary hover:underline"
+            >
               ↑ Torna all&apos;inizio
             </a>
           </p>

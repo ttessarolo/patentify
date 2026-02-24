@@ -318,7 +318,39 @@ function ConsigliETrucchiIndex(): JSX.Element {
           Alcune parole ed espressioni ricorrono sistematicamente nelle domande trabocchetto.
           Quando le vedi, rallenta e rileggi tutto con occhio critico.
         </p>
-        <div className="overflow-x-auto rounded-2xl border border-border">
+        <div className="space-y-3 md:hidden">
+          {TRIGGER_ROWS.map((row) => (
+            <article
+              key={row.trigger}
+              className="space-y-3 rounded-xl border border-border bg-card p-4"
+            >
+              <h3 className="font-semibold text-primary">{row.trigger}</h3>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Cosa succede
+                </p>
+                <p className="text-sm text-muted-foreground">{row.effect}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Parole tipiche
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {row.badges.map((badge) => (
+                    <span
+                      key={badge}
+                      className="rounded border border-border bg-muted px-2 py-0.5 text-xs text-foreground"
+                    >
+                      {badge}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto rounded-2xl border border-border md:block">
           <table className="min-w-[760px] w-full text-left text-sm">
             <thead className="bg-muted text-foreground">
               <tr>
@@ -489,7 +521,30 @@ function ConsigliETrucchiIndex(): JSX.Element {
             Il punteggio può andare indicativamente da 1 a 6. Più è alto, più la domanda è
             selettiva.
           </p>
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 space-y-3 md:hidden">
+            {IRE_ROWS.map((row) => (
+              <article
+                key={row.range}
+                className="space-y-2 rounded-xl border border-border bg-card p-4"
+              >
+                <h3 className="font-semibold">
+                  <span
+                    className={`mr-2 inline-block h-2.5 w-2.5 rounded-full align-middle ${getValueColorClass(row.level)} bg-current`}
+                    aria-hidden="true"
+                  />
+                  <span className={getValueColorClass(row.level)}>{row.range}</span>
+                </h3>
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Cosa significa
+                  </p>
+                  <p className="text-sm text-muted-foreground">{row.text}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-4 hidden overflow-x-auto md:block">
             <table className="min-w-[520px] w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-border text-xs uppercase tracking-wide text-muted-foreground">
