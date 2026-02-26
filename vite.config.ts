@@ -28,6 +28,7 @@ export default defineConfig({
     alias: {
       '~': path.resolve(__dirname, './app'),
       '@': path.resolve(__dirname, '.'),
+      '@commons': path.resolve(__dirname, './commons'),
       // Più specifico prima: with-selector resta dal pacchetto reale (pre-bundled)
       'use-sync-external-store/shim/with-selector': path.resolve(
         __dirname,

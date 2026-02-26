@@ -174,3 +174,98 @@
 - Non committare `.env.local`, solo `.env.example`
 - Il font Noto Sans è importato da Google Fonts
 - Le icone Google Icons sono scaricate come SVG locali e organizzate in `/app/icons` con export centralizzato
+
+## Native Development (Expo)
+
+### Architettura Monorepo
+
+- **Web invariato**: l'app TanStack Start resta in `app/` e continua a deployare su Netlify
+- **Native separato**: il progetto Expo vive in `native/`
+- **Shared code**: codice platform-agnostic in `commons/` (`@patentify/commons`)
+- **Workspace**: usare `pnpm-workspace.yaml` con pacchetti root + `commons` + `native`
+
+### Import Path e Confini
+
+- **Web alias**: `~/` resta valido solo nel progetto web
+- **Shared alias**: usare `@commons/*` per codice condiviso in web e native
+- **Native**: NON usare `~/` dentro `native/`; usare path relativi o `@commons/*`
+- **Boundary rule**: `commons/` non deve dipendere da DOM, Tailwind, Radix o API browser
+
+### Cosa va in `commons/`
+
+- **Consentito**:
+  - tipi TypeScript puri
+  - costanti business
+  - slice creator Zustand (solo logica stato)
+  - helper platform-agnostic
+- **Vietato**:
+  - componenti React web
+  - classi Tailwind
+  - codice server-only (Neon, handler API, middleware auth server)
+  - API browser (`window`, `document`, `localStorage`)
+
+### Regola Tipi TypeScript
+
+- **Unificazione tipi**: preferire file aggregatori `types.d.ts` per re-export dei tipi condivisi
+- **Return types espliciti**: ogni funzione TypeScript deve avere return type esplicito
+- **No `any`**: usare tipi specifici o `unknown`
+
+### Routing Native (Expo Router)
+
+- **Entry point**: `native/package.json` deve usare `"main": "expo-router/entry"`
+- **Default export obbligatorio**: ogni file route Expo deve esportare `default`
+- **Struttura route**:
+  - `native/app/(auth)/` per sign-in/sign-up
+  - `native/app/(app)/` per aree protette
+  - `_layout.tsx` per guard e navigator (`Stack`/`Tabs`)
+
+### Styling Native
+
+- **No Tailwind in native**: usare `StyleSheet.create()` e primitive React Native
+- **No Radix/shadcn in native**: usare componenti React Native base o librerie RN dedicate
+- **Mobile-first**: UI pensata prima per touch e schermi piccoli
+
+### Auth Native (Clerk Expo)
+
+- **SDK**: usare `@clerk/clerk-expo`
+- **Provider root**: `ClerkProvider` in `native/app/_layout.tsx`
+- **Token cache**: usare `expo-secure-store` (mai `localStorage`)
+- **Hook autorizzazione**: usare `useAuth`, `useSignIn`, `useSignUp`, `useOAuth`
+- **Route guard**: in `(app)/_layout.tsx`, redirect a `/(auth)/sign-in` se non autenticato
+- **Deep link OAuth**: configurare `scheme` in `native/app.json` (es. `patentify://`)
+
+### Client API oRPC su Native
+
+- **Pattern factory**: creare client con funzione `createNativeORPCClient(getToken)`
+- **No singleton hard-coded**: token letto dinamicamente con callback `getToken`
+- **Auth header**: inviare JWT Clerk via `Authorization: Bearer <token>`
+- **Type sharing**: import dei tipi router solo in modalità type-only (`import type`)
+
+### Zustand Native
+
+- **Store native**: `native/store/index.ts`
+- **Persistenza**: `AsyncStorage` via `createJSONStorage`
+- **Slices condivise**: import da `@commons/store/slices/*`
+- **SSR flag**: non usare `skipHydration` nel progetto native
+
+### Configurazioni Expo Critiche
+
+- **Metro monorepo**: configurare `watchFolders`, `nodeModulesPaths`, `extraNodeModules` per `@commons`
+- **Babel**: configurare alias `@commons` e plugin `react-native-reanimated/plugin` come ultimo
+- **Env native**: usare solo variabili `EXPO_PUBLIC_*`
+
+### Comandi Standard Native
+
+- `pnpm --filter patentify-native start`
+- `pnpm --filter patentify-native ios`
+- `pnpm --filter patentify-native android`
+- `pnpm --filter patentify-native typecheck`
+
+### Checklist Minima di Verifica Native
+
+- Avvio Expo senza crash (`expo start`)
+- Navigazione tra route stub principale e sotto-sezioni
+- Login email/password funzionante
+- Persistenza sessione tra riaperture app
+- Redirect corretto da route protette quando non autenticato
+- Smoke test chiamata API autenticata verso endpoint oRPC (es. `version.get`)

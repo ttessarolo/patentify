@@ -1,0 +1,15 @@
+{
+  "name": "@patentify/commons",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "types": "types.d.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.2.4",
+    "zustand": "^5.0.11"
+  }
+}

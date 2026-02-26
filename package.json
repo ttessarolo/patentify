@@ -1,6 +1,6 @@
 {
   "name": "patentify",
-  "version": "1.0.43",
+  "version": "1.0.44",
   "type": "module",
   "description": "",
   "main": "index.js",
@@ -12,7 +12,13 @@
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "typecheck": "tsc --noEmit",
-    "release": "node scripts/release.js"
+    "release": "node scripts/release.js",
+    "native:start": "pnpm --dir native start",
+    "native:ios": "pnpm --dir native ios",
+    "native:android": "pnpm --dir native android",
+    "native:web": "pnpm --dir native web",
+    "native:run:ios": "pnpm --dir native expo run:ios",
+    "native:run:android": "pnpm --dir native expo run:android"
   },
   "engines": {
     "node": ">=24.0.0"
@@ -38,7 +44,7 @@
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
     "@radix-ui/react-switch": "^1.2.6",
-    "@sentry/tanstackstart-react": "^10.39.0",
+    "@sentry/tanstackstart-react": "10.39.0",
     "@tanstack/devtools-vite": "^0.5.1",
     "@tanstack/react-devtools": "^0.9.6",
     "@tanstack/react-query": "^5.90.21",
